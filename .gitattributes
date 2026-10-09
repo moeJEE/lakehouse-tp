@@ -1,0 +1,7 @@
+# Les scripts gardent des fins de ligne Unix, même clonés sous Windows
+*.sh         text eol=lf
+*.py         text eol=lf
+*.conf       text eol=lf
+*.properties text eol=lf
+*.yml        text eol=lf
+Dockerfile   text eol=lf

@@ -1,0 +1,358 @@
+% =====================================================================
+%  Module Data Lakehouse -- Support 0 : Installation de l'environnement
+%  Compilation : pdflatex (2 passes)
+% =====================================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+\usepackage[babel=true]{microtype}
+
+\usepackage[a4paper,margin=2.3cm,headheight=14pt]{geometry}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{needspace}
+\usepackage{enumitem}
+\usepackage{amssymb}
+\usepackage[table]{xcolor}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,babel}
+\usepackage{listings}
+\usepackage[most]{tcolorbox}
+\usepackage[htt]{hyphenat}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xurl}
+
+\setlength{\parskip}{0.5em}
+\setlength{\parindent}{0pt}
+\setlength{\emergencystretch}{3em}
+
+% ---------- Couleurs ----------
+\definecolor{lhblue}{HTML}{1F4E79}
+\definecolor{lhteal}{HTML}{0F766E}
+\definecolor{lhred}{HTML}{B91C1C}
+\definecolor{lhviolet}{HTML}{6D28D9}
+\definecolor{lhgray}{HTML}{F3F4F6}
+\definecolor{lhbronze}{HTML}{A16207}
+\definecolor{lhsilver}{HTML}{64748B}
+\definecolor{lhgold}{HTML}{CA8A04}
+
+% ---------- Titres, en-têtes ----------
+\titleformat{\section}{\needspace{6\baselineskip}\Large\bfseries\color{lhblue}}{\thesection.}{0.6em}{}
+\titleformat{\subsection}{\large\bfseries\color{lhblue}}{\thesubsection}{0.6em}{}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{lhblue}Module Data Lakehouse}
+\fancyhead[R]{\small\color{lhblue}Support 0 -- Installation}
+\fancyfoot[C]{\small\thepage}
+
+% ---------- Encadrés ----------
+\newtcolorbox{resultat}{enhanced,colback=green!4,colframe=green!45!black,
+  fonttitle=\bfseries,title={Résultat attendu},left=6pt,right=6pt}
+\newtcolorbox{attention}{enhanced,colback=lhred!5,colframe=lhred,
+  fonttitle=\bfseries,title={Attention},left=6pt,right=6pt}
+\newtcolorbox{astuce}{enhanced,colback=lhteal!6,colframe=lhteal,
+  fonttitle=\bfseries,title={Astuce},left=6pt,right=6pt}
+
+% ---------- Code ----------
+\lstset{
+  basicstyle=\ttfamily\small, columns=fullflexible, keepspaces=true,
+  breaklines=true, showstringspaces=false, upquote=true,
+  frame=single, framesep=5pt, xleftmargin=6pt, xrightmargin=6pt,
+  backgroundcolor=\color{lhgray}, rulecolor=\color{black!15},
+  commentstyle=\color{black!55}\itshape,
+  keywordstyle=\color{lhblue}\bfseries, stringstyle=\color{lhteal},
+  literate=
+   {é}{{\'e}}1 {è}{{\`e}}1 {ê}{{\^e}}1 {à}{{\`a}}1 {ç}{{\c c}}1
+   {ù}{{\`u}}1 {î}{{\^i}}1 {ô}{{\^o}}1 {É}{{\'E}}1 {Ê}{{\^E}}1
+}
+\lstdefinestyle{shell}{language=bash,backgroundcolor=\color{black!85},
+  basicstyle=\ttfamily\small\color{white},rulecolor=\color{black!85},
+  commentstyle=\color{green!60}\itshape,keywordstyle=\color{white}}
+
+\newcommand{\cmd}[1]{\texttt{#1}}
+\newcommand{\cocher}{$\square$\ }
+\pdfstringdefDisableCommands{\def\cmd#1{#1}}
+
+% =====================================================================
+\begin{document}
+% =====================================================================
+
+% --------------------------- Titre ---------------------------
+\begin{tikzpicture}[remember picture,overlay]
+  \fill[lhblue] (current page.north west) rectangle ([yshift=-5.2cm]current page.north east);
+  \node[anchor=north west,text=white,font=\sffamily] at ([xshift=2.3cm,yshift=-1.3cm]current page.north west)
+    {Module Data Lakehouse -- Cycle ingénieur 4\textsuperscript{e}/5\textsuperscript{e} année};
+  \node[anchor=north west,text=white,font=\sffamily\bfseries\fontsize{26}{30}\selectfont] at ([xshift=2.3cm,yshift=-2.2cm]current page.north west)
+    {Support 0 -- Installation};
+  \node[anchor=north west,text=white!85!lhblue,font=\sffamily\large] at ([xshift=2.3cm,yshift=-3.6cm]current page.north west)
+    {Votre Lakehouse local en une commande};
+\end{tikzpicture}
+\thispagestyle{empty}
+\vspace*{4.2cm}
+
+\begin{tcolorbox}[colback=lhgray,colframe=lhblue,title=\textbf{En bref},fonttitle=\bfseries]
+\begin{tabularx}{\linewidth}{@{}>{\bfseries}l X@{}}
+Objectif & Installer l'environnement utilisé dans les TP 1, 2 et 3, puis vérifier qu'il fonctionne. \\
+Durée    & Environ 1 h, \textbf{à faire chez vous avant la séance 1} (téléchargement de 6 à 8 Go). \\
+À rendre & Une capture d'écran du test final (étape 6) affichant \og ENVIRONNEMENT PRÊT \fg{}. \\
+Besoin   & Un ordinateur avec 8 Go de RAM minimum (16 Go conseillés) et 15 Go d'espace libre. \\
+\end{tabularx}
+\end{tcolorbox}
+
+% =====================================================================
+\section{Ce que vous allez installer}
+% =====================================================================
+
+Tout l'environnement tourne dans \textbf{Docker} : vous n'installez ni Java, ni Spark, ni Python à la main.
+Une seule commande démarre l'ensemble des services suivants.
+
+\begin{center}
+\begin{tikzpicture}[
+  font=\sffamily\small, >=Stealth,
+  svc/.style={draw=#1,fill=#1!8,rounded corners=3pt,thick,minimum width=3.3cm,minimum height=1.1cm,align=center},
+  opt/.style={svc=#1,dashed}]
+\node[svc=lhblue] (jup) {\textbf{JupyterLab + Spark}\\\scriptsize vous codez ici};
+\node[opt=lhteal, right=0.8cm of jup] (trino) {\textbf{Trino}\\\scriptsize requêtes SQL};
+\node[opt=orange, right=0.8cm of trino] (sup) {\textbf{Superset}\\\scriptsize tableaux de bord};
+\node[svc=lhviolet, below=1cm of trino] (cat) {\textbf{Catalogue Iceberg}\\\scriptsize liste des tables};
+\node[svc=gray, left=0.8cm of cat] (pg) {\textbf{PostgreSQL}\\\scriptsize base source};
+\node[svc=lhbronze, below=1cm of cat, minimum width=11.5cm] (s3)
+  {\textbf{Stockage S3 (RustFS)} -- les fichiers de données\\
+   \scriptsize \texttt{landing/} \quad $\rightarrow$ \quad
+   \colorbox{lhbronze!30}{bronze} \quad $\rightarrow$ \quad
+   \colorbox{lhsilver!30}{silver} \quad $\rightarrow$ \quad
+   \colorbox{lhgold!30}{gold}};
+\draw[->] (jup) -- (cat);
+\draw[->] (trino) -- (cat);
+\draw[->] (sup) -- (trino);
+\draw[->] (cat) -- (s3);
+\draw[->] (jup.south west) ++(0.4,0) |- ([yshift=0.3cm]s3.north west) -- ([xshift=0.4cm]s3.north west);
+\draw[->,dashed] (pg) -- (jup);
+\end{tikzpicture}
+
+{\footnotesize Pointillés : services facultatifs, à lancer seulement avec 12 Go de RAM ou plus.}
+\end{center}
+
+\textbf{L'idée à retenir.} Les données sont stockées \emph{une seule fois} dans le stockage S3.
+Le catalogue sait où se trouve chaque table. Plusieurs outils (Spark, Trino, Superset) lisent
+\emph{les mêmes tables} sans les copier : c'est le principe du Lakehouse.
+
+% =====================================================================
+\section{Installer Docker}
+% =====================================================================
+
+\begin{tabularx}{\textwidth}{@{}>{\bfseries}p{2.2cm}X@{}}
+\toprule
+Windows & 1. Ouvrir PowerShell \emph{en administrateur} et taper \cmd{wsl -{}-install}, puis redémarrer.\newline
+          2. Installer \textbf{Docker Desktop} (\url{https://docs.docker.com/desktop/}) en gardant l'option \og WSL 2 \fg{}. \\
+\midrule
+macOS   & Installer \textbf{Docker Desktop} en choisissant la version de votre processeur (Apple Silicon ou Intel). \\
+\midrule
+Linux   & \cmd{curl -fsSL https://get.docker.com | sh} \newline
+          puis \cmd{sudo usermod -aG docker \$USER} et se reconnecter. \\
+\bottomrule
+\end{tabularx}
+
+\textbf{Mémoire.} Dans Docker Desktop, menu \emph{Settings > Resources}, donnez à Docker
+\textbf{6 Go} (machine de 8 Go) ou \textbf{10 Go} (machine de 16 Go).
+
+\textbf{Vérification} dans un terminal :
+\begin{lstlisting}[style=shell]
+docker compose version
+docker run --rm hello-world
+\end{lstlisting}
+
+\begin{resultat}
+Une version \texttt{v2.x} s'affiche, puis le message \texttt{Hello from Docker!}
+\end{resultat}
+
+% =====================================================================
+\section{Installer l'environnement du cours}
+% =====================================================================
+
+Toutes les commandes s'exécutent dans un terminal (sous Windows : le terminal \textbf{Ubuntu} installé avec WSL).
+
+\subsection*{Étape 1 -- Récupérer le dossier du cours}
+\begin{lstlisting}[style=shell]
+git clone https://github.com/moeJEE/lakehouse-tp.git
+cd lakehouse-tp
+\end{lstlisting}
+Sans Git : téléchargez le fichier ZIP depuis la page du dépôt et décompressez-le.
+
+\subsection*{Étape 2 -- Créer le fichier de configuration}
+\begin{lstlisting}[style=shell]
+cp .env.example .env
+\end{lstlisting}
+\textbf{Machine de 8 Go uniquement :} ouvrez \cmd{.env} et remplacez \cmd{JUPYTER\_MEM\_LIMIT=4g} par \cmd{3g}.
+
+\subsection*{Étape 3 -- Télécharger les images (le plus long)}
+\begin{lstlisting}[style=shell]
+docker compose --profile full pull
+\end{lstlisting}
+Si le téléchargement s'interrompt, relancez simplement la même commande.
+
+\subsection*{Étape 4 -- Démarrer}
+\begin{lstlisting}[style=shell]
+docker compose up -d
+\end{lstlisting}
+
+\subsection*{Étape 5 -- Contrôler l'état des services}
+\begin{lstlisting}[style=shell]
+docker compose ps
+\end{lstlisting}
+
+\begin{resultat}
+Après environ une minute, \texttt{rustfs}, \texttt{iceberg-rest}, \texttt{postgres} et \texttt{jupyter}
+sont à l'état \texttt{running}. Le service \texttt{init-buckets} est à l'état \texttt{exited (0)} :
+c'est normal, il a préparé le stockage puis s'est arrêté.
+\end{resultat}
+
+\subsection*{Étape 6 -- Lancer le test automatique}
+\begin{lstlisting}[style=shell]
+docker compose exec jupyter python /opt/lakehouse/scripts/check_env.py
+\end{lstlisting}
+
+\begin{resultat}
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize,backgroundcolor=\color{white},frame=none]
+[OK] 1. Stockage S3 (RustFS)
+[OK] 2. Catalogue Iceberg REST
+[OK] 3. PostgreSQL
+[OK] 4. Spark + Iceberg
+[OK] 5. Spark + Delta Lake
+[OK] 6. DuckDB lit les fichiers sur S3
+[--] 7. Trino (profil sql/full non démarré ?)
+ENVIRONNEMENT PRÊT
+\end{lstlisting}
+\textbf{Faites une capture d'écran de ce résultat : c'est votre livrable.}
+La ligne 7 en \texttt{[--]} est normale tant que Trino n'est pas lancé.
+\end{resultat}
+
+% =====================================================================
+\section{Ouvrir les outils}
+% =====================================================================
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{@{}l l X@{}}
+\toprule
+\textbf{Outil} & \textbf{Adresse dans le navigateur} & \textbf{Connexion} \\
+\midrule
+JupyterLab        & \url{http://localhost:8888} & jeton : \texttt{lakehouse} \\
+Stockage S3       & \url{http://localhost:9001} & \texttt{lakehouse} / \texttt{lakehouse-secret} \\
+Spark UI          & \url{http://localhost:4040} & visible pendant qu'un notebook Spark tourne \\
+Trino$^*$         & \url{http://localhost:8080} & nom d'utilisateur libre \\
+Superset$^*$      & \url{http://localhost:8088} & \texttt{admin} / \texttt{admin} \\
+\bottomrule
+\end{tabularx}
+
+\smallskip
+{\footnotesize $^*$ Uniquement après \cmd{docker compose -{}-profile full up -d} (16 Go de RAM conseillés).}
+\end{center}
+
+% =====================================================================
+\section{Premier test dans JupyterLab}
+% =====================================================================
+
+Dans JupyterLab, créez un notebook dans le dossier \texttt{notebooks/} et exécutez ces trois cellules.
+
+\textbf{Cellule 1 -- Démarrer Spark}
+\begin{lstlisting}[language=Python]
+from pyspark.sql import SparkSession
+spark = SparkSession.builder.appName("premier_test").getOrCreate()
+\end{lstlisting}
+
+\needspace{10\baselineskip}
+\textbf{Cellule 2 -- Créer une table, puis la modifier}
+\begin{lstlisting}[language=Python]
+spark.sql("CREATE NAMESPACE IF NOT EXISTS lakehouse.bronze")
+spark.sql("""CREATE OR REPLACE TABLE lakehouse.bronze.villes
+             (nom STRING, population BIGINT) USING iceberg""")
+spark.sql("INSERT INTO lakehouse.bronze.villes VALUES ('Paris', 2100000), ('Lyon', 520000)")
+spark.sql("UPDATE lakehouse.bronze.villes SET population = 2133000 WHERE nom = 'Paris'")
+spark.table("lakehouse.bronze.villes").show()
+\end{lstlisting}
+
+\textbf{Cellule 3 -- Voir l'historique de la table}
+\begin{lstlisting}[language=Python]
+spark.sql("SELECT committed_at, operation FROM lakehouse.bronze.villes.snapshots").show()
+\end{lstlisting}
+
+\begin{resultat}
+La cellule 3 affiche \textbf{deux versions} de la table : l'insertion, puis la modification.
+Un Lakehouse garde l'historique des données ; vous l'exploiterez dans le TP 1.
+\end{resultat}
+
+% =====================================================================
+\section{Commandes utiles au quotidien}
+% =====================================================================
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{@{}l >{\ttfamily}X@{}}
+\toprule
+\textbf{Je veux\dots} & \textbf{\normalfont Commande} \\
+\midrule
+Démarrer                           & docker compose up -d \\
+Démarrer avec Trino et Superset    & docker compose -{}-profile full up -d \\
+Voir l'état des services           & docker compose ps \\
+Voir les erreurs d'un service      & docker compose logs -{}-tail 50 jupyter \\
+Arrêter (en gardant mes données)   & docker compose -{}-profile full down \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{attention}
+N'ajoutez \textbf{jamais} l'option \cmd{-v} à \cmd{docker compose down} : elle efface toutes les
+données du Lakehouse. Vos notebooks, eux, restent dans le dossier \texttt{notebooks/}.
+\end{attention}
+
+% =====================================================================
+\section{En cas de problème}
+% =====================================================================
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{5.2cm}X@{}}
+\toprule
+\textbf{Symptôme} & \textbf{Solution} \\
+\midrule
+Docker Desktop ne démarre pas (Windows) &
+  Activer la virtualisation dans le BIOS (Intel VT-x ou AMD-V), puis relancer \cmd{wsl -{}-install}. \\
+\texttt{port is already allocated} &
+  Un autre logiciel utilise ce port : changez le numéro dans \cmd{.env} (ex. \cmd{PORT\_JUPYTER=8889}). \\
+Un service s'arrête tout seul, ou le notebook plante &
+  Mémoire insuffisante : fermez les autres applications, restez sans le profil \cmd{full},
+  ou baissez \cmd{JUPYTER\_MEM\_LIMIT} dans \cmd{.env}. \\
+Erreur \texttt{RequestTimeTooSkewed} après une mise en veille &
+  Redémarrez Docker Desktop (Windows : \cmd{wsl -{}-shutdown}). \\
+\texttt{Permission denied} dans \texttt{notebooks/} (Linux) &
+  \cmd{sudo chown -R 1000:1000 notebooks apps} \\
+Téléchargement bloqué sur le réseau de l'école &
+  Téléchargez chez vous, ou demandez la clé USB du kit hors ligne. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{astuce}
+Toujours bloqué ? Envoyez à l'enseignant la sortie de ces deux commandes :
+\cmd{docker compose ps} et \cmd{docker compose logs -{}-tail 50 <service>}.
+\end{astuce}
+
+% =====================================================================
+\section{Avant la séance 1}
+% =====================================================================
+
+\begin{tcolorbox}[colback=lhgray,colframe=lhblue]
+\cocher Docker fonctionne (\cmd{hello-world} affiche son message)\\[3pt]
+\cocher Le test de l'étape 6 affiche \og ENVIRONNEMENT PRÊT \fg{}\\[3pt]
+\cocher Capture d'écran déposée sur l'espace de cours\\[3pt]
+\cocher JupyterLab s'ouvre et le premier test fonctionne
+\end{tcolorbox}
+
+\end{document}

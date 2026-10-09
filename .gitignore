@@ -1,0 +1,21 @@
+# Configuration locale (copiée depuis .env.example)
+.env
+
+# Jupyter / Python
+.ipynb_checkpoints/
+__pycache__/
+spark-warehouse/
+metastore_db/
+derby.log
+mlruns/
+
+# Données volumineuses (fournies séparément)
+data/*
+!data/.gitkeep
+
+# LaTeX
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
