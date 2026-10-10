@@ -16,6 +16,7 @@
 \usepackage{needspace}
 \usepackage{enumitem}
 \usepackage{amssymb}
+\usepackage{pifont}
 \usepackage[table]{xcolor}
 \usepackage{booktabs}
 \usepackage{tabularx}
@@ -51,13 +52,16 @@
 \fancyhead[R]{\small\color{lhblue}TP 1 -- Données structurées}
 \fancyfoot[C]{\small\thepage}
 
-% ---------- Encadrés ----------
-\newtcolorbox{resultat}{enhanced,colback=green!4,colframe=green!45!black,
-  fonttitle=\bfseries,title={Résultat attendu},left=6pt,right=6pt}
-\newtcolorbox{attention}{enhanced,colback=lhred!5,colframe=lhred,
-  fonttitle=\bfseries,title={Attention},left=6pt,right=6pt}
-\newtcolorbox{astuce}{enhanced,colback=lhteal!6,colframe=lhteal,
-  fonttitle=\bfseries,title={Astuce},left=6pt,right=6pt}
+% ---------- Encadrés : un seul style, différencié par le titre ----------
+% Fond gris clair + barre latérale. Seul « Attention » est en couleur (rouge).
+\tcbset{lhbox/.style={enhanced, sharp corners, boxrule=0pt, frame hidden,
+  colback=lhgray, colbacktitle=lhgray, coltitle=black, fonttitle=\bfseries,
+  borderline west={2.5pt}{0pt}{#1}, left=9pt, right=8pt, top=1pt, bottom=5pt,
+  toptitle=5pt, bottomtitle=0pt, lefttitle=9pt}}
+\newtcolorbox{resultat}{lhbox=black!35, title={\ding{51}\ \ Résultat attendu}}
+\newtcolorbox{astuce}{lhbox=black!35, title={\ding{43}\ \ Astuce}}
+\newtcolorbox{attention}{lhbox=lhred, colback=lhred!5, colbacktitle=lhred!5,
+  coltitle=lhred!85!black, title={\ding{115}\ \ Attention}}
 
 % ---------- Code ----------
 \lstset{
@@ -66,22 +70,21 @@
   frame=single, framesep=5pt, xleftmargin=6pt, xrightmargin=6pt,
   backgroundcolor=\color{lhgray}, rulecolor=\color{black!15},
   commentstyle=\color{black!55}\itshape,
-  keywordstyle=\color{lhblue}\bfseries, stringstyle=\color{lhteal},
+  keywordstyle=\color{lhblue}\bfseries, stringstyle=\color{black!70},
   literate=
    {é}{{\'e}}1 {è}{{\`e}}1 {ê}{{\^e}}1 {à}{{\`a}}1 {ç}{{\c c}}1
    {ù}{{\`u}}1 {î}{{\^i}}1 {ô}{{\^o}}1 {É}{{\'E}}1 {Ê}{{\^E}}1
 }
 \lstdefinestyle{shell}{language=bash,backgroundcolor=\color{black!85},
   basicstyle=\ttfamily\small\color{white},rulecolor=\color{black!85},
-  commentstyle=\color{green!60}\itshape,keywordstyle=\color{white}}
+  commentstyle=\color{black!35}\itshape,keywordstyle=\color{white}}
 
 \newcommand{\cmd}[1]{\texttt{#1}}
 \newcommand{\cocher}{$\square$\ }
 \pdfstringdefDisableCommands{\def\cmd#1{#1}}
 
-\newtcolorbox{notion}{enhanced,colback=lhblue!4,colframe=lhblue,
-  fonttitle=\bfseries,title={Notion clé},left=6pt,right=6pt}
-\newcommand{\nb}[1]{\textcolor{lhteal}{\texttt{#1}}}
+\newtcolorbox{notion}{lhbox=lhblue, title={\ding{72}\ \ Notion clé}}
+\newcommand{\nb}[1]{\textcolor{lhblue}{\texttt{#1}}}
 
 % =====================================================================
 \begin{document}
@@ -99,7 +102,7 @@
 \thispagestyle{empty}
 \vspace*{4.2cm}
 
-\begin{tcolorbox}[colback=lhgray,colframe=lhblue,title=\textbf{En bref},fonttitle=\bfseries]
+\begin{tcolorbox}[lhbox=lhblue, title={En bref}]
 \begin{tabularx}{\linewidth}{@{}>{\bfseries}l X@{}}
 Objectif & Construire un pipeline Lakehouse complet sur les données réelles d'un site
            de e-commerce, puis en tirer des indicateurs et un tableau de bord. \\
@@ -174,9 +177,9 @@ personne d'une commande à l'autre, il faut utiliser \cmd{customer\_unique\_id}.
 \node[b=lhbronze, right=0.5cm of land, yshift=0.8cm] (br) {\textbf{Bronze}\\\scriptsize copie fidèle};
 \node[b=lhsilver, right=0.45cm of br] (si) {\textbf{Silver}\\\scriptsize propre, typé};
 \node[b=lhgold, right=0.45cm of si] (go) {\textbf{Gold}\\\scriptsize indicateurs};
-\node[b=lhred, below=0.5cm of si, minimum width=2.05cm] (q) {\textbf{Quarantaine}\\\scriptsize lignes rejetées};
-\node[b=lhteal, above right=0.15cm and 0.45cm of go] (db) {\textbf{Tableau}\\\textbf{de bord}};
-\node[b=lhviolet, below right=0.15cm and 0.45cm of go] (ml) {\textbf{Modèle ML}\\\scriptsize retards};
+\node[b=gray, dashed, below=0.5cm of si, minimum width=2.05cm] (q) {\textbf{Quarantaine}\\\scriptsize lignes rejetées};
+\node[b=lhblue, above right=0.15cm and 0.45cm of go] (db) {\textbf{Tableau}\\\textbf{de bord}};
+\node[b=lhblue, below right=0.15cm and 0.45cm of go] (ml) {\textbf{Modèle ML}\\\scriptsize retards};
 \draw[->] (pg) -- node[lbl,above,sloped]{JDBC} (br);
 \draw[->] (csv) -- (land);
 \draw[->] (land) -- (br);

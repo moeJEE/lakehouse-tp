@@ -16,6 +16,7 @@
 \usepackage{needspace}
 \usepackage{enumitem}
 \usepackage{amssymb}
+\usepackage{pifont}
 \usepackage[table]{xcolor}
 \usepackage{booktabs}
 \usepackage{tabularx}
@@ -51,13 +52,16 @@
 \fancyhead[R]{\small\color{lhblue}Support 0 -- Installation}
 \fancyfoot[C]{\small\thepage}
 
-% ---------- Encadrés ----------
-\newtcolorbox{resultat}{enhanced,colback=green!4,colframe=green!45!black,
-  fonttitle=\bfseries,title={Résultat attendu},left=6pt,right=6pt}
-\newtcolorbox{attention}{enhanced,colback=lhred!5,colframe=lhred,
-  fonttitle=\bfseries,title={Attention},left=6pt,right=6pt}
-\newtcolorbox{astuce}{enhanced,colback=lhteal!6,colframe=lhteal,
-  fonttitle=\bfseries,title={Astuce},left=6pt,right=6pt}
+% ---------- Encadrés : un seul style, différencié par le titre ----------
+% Fond gris clair + barre latérale. Seul « Attention » est en couleur (rouge).
+\tcbset{lhbox/.style={enhanced, sharp corners, boxrule=0pt, frame hidden,
+  colback=lhgray, colbacktitle=lhgray, coltitle=black, fonttitle=\bfseries,
+  borderline west={2.5pt}{0pt}{#1}, left=9pt, right=8pt, top=1pt, bottom=5pt,
+  toptitle=5pt, bottomtitle=0pt, lefttitle=9pt}}
+\newtcolorbox{resultat}{lhbox=black!35, title={\ding{51}\ \ Résultat attendu}}
+\newtcolorbox{astuce}{lhbox=black!35, title={\ding{43}\ \ Astuce}}
+\newtcolorbox{attention}{lhbox=lhred, colback=lhred!5, colbacktitle=lhred!5,
+  coltitle=lhred!85!black, title={\ding{115}\ \ Attention}}
 
 % ---------- Code ----------
 \lstset{
@@ -66,14 +70,14 @@
   frame=single, framesep=5pt, xleftmargin=6pt, xrightmargin=6pt,
   backgroundcolor=\color{lhgray}, rulecolor=\color{black!15},
   commentstyle=\color{black!55}\itshape,
-  keywordstyle=\color{lhblue}\bfseries, stringstyle=\color{lhteal},
+  keywordstyle=\color{lhblue}\bfseries, stringstyle=\color{black!70},
   literate=
    {é}{{\'e}}1 {è}{{\`e}}1 {ê}{{\^e}}1 {à}{{\`a}}1 {ç}{{\c c}}1
    {ù}{{\`u}}1 {î}{{\^i}}1 {ô}{{\^o}}1 {É}{{\'E}}1 {Ê}{{\^E}}1
 }
 \lstdefinestyle{shell}{language=bash,backgroundcolor=\color{black!85},
   basicstyle=\ttfamily\small\color{white},rulecolor=\color{black!85},
-  commentstyle=\color{green!60}\itshape,keywordstyle=\color{white}}
+  commentstyle=\color{black!35}\itshape,keywordstyle=\color{white}}
 
 \newcommand{\cmd}[1]{\texttt{#1}}
 \newcommand{\cocher}{$\square$\ }
@@ -96,7 +100,7 @@
 \thispagestyle{empty}
 \vspace*{4.2cm}
 
-\begin{tcolorbox}[colback=lhgray,colframe=lhblue,title=\textbf{En bref},fonttitle=\bfseries]
+\begin{tcolorbox}[lhbox=lhblue, title={En bref}]
 \begin{tabularx}{\linewidth}{@{}>{\bfseries}l X@{}}
 Objectif & Installer l'environnement utilisé dans les TP 1, 2 et 3, puis vérifier qu'il fonctionne. \\
 Durée    & Environ 1 h, \textbf{à faire chez vous avant la séance 1} (téléchargement de 6 à 8 Go). \\
@@ -118,9 +122,9 @@ Une seule commande démarre l'ensemble des services suivants.
   svc/.style={draw=#1,fill=#1!8,rounded corners=3pt,thick,minimum width=3.3cm,minimum height=1.1cm,align=center},
   opt/.style={svc=#1,dashed}]
 \node[svc=lhblue] (jup) {\textbf{JupyterLab + Spark}\\\scriptsize vous codez ici};
-\node[opt=lhteal, right=0.8cm of jup] (trino) {\textbf{Trino}\\\scriptsize requêtes SQL};
-\node[opt=orange, right=0.8cm of trino] (sup) {\textbf{Superset}\\\scriptsize tableaux de bord};
-\node[svc=lhviolet, below=1cm of trino] (cat) {\textbf{Catalogue Iceberg}\\\scriptsize liste des tables};
+\node[opt=lhblue, right=0.8cm of jup] (trino) {\textbf{Trino}\\\scriptsize requêtes SQL};
+\node[opt=lhblue, right=0.8cm of trino] (sup) {\textbf{Superset}\\\scriptsize tableaux de bord};
+\node[svc=gray, below=1cm of trino] (cat) {\textbf{Catalogue Iceberg}\\\scriptsize liste des tables};
 \node[svc=gray, left=0.8cm of cat] (pg) {\textbf{PostgreSQL}\\\scriptsize base source};
 \node[svc=lhbronze, below=1cm of cat, minimum width=11.5cm] (s3)
   {\textbf{Stockage S3 (RustFS)} -- les fichiers de données\\
@@ -410,7 +414,7 @@ Toujours bloqué ? Envoyez à l'enseignant la sortie de ces deux commandes :
 \section{Avant la séance 1}
 % =====================================================================
 
-\begin{tcolorbox}[colback=lhgray,colframe=lhblue]
+\begin{tcolorbox}[lhbox=lhblue]
 \cocher Docker fonctionne (\cmd{hello-world} affiche son message)\\[3pt]
 \cocher Le test de l'étape 6 affiche \og ENVIRONNEMENT PRÊT \fg{}\\[3pt]
 \cocher Capture d'écran déposée sur l'espace de cours\\[3pt]
