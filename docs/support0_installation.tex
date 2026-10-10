@@ -133,16 +133,20 @@ La figure~\ref{fig:archi} montre comment ils s'articulent ; les flux numérotés
   lbl/.style={font=\sffamily\scriptsize,text=black!70,align=center}]
 
 % Zones
-\draw[zone,dashed] (-4.8,1.7) rectangle (12.9,-7.7);
-\node[ztitre] at (-4.7,1.65) {Votre ordinateur};
-\draw[zone,fill=black!2] (-0.5,1.15) rectangle (12.6,-7.4);
-\node[ztitre] at (-0.4,1.1) {Docker : réseau privé du cours};
+\draw[zone,dashed] (-4.8,3.85) rectangle (12.9,-7.7);
+\node[ztitre] at (-4.7,3.8) {Votre ordinateur};
+\draw[zone,fill=black!2] (-0.5,3.3) rectangle (12.6,-7.4);
+\node[ztitre] at (-0.4,3.25) {Docker : réseau privé du cours};
+% Conteneur jupyter : JupyterLab + Spark et dbt
+\draw[zone,dashed,draw=lhblue!60] (4.2,2.75) rectangle (8.0,-0.8);
+\node[font=\sffamily\scriptsize,text=lhblue,anchor=south west] at (4.2,2.75) {conteneur jupyter};
 \draw[zone,draw=lhbronze,fill=lhbronze!6] (-0.3,-3.95) rectangle (12.4,-7.15);
 \node[ztitre,text=lhbronze!80!black] at (-0.2,-4.0) {Stockage S3 -- RustFS};
 
 % Ligne 1
 \node[svc=gray] (pg) at (1.7,0) {\textbf{PostgreSQL}\\\scriptsize base source (TP 1)};
-\node[svc=lhblue] (jup) at (6.1,0) {\textbf{JupyterLab + Spark}\\\scriptsize vous codez ici (Python, SQL, dbt)};
+\node[svc=lhblue] (jup) at (6.1,0) {\textbf{JupyterLab + Spark}\\\scriptsize vous codez ici};
+\node[svc=lhblue,minimum height=0.95cm] (dbt) at (6.1,1.75) {\textbf{dbt}\\\scriptsize modèles SQL testés (TP 2 et 3)};
 \node[opt=lhblue] (sup) at (10.5,0) {\textbf{Superset}\\\scriptsize tableaux de bord};
 % Ligne 2
 \node[svc=gray] (cat) at (6.1,-2.6) {\textbf{Catalogue Iceberg}\\\scriptsize annuaire des tables};
@@ -162,6 +166,8 @@ La figure~\ref{fig:archi} montre comment ils s'articulent ; les flux numérotés
 \draw[<->,dashed] (dos.east) -- node[lbl,above]{partagé} (-0.5,-5.75);
 
 % Flux numérotés
+\draw[->] (dbt.south) -- node[lbl,right]{SQL exécuté par Spark} (jup.north);
+\draw[->,dashed] (dbt.east) -- node[lbl,above,pos=0.55]{ou exécuté par Trino (TP 3)} (12.4,1.75) |- (trino.east);
 \draw[->,thick] (pg.east) -- node[num,above=2pt]{1} node[lbl,below=2pt]{JDBC} (jup.west);
 \draw[->,thick] (land.north) |- (4.9,-1.35) -- (4.9,-0.575);
 \node[num] at (3.3,-1.35) {1};
@@ -174,7 +180,7 @@ La figure~\ref{fig:archi} montre comment ils s'articulent ; les flux numérotés
 \draw[->] (sup.south) -- node[lbl,right]{SQL} (trino.north);
 \draw[->,dashed] (cat.south) -- node[lbl,left,align=right,pos=0.4]{pointe vers les\\métadonnées} (6.1,-4.95);
 \end{tikzpicture}}
-\caption{Architecture de l'environnement. Pointillés : services facultatifs (12~Go de RAM ou plus).}
+\caption{Architecture de l'environnement. Encadrés en pointillés : services facultatifs (12~Go de RAM ou plus).}
 \label{fig:archi}
 \end{figure}
 
@@ -192,6 +198,11 @@ La figure~\ref{fig:archi} montre comment ils s'articulent ; les flux numérotés
 \item[\etape{5}] \textbf{Trino lit directement les fichiers} dans le stockage S3 : il voit exactement
   les données que Spark vient d'écrire, sans copie. Superset, lui, passe par Trino.
 \end{description}
+
+\textbf{Et dbt ?} Dans les TP 2 et 3, une partie des transformations est écrite sous forme de
+\emph{modèles} dbt : de simples fichiers SQL, testés et documentés. dbt ne stocke rien lui-même :
+il génère les requêtes et les fait exécuter par Spark (ou par Trino). Le trajet reste donc le même,
+à partir de l'étape \etape{2}.
 
 \subsection*{Les composants}
 
