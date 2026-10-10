@@ -16,7 +16,7 @@
 \usepackage{needspace}
 \usepackage{enumitem}
 \usepackage{amssymb}
-\usepackage{pifont}
+
 \usepackage[table]{xcolor}
 \usepackage{booktabs}
 \usepackage{tabularx}
@@ -24,7 +24,7 @@
 \usepackage{tikz}
 \usetikzlibrary{positioning,arrows.meta,babel}
 \usepackage{listings}
-\usepackage[most]{tcolorbox}
+
 \usepackage[htt]{hyphenat}
 \usepackage[hidelinks]{hyperref}
 \usepackage{xurl}
@@ -52,16 +52,11 @@
 \fancyhead[R]{\small\color{lhblue}Support 0 -- Installation}
 \fancyfoot[C]{\small\thepage}
 
-% ---------- Encadrés : un seul style, différencié par le titre ----------
-% Fond gris clair + barre latérale. Seul « Attention » est en couleur (rouge).
-\tcbset{lhbox/.style={enhanced, sharp corners, boxrule=0pt, frame hidden,
-  colback=lhgray, colbacktitle=lhgray, coltitle=black, fonttitle=\bfseries,
-  borderline west={2.5pt}{0pt}{#1}, left=9pt, right=8pt, top=1pt, bottom=5pt,
-  toptitle=5pt, bottomtitle=0pt, lefttitle=9pt}}
-\newtcolorbox{resultat}{lhbox=black!35, title={\ding{51}\ \ Résultat attendu}}
-\newtcolorbox{astuce}{lhbox=black!35, title={\ding{43}\ \ Astuce}}
-\newtcolorbox{attention}{lhbox=lhred, colback=lhred!5, colbacktitle=lhred!5,
-  coltitle=lhred!85!black, title={\ding{115}\ \ Attention}}
+% ---------- Encadrés : texte simple, sans boîte ----------
+% Un titre en gras introduit le paragraphe ; seul « Attention » est en rouge.
+\newenvironment{resultat}{\par\medskip\noindent\textbf{Résultat attendu.}\ }{\par\medskip}
+\newenvironment{astuce}{\par\medskip\noindent\textbf{Astuce.}\ }{\par\medskip}
+\newenvironment{attention}{\par\medskip\noindent\textbf{\textcolor{lhred}{Attention.}}\ }{\par\medskip}
 
 % ---------- Code ----------
 \lstset{
@@ -100,14 +95,16 @@
 \thispagestyle{empty}
 \vspace*{4.2cm}
 
-\begin{tcolorbox}[lhbox=lhblue, title={En bref}]
+{\large\bfseries\color{lhblue}En bref}\par\smallskip
 \begin{tabularx}{\linewidth}{@{}>{\bfseries}l X@{}}
+\toprule
 Objectif & Installer l'environnement utilisé dans les TP 1, 2 et 3, puis vérifier qu'il fonctionne. \\
-Durée    & Environ 1 h, \textbf{à faire chez vous avant la séance 1} (téléchargement de 6 à 8 Go). \\
-À rendre & Une capture d'écran du test final (étape 6) affichant \og ENVIRONNEMENT PRÊT \fg{}. \\
-Besoin   & Un ordinateur avec 8 Go de RAM minimum (16 Go conseillés) et 15 Go d'espace libre. \\
+Durée    & Environ 1 h, \textbf{à faire chez vous avant la séance 1}. \\
+Téléchargement & 6 à 8~Go : prévoyez une bonne connexion. \\
+À rendre & Un court compte rendu (section~\ref{sec:cr}). \\
+Matériel & 8~Go de RAM minimum (16~Go conseillés) et 15~Go d'espace disque libre. \\
+\bottomrule
 \end{tabularx}
-\end{tcolorbox}
 
 % =====================================================================
 \section{Ce que vous allez installer}
@@ -272,7 +269,7 @@ docker compose exec jupyter python /opt/lakehouse/scripts/check_env.py
 [--] 7. Trino (profil sql/full non démarré ?)
 ENVIRONNEMENT PRÊT
 \end{lstlisting}
-\textbf{Faites une capture d'écran de ce résultat : c'est votre livrable.}
+\textbf{Faites une capture d'écran de ce résultat :} elle figurera dans votre compte rendu.
 La ligne 7 en \texttt{[--]} est normale : Trino et Superset \textbf{ne démarrent pas automatiquement}
 (ils demandent 2,5 Go de RAM en plus). Avec 16 Go de RAM, lancez-les puis refaites le test :
 \begin{lstlisting}[style=shell]
@@ -414,11 +411,25 @@ Toujours bloqué ? Envoyez à l'enseignant la sortie de ces deux commandes :
 \section{Avant la séance 1}
 % =====================================================================
 
-\begin{tcolorbox}[lhbox=lhblue]
-\cocher Docker fonctionne (\cmd{hello-world} affiche son message)\\[3pt]
-\cocher Le test de l'étape 6 affiche \og ENVIRONNEMENT PRÊT \fg{}\\[3pt]
-\cocher Capture d'écran déposée sur l'espace de cours\\[3pt]
-\cocher JupyterLab s'ouvre et le premier test fonctionne
-\end{tcolorbox}
+\begin{itemize}[leftmargin=*,label=\cocher,itemsep=2pt]
+\item Docker fonctionne (\cmd{hello-world} affiche son message)
+\item Le test de l'étape 6 affiche \og ENVIRONNEMENT PRÊT \fg{}
+\item JupyterLab s'ouvre et le premier test fonctionne
+\item Le compte rendu est déposé sur l'espace de cours (section~\ref{sec:cr})
+\end{itemize}
+
+% =====================================================================
+\section{Compte rendu}\label{sec:cr}
+% =====================================================================
+
+Une à deux pages, au format PDF, nommé \cmd{NOM\_Prenom\_Support0.pdf}. Il contient :
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+  \item la capture d'écran du test de l'étape 6 et celle du premier test dans JupyterLab ;
+  \item votre configuration : système d'exploitation, mémoire vive, profil lancé (base ou \cmd{full}) ;
+  \item les problèmes rencontrés pendant l'installation et la façon dont vous les avez résolus
+        (\og aucun \fg{} est une réponse acceptée) ;
+  \item en quelques lignes, avec vos mots : le rôle du stockage S3, du catalogue et de Spark,
+        et ce que montre l'historique de la table \cmd{villes}.
+\end{enumerate}
 
 \end{document}

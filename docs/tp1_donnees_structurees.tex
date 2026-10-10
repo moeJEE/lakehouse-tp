@@ -16,7 +16,7 @@
 \usepackage{needspace}
 \usepackage{enumitem}
 \usepackage{amssymb}
-\usepackage{pifont}
+
 \usepackage[table]{xcolor}
 \usepackage{booktabs}
 \usepackage{tabularx}
@@ -24,7 +24,7 @@
 \usepackage{tikz}
 \usetikzlibrary{positioning,arrows.meta,babel}
 \usepackage{listings}
-\usepackage[most]{tcolorbox}
+
 \usepackage[htt]{hyphenat}
 \usepackage[hidelinks]{hyperref}
 \usepackage{xurl}
@@ -52,16 +52,11 @@
 \fancyhead[R]{\small\color{lhblue}TP 1 -- Données structurées}
 \fancyfoot[C]{\small\thepage}
 
-% ---------- Encadrés : un seul style, différencié par le titre ----------
-% Fond gris clair + barre latérale. Seul « Attention » est en couleur (rouge).
-\tcbset{lhbox/.style={enhanced, sharp corners, boxrule=0pt, frame hidden,
-  colback=lhgray, colbacktitle=lhgray, coltitle=black, fonttitle=\bfseries,
-  borderline west={2.5pt}{0pt}{#1}, left=9pt, right=8pt, top=1pt, bottom=5pt,
-  toptitle=5pt, bottomtitle=0pt, lefttitle=9pt}}
-\newtcolorbox{resultat}{lhbox=black!35, title={\ding{51}\ \ Résultat attendu}}
-\newtcolorbox{astuce}{lhbox=black!35, title={\ding{43}\ \ Astuce}}
-\newtcolorbox{attention}{lhbox=lhred, colback=lhred!5, colbacktitle=lhred!5,
-  coltitle=lhred!85!black, title={\ding{115}\ \ Attention}}
+% ---------- Encadrés : texte simple, sans boîte ----------
+% Un titre en gras introduit le paragraphe ; seul « Attention » est en rouge.
+\newenvironment{resultat}{\par\medskip\noindent\textbf{Résultat attendu.}\ }{\par\medskip}
+\newenvironment{astuce}{\par\medskip\noindent\textbf{Astuce.}\ }{\par\medskip}
+\newenvironment{attention}{\par\medskip\noindent\textbf{\textcolor{lhred}{Attention.}}\ }{\par\medskip}
 
 % ---------- Code ----------
 \lstset{
@@ -83,7 +78,7 @@
 \newcommand{\cocher}{$\square$\ }
 \pdfstringdefDisableCommands{\def\cmd#1{#1}}
 
-\newtcolorbox{notion}{lhbox=lhblue, title={\ding{72}\ \ Notion clé}}
+\newenvironment{notion}{\par\medskip\noindent\textbf{\textcolor{lhblue}{Notion clé.}}\ }{\par\medskip}
 \newcommand{\nb}[1]{\textcolor{lhblue}{\texttt{#1}}}
 
 % =====================================================================
@@ -102,16 +97,17 @@
 \thispagestyle{empty}
 \vspace*{4.2cm}
 
-\begin{tcolorbox}[lhbox=lhblue, title={En bref}]
+{\large\bfseries\color{lhblue}En bref}\par\smallskip
 \begin{tabularx}{\linewidth}{@{}>{\bfseries}l X@{}}
+\toprule
 Objectif & Construire un pipeline Lakehouse complet sur les données réelles d'un site
            de e-commerce, puis en tirer des indicateurs et un tableau de bord. \\
 Durée    & 2 séances de 3 h (+ environ 2 h de travail personnel). \\
 Prérequis & Support 0 terminé : \cmd{check\_env.py} affiche \og ENVIRONNEMENT PRÊT \fg{}. \\
-À rendre & Les notebooks exécutés, l'application de tableau de bord et une capture d'écran
-           (détail en section~\ref{sec:livrables}). \\
+À rendre & Un compte rendu, les notebooks exécutés et le tableau de bord
+           (section~\ref{sec:livrables}). \\
+\bottomrule
 \end{tabularx}
-\end{tcolorbox}
 
 % =====================================================================
 \section{Le scénario}
@@ -366,10 +362,27 @@ d'analyse, pas un détail.
 
 À déposer sur l'espace de cours, dans une archive \cmd{NOM\_Prenom\_TP1.zip} :
 \begin{itemize}[leftmargin=*,nosep]
-  \item les notebooks \cmd{01} à \cmd{04} \textbf{exécutés}, avec les réponses aux questions
-        (cellules \og Question \fg{}) rédigées en Markdown ;
-  \item le fichier \cmd{apps/dashboard\_tp1.py} et une capture d'écran du tableau de bord.
+  \item le \textbf{compte rendu} au format PDF (\cmd{NOM\_Prenom\_TP1.pdf}) ;
+  \item les notebooks \cmd{01} à \cmd{04} \textbf{exécutés} ;
+  \item le fichier \cmd{apps/dashboard\_tp1.py}.
 \end{itemize}
+
+\subsection*{Le compte rendu}
+
+Cinq à huit pages. Il ne recopie pas le code : il explique vos choix et vos résultats.
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+  \item \textbf{Architecture} : le schéma de votre pipeline et le rôle de chaque couche.
+  \item \textbf{Qualité des données} : les défauts trouvés, les règles appliquées en Silver
+        (bloquantes ou simples alertes) et le bilan Bronze / Silver.
+  \item \textbf{Ingestion incrémentale} : le principe du filigrane et du \cmd{MERGE}, et ce que montre
+        le \emph{time travel}.
+  \item \textbf{Réponses à la direction} : les résultats des requêtes SQL, interprétés.
+  \item \textbf{Modèle de prédiction} : les variables choisies, les métriques, la comparaison des deux
+        modèles et la démonstration de la fuite de données.
+  \item \textbf{Tableau de bord} : une capture d'écran et deux ou trois enseignements.
+  \item \textbf{Réponses aux questions} des notebooks, rédigées et argumentées.
+  \item \textbf{Limites et améliorations} : ce que vous feriez avec plus de temps, ou en production.
+\end{enumerate}
 
 \begin{center}
 \small
@@ -384,7 +397,7 @@ Gold : table des commandes et tables d'indicateurs correctes & 2 \\
 Requêtes SQL et ingestion incrémentale (\cmd{MERGE}, \emph{time travel}) & 3 \\
 Machine Learning : évaluation correcte, fuite de données expliquée, prédictions en Gold & 3 \\
 Tableau de bord : complet, lisible, sans erreur d'analyse & 2 \\
-Réponses aux questions : justesse et esprit critique & 3 \\
+Compte rendu : clarté, réponses argumentées, esprit critique & 3 \\
 \midrule
 \textbf{Total} & \textbf{20} \\
 \bottomrule
