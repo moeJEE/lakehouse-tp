@@ -80,6 +80,8 @@
 
 \newcommand{\cmd}[1]{\texttt{#1}}
 \newcommand{\cocher}{$\square$\ }
+\newcommand{\etape}[1]{\tikz[baseline=(n.base)]\node[circle,fill=lhblue,text=white,
+  font=\sffamily\bfseries\scriptsize,inner sep=1.3pt](n){#1};}
 \pdfstringdefDisableCommands{\def\cmd#1{#1}}
 
 % =====================================================================
@@ -115,34 +117,83 @@ Matériel & 8~Go de RAM minimum (16~Go conseillés) et 15~Go d'espace disque lib
 % =====================================================================
 
 Tout l'environnement tourne dans \textbf{Docker} : vous n'installez ni Java, ni Spark, ni Python à la main.
-Une seule commande démarre l'ensemble des services suivants.
+Une seule commande démarre sept services, qui communiquent entre eux sur un réseau privé.
+La figure~\ref{fig:archi} montre comment ils s'articulent ; les flux numérotés sont expliqués juste après.
 
-\begin{center}
+\begin{figure}[h]
+\centering
+\resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[
   font=\sffamily\small, >=Stealth,
-  svc/.style={draw=#1,fill=#1!8,rounded corners=3pt,thick,minimum width=3.3cm,minimum height=1.1cm,align=center},
-  opt/.style={svc=#1,dashed}]
-\node[svc=lhblue] (jup) {\textbf{JupyterLab + Spark}\\\scriptsize vous codez ici};
-\node[opt=lhblue, right=0.8cm of jup] (trino) {\textbf{Trino}\\\scriptsize requêtes SQL};
-\node[opt=lhblue, right=0.8cm of trino] (sup) {\textbf{Superset}\\\scriptsize tableaux de bord};
-\node[svc=gray, below=1cm of trino] (cat) {\textbf{Catalogue Iceberg}\\\scriptsize liste des tables};
-\node[svc=gray, left=0.8cm of cat] (pg) {\textbf{PostgreSQL}\\\scriptsize base source};
-\node[svc=lhbronze, below=1cm of cat, minimum width=11.5cm] (s3)
-  {\textbf{Stockage S3 (RustFS)} -- les fichiers de données\\
-   \scriptsize \texttt{landing/} \quad $\rightarrow$ \quad
-   \colorbox{lhbronze!30}{bronze} \quad $\rightarrow$ \quad
-   \colorbox{lhsilver!30}{silver} \quad $\rightarrow$ \quad
-   \colorbox{lhgold!30}{gold}};
-\draw[->] (jup) -- (cat);
-\draw[->] (trino) -- (cat);
-\draw[->] (sup) -- (trino);
-\draw[->] (cat) -- (s3);
-\draw[->] (jup.south west) ++(0.4,0) |- ([yshift=0.3cm]s3.north west) -- ([xshift=0.4cm]s3.north west);
-\draw[->,dashed] (pg) -- (jup);
-\end{tikzpicture}
+  svc/.style={draw=#1,fill=#1!8,rounded corners=3pt,thick,minimum width=3.4cm,minimum height=1.15cm,align=center},
+  opt/.style={svc=#1,dashed},
+  zone/.style={draw=black!35,rounded corners=6pt},
+  ztitre/.style={font=\sffamily\bfseries\footnotesize,text=black!60,anchor=north west},
+  num/.style={circle,fill=lhblue,text=white,font=\sffamily\bfseries\scriptsize,inner sep=1.3pt},
+  lbl/.style={font=\sffamily\scriptsize,text=black!70,align=center}]
 
-{\footnotesize Pointillés : services facultatifs, à lancer seulement avec 12 Go de RAM ou plus.}
-\end{center}
+% Zones
+\draw[zone,dashed] (-4.8,1.7) rectangle (12.9,-7.7);
+\node[ztitre] at (-4.7,1.65) {Votre ordinateur};
+\draw[zone,fill=black!2] (-0.5,1.15) rectangle (12.6,-7.4);
+\node[ztitre] at (-0.4,1.1) {Docker : réseau privé du cours};
+\draw[zone,draw=lhbronze,fill=lhbronze!6] (-0.3,-3.95) rectangle (12.4,-7.15);
+\node[ztitre,text=lhbronze!80!black] at (-0.2,-4.0) {Stockage S3 -- RustFS};
+
+% Ligne 1
+\node[svc=gray] (pg) at (1.7,0) {\textbf{PostgreSQL}\\\scriptsize base source (TP 1)};
+\node[svc=lhblue] (jup) at (6.1,0) {\textbf{JupyterLab + Spark}\\\scriptsize vous codez ici};
+\node[opt=lhblue] (sup) at (10.5,0) {\textbf{Superset}\\\scriptsize tableaux de bord};
+% Ligne 2
+\node[svc=gray] (cat) at (6.1,-2.6) {\textbf{Catalogue Iceberg}\\\scriptsize annuaire des tables};
+\node[opt=lhblue] (trino) at (10.5,-2.6) {\textbf{Trino}\\\scriptsize requêtes SQL};
+% Ligne 3 : le stockage
+\node[svc=darkgray,fill=white,minimum height=1.6cm] (land) at (1.7,-5.75)
+  {\textbf{landing/}\\\scriptsize fichiers bruts\\\scriptsize (CSV, JSON, texte)};
+\node[svc=darkgray,fill=white,minimum width=7.6cm,minimum height=1.6cm] (wh) at (8.35,-5.75)
+  {\textbf{lakehouse/warehouse/}\\[2pt]
+   \colorbox{lhbronze!30}{bronze}\ \colorbox{lhsilver!30}{silver}\ \colorbox{lhgold!30}{gold}\\[2pt]
+   \scriptsize fichiers Parquet (données) + JSON (métadonnées)};
+
+% Hors Docker
+\node[svc=gray,fill=white] (nav) at (-2.75,0) {\textbf{Navigateur}\\\scriptsize localhost:8888, :9001\dots};
+\node[svc=gray,fill=white] (dos) at (-2.75,-5.75) {\textbf{Votre dossier}\\\scriptsize notebooks/, data/};
+\draw[->] (nav.east) -- node[lbl,above]{ports} (-0.5,0);
+\draw[<->,dashed] (dos.east) -- node[lbl,above]{partagé} (-0.5,-5.75);
+
+% Flux numérotés
+\draw[->,thick] (pg.east) -- node[num,above=2pt]{1} node[lbl,below=2pt]{JDBC} (jup.west);
+\draw[->,thick] (land.north) |- (4.9,-1.35) -- (4.9,-0.575);
+\node[num] at (3.3,-1.35) {1};
+\draw[->,thick] (7.3,-0.575) |- (8.3,-1.35) -- (8.3,-4.95);
+\node[num] at (8.3,-3.4) {2};
+\node[lbl,right] at (8.45,-3.4) {écrit};
+\draw[->,thick] (jup.south) -- node[num,left=3pt]{3} (cat.north);
+\draw[->,thick] (trino.west) -- node[num,above=2pt]{4} (cat.east);
+\draw[->,thick] (trino.south) -- node[num,right=3pt]{5} (10.5,-4.95);
+\draw[->] (sup.south) -- node[lbl,right]{SQL} (trino.north);
+\draw[->,dashed] (cat.south) -- node[lbl,left,align=right,pos=0.4]{pointe vers les\\métadonnées} (6.1,-4.95);
+\end{tikzpicture}}
+\caption{Architecture de l'environnement. Pointillés : services facultatifs (12~Go de RAM ou plus).}
+\label{fig:archi}
+\end{figure}
+
+\subsection*{Le trajet d'une donnée}
+
+\begin{description}[leftmargin=1.4em,labelindent=0pt,itemsep=3pt,font=\normalfont]
+\item[\etape{1}] \textbf{Spark lit les sources} : la base PostgreSQL (connexion JDBC) et les fichiers
+  bruts déposés dans le dossier \texttt{landing/} du stockage S3.
+\item[\etape{2}] \textbf{Spark écrit la table} dans \texttt{warehouse/} : des fichiers \emph{Parquet}
+  qui contiennent les données, et des fichiers \emph{JSON} qui les décrivent (schéma, liste des
+  fichiers, numéro de version).
+\item[\etape{3}] \textbf{Spark déclare la nouvelle version au catalogue} : \og la table
+  \texttt{lakehouse.bronze.orders}, c'est désormais ce fichier de métadonnées \fg{}.
+\item[\etape{4}] \textbf{Trino demande au catalogue} où se trouve la table qu'on lui demande d'interroger.
+\item[\etape{5}] \textbf{Trino lit directement les fichiers} dans le stockage S3 : il voit exactement
+  les données que Spark vient d'écrire, sans copie. Superset, lui, passe par Trino.
+\end{description}
+
+\subsection*{Les composants}
 
 \begin{center}
 \small
@@ -182,6 +233,26 @@ Superset &
 {\footnotesize \textbf{auto} : démarre avec \cmd{docker compose up -d}. \quad
 \textbf{-{}-profile} : démarre seulement avec \cmd{docker compose -{}-profile full up -d}.}
 \end{center}
+
+\subsection*{Ce qui est conservé, et où}
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{@{}X l@{}}
+\toprule
+\textbf{Contenu} & \textbf{Emplacement} \\
+\midrule
+Données et métadonnées des tables (bronze, silver, gold) & volume Docker \texttt{rustfs-data} \\
+Annuaire des tables (catalogue) & volume Docker \texttt{iceberg-catalog} \\
+Base source PostgreSQL & volume Docker \texttt{pg-data} \\
+Vos notebooks et votre code & dossier \texttt{notebooks/mon\_travail/}, sur votre disque \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Arrêter ou redémarrer les services ne fait rien perdre. Seule la commande
+\mbox{\cmd{docker compose down -v}} efface les trois volumes, donc toutes les tables.
 
 \textbf{L'idée à retenir :} Les données sont stockées \emph{une seule fois} dans le stockage S3.
 Le catalogue sait où se trouve chaque table. Plusieurs outils (Spark, Trino, Superset) lisent
