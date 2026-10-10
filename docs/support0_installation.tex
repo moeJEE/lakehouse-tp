@@ -271,16 +271,32 @@ spark = SparkSession.builder.appName("premier_test").getOrCreate()
 \textbf{Cellule 2 -- Créer une table, puis la modifier}
 \begin{lstlisting}[language=Python]
 spark.sql("CREATE NAMESPACE IF NOT EXISTS lakehouse.bronze")
-spark.sql("""CREATE OR REPLACE TABLE lakehouse.bronze.villes
-             (nom STRING, population BIGINT) USING iceberg""")
-spark.sql("INSERT INTO lakehouse.bronze.villes VALUES ('Paris', 2100000), ('Lyon', 520000)")
-spark.sql("UPDATE lakehouse.bronze.villes SET population = 2133000 WHERE nom = 'Paris'")
+
+spark.sql("""
+    CREATE OR REPLACE TABLE lakehouse.bronze.villes
+    (nom STRING, population BIGINT) USING iceberg
+""")
+
+spark.sql("""
+    INSERT INTO lakehouse.bronze.villes
+    VALUES ('Paris', 2100000), ('Lyon', 520000)
+""")
+
+spark.sql("""
+    UPDATE lakehouse.bronze.villes
+    SET population = 2133000
+    WHERE nom = 'Paris'
+""")
+
 spark.table("lakehouse.bronze.villes").show()
 \end{lstlisting}
 
 \textbf{Cellule 3 -- Voir l'historique de la table}
 \begin{lstlisting}[language=Python]
-spark.sql("SELECT committed_at, operation FROM lakehouse.bronze.villes.snapshots").show()
+spark.sql("""
+    SELECT committed_at, operation
+    FROM lakehouse.bronze.villes.snapshots
+""").show()
 \end{lstlisting}
 
 \begin{resultat}
