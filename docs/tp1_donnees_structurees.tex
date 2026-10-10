@@ -78,6 +78,8 @@
 
 \newcommand{\cmd}[1]{\texttt{#1}}
 \newcommand{\cocher}{$\square$\ }
+\newcommand{\etape}[1]{\tikz[baseline=(n.base)]\node[circle,fill=lhblue,text=white,
+  font=\sffamily\bfseries\scriptsize,inner sep=1.3pt](n){#1};}
 \pdfstringdefDisableCommands{\def\cmd#1{#1}}
 
 \newenvironment{notion}{\par\medskip\noindent\textbf{\textcolor{lhblue}{Notion clé :}}\ }{\par\medskip}
@@ -176,7 +178,8 @@ seconde (préparation et usages).
   col/.style={draw=#1,thick,rounded corners=4pt,fill=#1!7,text width=3.75cm,align=left,
               inner sep=6pt,font=\sffamily\footnotesize},
   tag/.style={font=\sffamily\scriptsize\bfseries,text=white,fill=lhblue,rounded corners=2pt,inner sep=2.5pt},
-  op/.style={font=\sffamily\scriptsize,text=black!70,align=center}]
+  op/.style={font=\sffamily\scriptsize,text=black!70,align=center},
+  num/.style={circle,fill=lhblue,text=white,font=\sffamily\bfseries\scriptsize,inner sep=1.4pt}]
 
 % ---------------- Ligne 1 : ingestion ----------------
 \node[col=gray] (pg) at (0,1.2) {\textbf{PostgreSQL}\\ schéma \texttt{ventes}\\[3pt]
@@ -185,17 +188,17 @@ seconde (préparation et usages).
   \texttt{customers}\\ \texttt{products}\\ \texttt{sellers}\\ \texttt{category\_translation}};
 \node[col=darkgray] (land) at (5.35,-2.0) {\textbf{Landing}\\ \texttt{s3://landing/}\\[3pt]
   un dossier par table\\ et par date de dépôt\\ fichiers non modifiés};
-\node[col=lhbronze] (br) at (11.0,-0.4) {\textbf{Bronze} -- 7 tables\\[3pt]
+\node[col=lhbronze] (br) at (10.85,-0.4) {\textbf{Bronze} -- 7 tables\\[3pt]
   \texttt{orders}, \texttt{order\_items},\\ \texttt{order\_payments}\\[2pt]
   \texttt{customers}, \texttt{products},\\ \texttt{sellers},\\ \texttt{category\_translation}\\[4pt]
   \textit{colonnes ajoutées :}\\ \texttt{\_source}, \texttt{\_ingere\_le}};
 
-\draw[->,thick] (pg.east) -- node[op,above]{JDBC (lot 1, puis lot 2)} (pg.east -| br.west);
-\draw[->,thick] (csv) -- node[op,above]{dépôt} (land);
-\draw[->,thick] (land.east) -- node[op,above]{lecture\\en texte} (land.east -| br.west);
+\draw[->,thick] (pg.east) -- node[num,pos=0.12]{1} node[op,above]{JDBC (lot 1, puis lot 2)} (pg.east -| br.west);
+\draw[->,thick] (csv) -- node[num]{2} node[op,above=4pt]{dépôt} (land);
+\draw[->,thick] (land.east) -- node[num]{3} node[op,above=4pt]{lecture\\en texte} (land.east -| br.west);
 
 % ---------------- Ligne 2 : préparation et usages ----------------
-\node[col=lhsilver] (si) at (11.0,-7.1) {\textbf{Silver} -- tables propres\\[3pt]
+\node[col=lhsilver] (si) at (10.85,-7.1) {\textbf{Silver} -- tables propres\\[3pt]
   \texttt{customers}, \texttt{sellers}\\
   \texttt{products} \textit{+ catégorie EN}\\
   \texttt{orders} \textit{+ délais, retard}\\
@@ -213,12 +216,12 @@ seconde (préparation et usages).
 \node[col=lhblue,text width=3.4cm] (ml)  at (0,-7.1) {\textbf{Modèle ML}\\ scikit-learn : retards};
 \node[col=lhblue,text width=3.4cm] (db)  at (0,-9.0) {\textbf{Tableau de bord}\\ Streamlit};
 
-\draw[->,thick] (br.south) -- node[op,right,align=left]{typage, dédoublonnage,\\règles de qualité\\[2pt]\textit{lot 2 : \texttt{MERGE}}} (si.north);
-\draw[->] (si.south) -- node[op,right]{lignes rejetées} (q.north);
-\draw[->,thick] (si.west) -- node[op,above]{jointures,\\agrégats} (go.east);
-\draw[->,thick] (go.west) -- ++(-0.5,0) |- (sql.east);
-\draw[<->,thick] (go.west) -- (ml.east);
-\draw[->,thick] (go.west) -- ++(-0.5,0) |- (db.east);
+\draw[->,thick] (br.south) -- node[num]{4} node[op,right=6pt,align=left]{typage, dédoublonnage,\\règles de qualité\\[2pt]\textit{lot 2 : \texttt{MERGE}}} (si.north);
+\draw[->] (si.south) -- node[num]{5} node[op,right=6pt]{lignes rejetées} (q.north);
+\draw[->,thick] (si.west) -- node[num]{6} node[op,above=4pt]{jointures,\\agrégats} (go.east);
+\draw[->,thick] (go.west) -- ++(-0.5,0) |- node[num,pos=0.8]{7} (sql.east);
+\draw[<->,thick] (go.west) -- node[num,pos=0.7]{8} (ml.east);
+\draw[->,thick] (go.west) -- ++(-0.5,0) |- node[num,pos=0.8]{9} (db.east);
 
 % ---------------- Notebooks ----------------
 \node[tag,anchor=south east] at (pg.north east)  {01\_bronze};
@@ -228,10 +231,40 @@ seconde (préparation et usages).
 \node[tag,anchor=south east] at (ml.north east)  {04\_ml\_retards};
 \node[tag,anchor=south east] at (db.north east)  {dashboard\_tp1.py};
 \end{tikzpicture}
-\caption{Pipeline du TP 1. Les étiquettes bleues indiquent le notebook qui réalise chaque étape.
-Le modèle ML lit \texttt{gold.commandes} et y écrit \texttt{predictions\_retard}.}
+\caption{Pipeline du TP 1. Les numéros renvoient aux étapes décrites ci-dessous ; les étiquettes
+bleues indiquent le notebook qui réalise chaque étape.}
 \label{fig:pipeline}
 \end{figure}
+
+\subsection*{Le pipeline, étape par étape}
+
+\begin{description}[leftmargin=1.4em,labelindent=0pt,itemsep=3pt,font=\normalfont]
+\item[\etape{1}] \textbf{Ingestion de la base de vente.} Spark lit les tables \cmd{orders},
+  \cmd{order\_items} et \cmd{order\_payments} de PostgreSQL par une connexion JDBC et les copie en
+  Bronze. Le lot 1 reflète la base au 1\textsuperscript{er} juillet 2018 ; le lot 2 n'apporte que les
+  lignes nouvelles ou modifiées depuis (colonne \cmd{updated\_at}).
+\item[\etape{2}] \textbf{Dépôt des fichiers.} Les CSV des référentiels (clients, produits, vendeurs,
+  traduction des catégories) sont copiés tels quels dans \cmd{s3://landing/}, un dossier par table et
+  par date de dépôt.
+\item[\etape{3}] \textbf{Ingestion des fichiers.} Spark lit ces CSV \emph{en texte}, sans deviner les
+  types, et les écrit en Bronze. Chaque table Bronze reçoit deux colonnes techniques :
+  \cmd{\_source} (d'où vient la ligne) et \cmd{\_ingere\_le} (quand elle a été chargée).
+\item[\etape{4}] \textbf{Nettoyage.} Chaque table Bronze devient une table Silver : colonnes renommées
+  et typées, doublons retirés, catégories traduites, délais de livraison et indicateur de retard
+  calculés. Au lot 2, l'instruction \cmd{MERGE} met à jour les commandes existantes et ajoute les
+  nouvelles.
+\item[\etape{5}] \textbf{Quarantaine.} Les lignes qui violent une règle bloquante (commande
+  \og livrée \fg{} sans date de livraison, paiement de type inconnu) sont isolées dans des tables de
+  quarantaine au lieu d'être supprimées.
+\item[\etape{6}] \textbf{Préparation de Gold.} Les tables Silver sont jointes dans
+  \cmd{gold.commandes}, une ligne par commande, puis agrégées en indicateurs : ventes par mois, par
+  catégorie, délais par état.
+\item[\etape{7}] \textbf{Analyse.} Des requêtes SQL sur Gold répondent aux questions de la direction.
+\item[\etape{8}] \textbf{Prédiction.} Un modèle scikit-learn apprend à prévoir les retards à partir
+  de \cmd{gold.commandes}, puis écrit ses prédictions dans \cmd{gold.predictions\_retard}.
+\item[\etape{9}] \textbf{Restitution.} Le tableau de bord Streamlit affiche les indicateurs Gold et
+  les commandes au plus fort risque de retard.
+\end{description}
 
 \begin{center}
 \small
