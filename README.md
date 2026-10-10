@@ -5,7 +5,7 @@ Il sert aux TP 1, 2 et 3 du module.
 
 | Service | Rôle | Adresse |
 |---|---|---|
-| JupyterLab + Spark | Développement (PySpark, DuckDB, Streamlit, MLflow) | http://localhost:8888 (jeton `lakehouse`) |
+| JupyterLab + Spark | Développement (PySpark, dbt, DuckDB, Streamlit, MLflow) | http://localhost:8888 (jeton `lakehouse`) |
 | RustFS | Stockage objet compatible S3 | http://localhost:9001 |
 | Catalogue Iceberg REST | Référentiel des tables | http://localhost:8181 |
 | PostgreSQL | Base source transactionnelle | `localhost:15432` |
@@ -66,7 +66,7 @@ Si `git pull` refuse de s'exécuter, un fichier du cours a été modifié par er
 ```
 docker-compose.yml     services de l'environnement
 .env.example           versions, identifiants locaux, ports, limites mémoire
-conf/                  configuration Spark et Trino
+conf/                  configuration Spark, Trino et dbt (profiles.yml)
 docker/                images JupyterLab et Superset
 scripts/               création des buckets et test de l'environnement
 notebooks/tp1/        énoncés du TP 1 (à copier, ne pas modifier)

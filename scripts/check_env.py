@@ -97,6 +97,17 @@ def test_duckdb(spark):
     return f"{n} lignes, DuckDB {duckdb.__version__}"
 
 
+@test("7. dbt (adaptateurs spark et trino)")
+def test_dbt():
+    import subprocess
+    sortie = subprocess.run(["dbt", "--version"], capture_output=True, text=True, timeout=120)
+    texte = sortie.stdout + sortie.stderr
+    manquants = [a for a in ("spark", "trino") if a not in texte.lower()]
+    assert sortie.returncode == 0 and not manquants, f"adaptateurs absents : {manquants or texte[-200:]}"
+    version = next((l.split(":")[-1].strip() for l in texte.splitlines() if "installed" in l.lower()), "?")
+    return f"dbt {version}"
+
+
 def test_trino():
     """Facultatif : uniquement si le profil sql ou full est démarré."""
     import trino
@@ -105,10 +116,10 @@ def test_trino():
                                   user="etudiant", catalog="lakehouse")
         cur = cnx.cursor()
         cur.execute("SELECT count(*) FROM lakehouse.bronze.smoke_test")
-        RESULTATS.append(("OK", "7. Trino lit la table écrite par Spark",
+        RESULTATS.append(("OK", "8. Trino lit la table écrite par Spark",
                           f"{cur.fetchone()[0]} lignes"))
     except Exception as err:
-        RESULTATS.append(("--", "7. Trino (profil sql/full non démarré ?)", type(err).__name__))
+        RESULTATS.append(("--", "8. Trino (profil sql/full non démarré ?)", type(err).__name__))
 
 
 if __name__ == "__main__":
@@ -119,6 +130,7 @@ if __name__ == "__main__":
     test_iceberg(spark)
     test_delta(spark)
     test_duckdb(spark)
+    test_dbt()
     test_trino()
     spark.stop()
 

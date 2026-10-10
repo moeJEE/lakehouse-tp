@@ -89,7 +89,10 @@ services:
       PG_DB: ${PG_DB}
       CATALOG_URI: http://iceberg-rest:8181
       TRINO_HOST: trino
+      DBT_PROFILES_DIR: /opt/dbt-profiles
+      DBT_SEND_ANONYMOUS_USAGE_STATS: "false"
     volumes:
+      - ./conf/dbt:/opt/dbt-profiles:ro
       - ./notebooks:/home/etudiant/work/notebooks
       - ./apps:/home/etudiant/work/apps
       - ./data:/home/etudiant/work/data

@@ -142,7 +142,7 @@ La figure~\ref{fig:archi} montre comment ils s'articulent ; les flux numérotés
 
 % Ligne 1
 \node[svc=gray] (pg) at (1.7,0) {\textbf{PostgreSQL}\\\scriptsize base source (TP 1)};
-\node[svc=lhblue] (jup) at (6.1,0) {\textbf{JupyterLab + Spark}\\\scriptsize vous codez ici};
+\node[svc=lhblue] (jup) at (6.1,0) {\textbf{JupyterLab + Spark}\\\scriptsize vous codez ici (Python, SQL, dbt)};
 \node[opt=lhblue] (sup) at (10.5,0) {\textbf{Superset}\\\scriptsize tableaux de bord};
 % Ligne 2
 \node[svc=gray] (cat) at (6.1,-2.6) {\textbf{Catalogue Iceberg}\\\scriptsize annuaire des tables};
@@ -215,6 +215,10 @@ Catalogue Iceberg &
   L'annuaire des tables : il associe un nom (\texttt{lakehouse.silver.commandes}) aux fichiers
   correspondants, pour que tous les outils voient la même version des données. &
   Unity Catalog, AWS Glue & auto \\
+dbt &
+  L'outil qui organise les transformations SQL en \emph{modèles} versionnés, testés et documentés
+  (TP 2 et 3). Il est installé dans le conteneur JupyterLab et s'exécute avec Spark, ou avec Trino. &
+  dbt Core, dbt Cloud & auto \\
 PostgreSQL &
   Une base de données classique qui joue le rôle d'application métier : c'est une
   \emph{source} que l'on ingère dans le Lakehouse (TP 1). &
@@ -366,16 +370,17 @@ docker compose exec jupyter python /opt/lakehouse/scripts/check_env.py
 [OK] 4. Spark + Iceberg
 [OK] 5. Spark + Delta Lake
 [OK] 6. DuckDB lit les fichiers sur S3
-[--] 7. Trino (profil sql/full non démarré ?)
+[OK] 7. dbt (adaptateurs spark et trino)
+[--] 8. Trino (profil sql/full non démarré ?)
 ENVIRONNEMENT PRÊT
 \end{lstlisting}
 \textbf{Faites une capture d'écran de ce résultat :} elle figurera dans votre compte rendu.
-La ligne 7 en \texttt{[--]} est normale : Trino et Superset \textbf{ne démarrent pas automatiquement}
+La ligne 8 en \texttt{[--]} est normale : Trino et Superset \textbf{ne démarrent pas automatiquement}
 (ils demandent 2,5 Go de RAM en plus). Avec 16 Go de RAM, lancez-les puis refaites le test :
 \begin{lstlisting}[style=shell]
 docker compose --profile full up -d
 \end{lstlisting}
-La ligne 7 passe alors en \texttt{[OK]}. Il suffit de le faire une fois : ils redémarreront ensuite
+La ligne 8 passe alors en \texttt{[OK]}. Il suffit de le faire une fois : ils redémarreront ensuite
 seuls avec Docker.
 \end{resultat}
 

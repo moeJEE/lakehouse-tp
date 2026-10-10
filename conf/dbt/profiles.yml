@@ -1,0 +1,22 @@
+# Connexions dbt du cours (lues grâce à DBT_PROFILES_DIR=/opt/dbt-profiles).
+# Dans un projet dbt, indiquer : profile: lakehouse
+#   dbt run                 -> cible « spark » (par défaut, fonctionne sur 8 Go)
+#   dbt run --target trino  -> cible « trino » (profil Docker « sql » ou « full »)
+lakehouse:
+  target: spark
+  outputs:
+    spark:
+      type: spark
+      method: session      # utilise le Spark local du conteneur et sa configuration Iceberg
+      host: NA
+      schema: gold
+      threads: 1
+    trino:
+      type: trino
+      method: none
+      user: dbt
+      host: trino
+      port: 8080
+      database: lakehouse  # catalogue Iceberg vu par Trino
+      schema: gold
+      threads: 2

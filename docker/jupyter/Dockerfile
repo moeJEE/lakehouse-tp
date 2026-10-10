@@ -33,6 +33,18 @@ RUN JARS=$(python -c "import pyspark,os;print(os.path.join(os.path.dirname(pyspa
  && curl -fsSLO $MAVEN/com/amazonaws/aws-java-sdk-bundle/$AWS_SDK_V1_VERSION/aws-java-sdk-bundle-$AWS_SDK_V1_VERSION.jar \
  && curl -fsSLO $MAVEN/org/postgresql/postgresql/$PG_JDBC_VERSION/postgresql-$PG_JDBC_VERSION.jar
 
+# dbt (TP 2/3) dans un environnement Python séparé : ses dépendances (protobuf…)
+# n'entrent pas en conflit avec celles de MLflow. Il réutilise le PySpark de l'image.
+ARG DBT_SPARK_VERSION=1.9.3
+ARG DBT_TRINO_VERSION=1.10.6
+RUN python -m venv --system-site-packages /opt/dbt \
+ && /opt/dbt/bin/pip install --no-cache-dir \
+      "dbt-core>=1.10,<1.12" \
+      "dbt-spark[session]==${DBT_SPARK_VERSION}" \
+      "dbt-trino==${DBT_TRINO_VERSION}" \
+ && ln -s /opt/dbt/bin/dbt /usr/local/bin/dbt \
+ && dbt --version
+
 # Utilisateur non root (UID 1000 : correspond à l'utilisateur courant sous Linux)
 RUN useradd -m -u 1000 -s /bin/bash etudiant
 USER etudiant
