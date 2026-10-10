@@ -29,6 +29,7 @@
 \usepackage[hidelinks]{hyperref}
 \usepackage{xurl}
 \usepackage{caption}
+\usepackage{float}
 \captionsetup{font=small,labelfont=bf,labelsep=period}
 
 \setlength{\parskip}{0.5em}
@@ -162,6 +163,41 @@ Dans Olist, un \cmd{customer\_id} est créé \textbf{à chaque commande}. Pour i
 personne d'une commande à l'autre, il faut utiliser \cmd{customer\_unique\_id}.
 \end{attention}
 
+La figure~\ref{fig:modele} montre comment les tables se relient. La table \cmd{orders} est au
+centre : une commande a plusieurs articles et plusieurs paiements, et chaque article renvoie à un
+produit et à un vendeur.
+
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  font=\sffamily\small, >=Stealth,
+  tab/.style={draw=#1,thick,rounded corners=3pt,fill=#1!7,text width=3.6cm,align=left,
+              inner sep=5pt,font=\sffamily\footnotesize},
+  card/.style={font=\sffamily\scriptsize,text=black!60}]
+\node[tab=gray]   (cus) at (-5.0,0)   {\textbf{customers}\\[2pt] \underline{\texttt{customer\_id}}\\ \texttt{customer\_unique\_id}\\ \texttt{customer\_state}};
+\node[tab=lhblue] (ord) at (0,0)      {\textbf{orders}\\[2pt] \underline{\texttt{order\_id}}\\ \texttt{customer\_id}\\ \texttt{order\_status}\\ dates d'achat, de livraison\\ et date estimée};
+\node[tab=lhblue] (itm) at (5.0,0)    {\textbf{order\_items}\\[2pt] \underline{\texttt{order\_id}, \texttt{order\_item\_id}}\\ \texttt{product\_id}, \texttt{seller\_id}\\ \texttt{price}, \texttt{freight\_value}};
+\node[tab=lhblue] (pay) at (0,-3.4)   {\textbf{order\_payments}\\[2pt] \underline{\texttt{order\_id}, \texttt{payment\_seq.}}\\ \texttt{payment\_type}\\ \texttt{payment\_value}};
+\node[tab=gray]   (prd) at (10.0,1.45) {\textbf{products}\\[2pt] \underline{\texttt{product\_id}}\\ \texttt{product\_category\_name}\\ poids, dimensions};
+\node[tab=gray]   (sel) at (10.0,-1.8) {\textbf{sellers}\\[2pt] \underline{\texttt{seller\_id}}\\ \texttt{seller\_state}};
+\node[tab=gray]   (tra) at (10.0,4.2)  {\textbf{category\_translation}\\[2pt] nom portugais $\rightarrow$ anglais};
+
+\draw[-] (cus) -- node[card,above]{1 -- n} (ord);
+\draw[-] (ord) -- node[card,above]{1 -- n} (itm);
+\draw[-] (ord) -- node[card,right]{1 -- n} (pay);
+\draw[-] (itm.east) -- node[card,above=2pt]{n -- 1} (prd.west);
+\draw[-] (itm.east) -- node[card,below=2pt]{n -- 1} (sel.west);
+\draw[-] (prd) -- (tra);
+
+\node[font=\sffamily\scriptsize,text=lhblue,anchor=west] at (-6.9,-3.0) {\rule{8pt}{8pt}\ PostgreSQL};
+\node[font=\sffamily\scriptsize,text=gray,anchor=west]  at (-6.9,-3.5) {\rule{8pt}{8pt}\ fichiers CSV};
+\end{tikzpicture}}
+\caption{Modèle de données Olist. Les colonnes soulignées forment la clé de chaque table ;
+\og 1 -- n \fg{} se lit \og une commande, plusieurs articles \fg{}.}
+\label{fig:modele}
+\end{figure}
+
 % =====================================================================
 \section{Ce que vous allez construire}
 % =====================================================================
@@ -171,7 +207,7 @@ transformations entre les couches et le notebook qui réalise chaque étape. Il 
 \textbf{de gauche à droite} sur la première ligne (ingestion), puis \textbf{de droite à gauche} sur la
 seconde (préparation et usages).
 
-\begin{figure}[ht]
+\begin{figure}[H]
 \centering
 \begin{tikzpicture}[
   font=\sffamily\small, >=Stealth,
@@ -375,6 +411,41 @@ Après le \cmd{MERGE}, \cmd{silver.orders} contient environ 99\,400 commandes, e
 commandes \cmd{shipped} est divisé par deux environ : elles ont été livrées entre-temps.
 \end{resultat}
 
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  font=\sffamily\small, >=Stealth,
+  box/.style={draw=#1,thick,rounded corners=3pt,fill=#1!7,text width=4.8cm,align=center,
+              inner sep=5pt,font=\sffamily\footnotesize,minimum height=1.25cm},
+  row/.style={font=\sffamily\bfseries\footnotesize,anchor=east},
+  op/.style={font=\sffamily\scriptsize,text=black!70,align=center}]
+\node[font=\sffamily\bfseries] at (0,1.0) {Lot 1 -- 1\textsuperscript{er} juillet 2018};
+\node[font=\sffamily\bfseries] at (7.6,1.0) {Lot 2 -- octobre 2018};
+\node[row] at (-3.0,0)    {PostgreSQL};
+\node[row] at (-3.0,-2.0) {Bronze};
+\node[row] at (-3.0,-4.0) {Silver};
+
+\node[box=gray]     (p1) at (0,0)    {toute la table \texttt{ventes.orders}\\ $\approx$ 86\,600 commandes};
+\node[box=gray]     (p2) at (7.6,0)  {seulement les lignes où\\ \texttt{updated\_at} > filigrane\\ $\approx$ 14\,500 lignes};
+\node[box=lhbronze] (b1) at (0,-2.0) {\texttt{bronze.orders} créée};
+\node[box=lhbronze] (b2) at (7.6,-2.0) {lignes \textbf{ajoutées} (\texttt{append})\\ l'historique est conservé};
+\node[box=lhsilver] (s1) at (0,-4.0) {\texttt{silver.orders}\\ \textbf{snapshot 1}};
+\node[box=lhsilver] (s2) at (7.6,-4.0) {\texttt{MERGE} : $\approx$ 1\,700 mises à jour\\ et $\approx$ 12\,800 insertions\\ \textbf{snapshot 2}};
+
+\draw[->,thick] (p1) -- (b1);
+\draw[->,thick] (b1) -- (s1);
+\draw[->,thick] (p2) -- (b2);
+\draw[->,thick] (b2) -- (s2);
+\draw[->,dashed] (b1.east) -- (3.8,-2.0) -- (3.8,0) -- (p2.west);
+\node[op,fill=white,inner sep=2pt] at (3.8,-1.0) {filigrane =\\ \texttt{max(updated\_at)}};
+\draw[->,dashed] (s2.west) -- node[op,below=2pt]{\emph{time travel} :\\ \texttt{VERSION AS OF}} (s1.east);
+\end{tikzpicture}
+\caption{Ingestion incrémentale. Au lot 2, on ne relit que les lignes modifiées depuis le lot 1 ;
+Iceberg garde l'ancienne version de la table, que l'on peut toujours interroger.}
+\label{fig:incremental}
+\end{figure}
+
 \subsection*{Partie 4 -- Prédire les retards \hfill \nb{04\_ml\_retards}}
 
 Vous entraînez deux modèles de classification (scikit-learn) qui estiment, au moment de la commande,
@@ -391,6 +462,26 @@ le modèle devient presque parfait\dots{} et totalement inutilisable.
 Une AUC ROC modeste, de l'ordre de 0,7 : les causes principales des retards (transporteur, météo,
 grèves) ne figurent pas dans les données. Avec la fuite de données, l'AUC dépasse 0,95.
 \end{resultat}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\sffamily\small, >=Stealth]
+\fill[lhblue!18] (0,0) rectangle (8.4,0.8);
+\fill[lhgold!40] (8.4,0) rectangle (13.6,0.8);
+\draw[thick] (0,0) rectangle (13.6,0.8);
+\draw[thick,dashed] (8.4,-0.35) -- (8.4,1.25);
+\node[align=center,font=\sffamily\footnotesize] at (4.2,0.4) {\textbf{apprentissage} : $\approx$ 57\,000 commandes};
+\node[align=center,font=\sffamily\footnotesize] at (11.0,0.4) {\textbf{test} : $\approx$ 39\,000};
+\node[font=\sffamily\scriptsize,anchor=north] at (0,-0.05)   {sept.\ 2016};
+\node[font=\sffamily\scriptsize,anchor=north] at (8.4,-0.35) {1\textsuperscript{er} mars 2018};
+\node[font=\sffamily\scriptsize,anchor=north] at (13.6,-0.05) {août 2018};
+\draw[->] (0,1.55) -- node[above,font=\sffamily\scriptsize]{temps (date d'achat)} (13.6,1.55);
+\end{tikzpicture}
+\caption{Découpage temporel : le modèle apprend sur le passé et il est évalué sur des commandes
+plus récentes, comme il le serait en production.}
+\label{fig:split}
+\end{figure}
+
 
 % =====================================================================
 \section{Le tableau de bord}\label{sec:dashboard}
