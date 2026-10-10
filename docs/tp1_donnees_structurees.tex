@@ -322,6 +322,39 @@ Gold & Tables prêtes à l'usage : une ligne par commande et des agrégats &
 Toutes les tables sont au format \textbf{Apache Iceberg} et enregistrées dans le catalogue sous
 le nom \cmd{lakehouse.<couche>.<table>} : par exemple \cmd{lakehouse.silver.orders}.
 
+\subsection*{Un pipeline ELT, de l'OLTP à l'OLAP}
+
+\textbf{ELT et non ETL :} Dans un ETL (\emph{Extract, Transform, Load}), les données sont
+transformées \emph{avant} d'être chargées, et seule la version propre est conservée. Ce TP suit
+l'approche \textbf{ELT} (\emph{Extract, Load, Transform}), celle des Lakehouse : les données sont
+d'abord extraites et chargées telles quelles, puis transformées \emph{dans} le Lakehouse, avec Spark.
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{@{}l l X@{}}
+\toprule
+\textbf{Lettre} & \textbf{Étapes} & \textbf{Ce qui se passe} \\
+\midrule
+E -- Extract   & \etape{1} \etape{2} & Lecture de PostgreSQL et dépôt des CSV. \\
+L -- Load      & \etape{3}           & Écriture en Bronze, sans aucune transformation. \\
+T -- Transform & \etape{4} à \etape{8} & Nettoyage et \cmd{MERGE} en Silver, jointures et agrégats en Gold,
+                                       prédictions. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Garder la copie brute en Bronze a deux avantages : si une règle de nettoyage change, on rejoue
+Silver et Gold sans relire les sources ; si un chiffre est faux, on remonte jusqu'à la donnée d'origine.
+
+\textbf{De l'OLTP à l'OLAP :} La source PostgreSQL est une base \textbf{OLTP} (\emph{OnLine
+Transaction Processing}) : celle d'une application qui enregistre des commandes une par une, avec
+un modèle \emph{normalisé} (7 tables liées par des clés) et des mises à jour fréquentes. La couche
+Gold est \textbf{OLAP} (\emph{OnLine Analytical Processing}) : des tables faites pour lire beaucoup
+de lignes et calculer des indicateurs. Bronze et Silver gardent le modèle normalisé de la source ;
+c'est en Gold que le modèle devient analytique. Le \emph{format}, lui, est analytique dès Bronze :
+Parquet range les données par colonne, et une requête ne lit que les colonnes dont elle a besoin.
+
 % =====================================================================
 \section{Déroulé}
 % =====================================================================
@@ -397,6 +430,54 @@ doublons retirés, lignes en quarantaine.
 Vous construisez \cmd{gold.commandes} (une ligne par commande) et trois tables d'indicateurs,
 puis vous répondez en SQL aux questions de la direction. Vous chargez ensuite le \textbf{lot 2} :
 deux mois et demi de nouvelles commandes et de changements de statut.
+
+\begin{notion}
+\textbf{Le modèle de la couche Gold :} Gold ne suit pas un schéma en étoile, mais un modèle plus
+simple, en deux niveaux (figure~\ref{fig:gold}).
+\begin{itemize}[leftmargin=*,itemsep=1pt,topsep=2pt]
+\item \cmd{gold.commandes} est une \textbf{table large dénormalisée} (\emph{One Big Table}) : une
+  ligne par commande, où le client, les montants, les paiements et les délais de livraison sont
+  déjà joints. On l'interroge sans aucune jointure.
+\item Les tables d'indicateurs (\cmd{ventes\_mensuelles}, \cmd{ventes\_categorie},
+  \cmd{livraison\_etat}) sont des \textbf{agrégats} calculés à partir d'elle : de petits
+  \emph{data marts}, chacun prêt pour un graphique du tableau de bord.
+\end{itemize}
+Dans un \textbf{schéma en étoile}, on aurait au centre une table de faits (une ligne par article
+vendu, avec les montants) reliée par des clés à des tables de dimensions : clients, produits,
+vendeurs, dates. Ce modèle évite de répéter les informations et sert de nombreuses analyses, mais
+chaque requête demande des jointures. La table large est plus simple à interroger et c'est le
+format qu'attend le modèle de ML (une ligne par commande, toutes les variables) ; avec un stockage
+en colonnes, sa largeur ne coûte presque rien à la lecture. Le schéma en étoile sera construit au TP~2.
+\end{notion}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  font=\sffamily\small, >=Stealth,
+  tb/.style={draw=#1,thick,rounded corners=3pt,fill=#1!7,align=center,inner sep=4pt,
+             font=\sffamily\footnotesize,minimum height=0.8cm},
+  lab/.style={font=\sffamily\bfseries\footnotesize,text=black!70}]
+\node[lab] at (0,2.4) {Silver (modèle normalisé)};
+\node[lab] at (5.2,2.4) {Gold -- table large};
+\node[lab] at (10.2,2.4) {Gold -- agrégats};
+\foreach \n/\i/\y in {orders/a/1.6, order\_items/b/0.8, payments/c/0, customers/d/-0.8, products/e/-1.6}
+  \node[tb=lhsilver,text width=2.6cm] (s\i) at (0,\y) {\texttt{\n}};
+\node[tb=lhgold,text width=3.4cm,minimum height=2.4cm] (oc) at (5.2,0)
+  {\texttt{\textbf{gold.commandes}}\\[2pt] une ligne par commande\\ client, montants,\\ paiement, délais, retard};
+\node[tb=lhgold,text width=3.4cm] (vm) at (10.2,1.6) {\texttt{ventes\_mensuelles}\\ une ligne par mois};
+\node[tb=lhgold,text width=3.4cm] (vc) at (10.2,0.4) {\texttt{ventes\_categorie}\\ une ligne par catégorie};
+\node[tb=lhgold,text width=3.4cm] (le) at (10.2,-0.8) {\texttt{livraison\_etat}\\ une ligne par état};
+\node[tb=lhgold,text width=3.4cm] (pr) at (10.2,-2.0) {\texttt{predictions\_retard}\\ calculée par le modèle de ML};
+\foreach \i in {a,b,c,d} \draw[->,thick,black!60] (s\i.east) -- (oc.west);
+\draw[->,thick,black!60] (se.east) -- (7.75,-1.6) |- ([yshift=-6pt]vc.west);
+\foreach \t in {vm,vc,le} \draw[->,thick] (oc.east) -- (\t.west);
+\draw[->,thick,dashed] (oc.east) -- (pr.west);
+\end{tikzpicture}
+\caption{Le modèle de la couche Gold. Les tables Silver sont jointes une seule fois dans
+\texttt{gold.commandes} ; les agrégats et les prédictions sont calculés à partir d'elle
+(\texttt{ventes\_categorie} relit aussi les articles et les produits de Silver, car une commande peut couvrir plusieurs catégories).}
+\label{fig:gold}
+\end{figure}
 
 \begin{notion}
 \textbf{Ingestion incrémentale :} on ne relit que les lignes modifiées depuis la dernière ingestion,
