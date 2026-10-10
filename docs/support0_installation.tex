@@ -132,8 +132,8 @@ La figure~\ref{fig:archi} montre comment ils s'articulent ; les flux numérotés
 % Niveau 1 : les outils
 \node[svc=gray]   (pg)    at (0,0)    {\textbf{PostgreSQL}\\\scriptsize la source};
 \node[svc=lhblue] (jup)   at (4.6,0)  {\textbf{JupyterLab}\\\scriptsize Spark et dbt};
-\node[opt=lhblue] (trino) at (9.2,0)  {\textbf{Trino}\\\scriptsize SQL interactif};
-\node[opt=lhblue] (sup)   at (13.8,0) {\textbf{Superset}\\\scriptsize tableaux de bord};
+\node[svc=lhblue] (trino) at (9.2,0)  {\textbf{Trino}\\\scriptsize SQL interactif};
+\node[svc=lhblue] (sup)   at (13.8,0) {\textbf{Superset}\\\scriptsize tableaux de bord};
 
 % Niveau 2 : le catalogue
 \node[svc=gray] (cat) at (6.9,-2.3) {\textbf{Catalogue Iceberg}\\\scriptsize l'annuaire des tables};
@@ -154,7 +154,7 @@ La figure~\ref{fig:archi} montre comment ils s'articulent ; les flux numérotés
 \draw[->,thick] ([xshift=8mm]trino.south) -- node[num,right=3pt]{5} ([xshift=8mm]trino.south |- s3.north);
 \draw[->] (sup) -- (trino);
 \end{tikzpicture}}
-\caption{Architecture de l'environnement. Tous les services tournent dans Docker ; ceux en pointillés sont facultatifs.}
+\caption{Architecture de l'environnement. Tous les services tournent dans Docker.}
 \label{fig:archi}
 \end{figure}
 
@@ -220,7 +220,7 @@ Superset &
 
 \smallskip
 {\footnotesize \textbf{auto} : démarre avec \cmd{docker compose up -d}. \quad
-\textbf{-{}-profile} : démarre seulement avec \cmd{docker compose -{}-profile full up -d}.}
+\textbf{-{}-profile} : démarre avec \cmd{docker compose -{}-profile full up -d} (utilisés à partir du TP 3).}
 \end{center}
 
 \subsection*{Ce qui est conservé, et où}
@@ -360,8 +360,9 @@ docker compose exec jupyter python /opt/lakehouse/scripts/check_env.py
 ENVIRONNEMENT PRÊT
 \end{lstlisting}
 \textbf{Faites une capture d'écran de ce résultat :} elle figurera dans votre compte rendu.
-La ligne 8 en \texttt{[--]} est normale : Trino et Superset \textbf{ne démarrent pas automatiquement}
-(ils demandent 2,5 Go de RAM en plus). Avec 16 Go de RAM, lancez-les puis refaites le test :
+La ligne 8 en \texttt{[--]} est normale : pour économiser la mémoire, Trino et Superset
+\textbf{ne démarrent pas automatiquement}. Vous en aurez besoin au TP 3 : vérifiez dès maintenant
+qu'ils fonctionnent, en les lançant puis en refaisant le test :
 \begin{lstlisting}[style=shell]
 docker compose --profile full up -d
 \end{lstlisting}
@@ -388,7 +389,7 @@ Superset$^*$      & \url{http://localhost:8088} & \texttt{admin} / \texttt{admin
 \end{tabularx}
 
 \smallskip
-{\footnotesize $^*$ Uniquement après \cmd{docker compose -{}-profile full up -d} (16 Go de RAM conseillés).}
+{\footnotesize $^*$ Après \cmd{docker compose -{}-profile full up -d}.}
 \end{center}
 
 % =====================================================================
@@ -471,6 +472,7 @@ données du Lakehouse. Vos notebooks, eux, restent dans le dossier \texttt{noteb
 \begin{itemize}[leftmargin=*,label=\cocher,itemsep=2pt]
 \item Docker fonctionne (\cmd{hello-world} affiche son message)
 \item Le test de l'étape 6 affiche \og ENVIRONNEMENT PRÊT \fg{}
+\item Avec le profil \cmd{full}, la ligne 8 du test (Trino) passe en \texttt{[OK]}
 \item JupyterLab s'ouvre et le premier test fonctionne
 \item Le compte rendu est déposé sur l'espace de cours (section~\ref{sec:cr})
 \end{itemize}

@@ -109,7 +109,7 @@ def test_dbt():
 
 
 def test_trino():
-    """Facultatif : uniquement si le profil sql ou full est démarré."""
+    """Trino ne répond que si le profil sql ou full est démarré (utilisé à partir du TP 3)."""
     import trino
     try:
         cnx = trino.dbapi.connect(host=os.environ.get("TRINO_HOST", "trino"), port=8080,
