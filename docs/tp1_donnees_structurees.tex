@@ -28,6 +28,8 @@
 \usepackage[htt]{hyphenat}
 \usepackage[hidelinks]{hyperref}
 \usepackage{xurl}
+\usepackage{caption}
+\captionsetup{font=small,labelfont=bf,labelsep=period}
 
 \setlength{\parskip}{0.5em}
 \setlength{\parindent}{0pt}
@@ -162,30 +164,74 @@ personne d'une commande à l'autre, il faut utiliser \cmd{customer\_unique\_id}.
 \section{Ce que vous allez construire}
 % =====================================================================
 
-\begin{center}
+La figure~\ref{fig:pipeline} montre le pipeline complet : les tables de chaque couche, les
+transformations entre les couches et le notebook qui réalise chaque étape. Il se lit en deux temps :
+\textbf{de gauche à droite} sur la première ligne (ingestion), puis \textbf{de droite à gauche} sur la
+seconde (préparation et usages).
+
+\begin{figure}[ht]
+\centering
 \begin{tikzpicture}[
   font=\sffamily\small, >=Stealth,
-  b/.style={draw=#1,fill=#1!10,rounded corners=3pt,thick,minimum height=1.1cm,align=center,minimum width=2.05cm},
-  lbl/.style={font=\sffamily\scriptsize,text=black!60}]
-\node[b=gray] (pg) {\textbf{PostgreSQL}\\\scriptsize ventes};
-\node[b=gray, below=0.5cm of pg] (csv) {\textbf{Fichiers CSV}\\\scriptsize référentiels};
-\node[b=darkgray, right=0.5cm of csv] (land) {\textbf{Landing}\\\scriptsize fichiers bruts};
-\node[b=lhbronze, right=0.5cm of land, yshift=0.8cm] (br) {\textbf{Bronze}\\\scriptsize copie fidèle};
-\node[b=lhsilver, right=0.45cm of br] (si) {\textbf{Silver}\\\scriptsize propre, typé};
-\node[b=lhgold, right=0.45cm of si] (go) {\textbf{Gold}\\\scriptsize indicateurs};
-\node[b=gray, dashed, below=0.5cm of si, minimum width=2.05cm] (q) {\textbf{Quarantaine}\\\scriptsize lignes rejetées};
-\node[b=lhblue, above right=0.15cm and 0.45cm of go] (db) {\textbf{Tableau}\\\textbf{de bord}};
-\node[b=lhblue, below right=0.15cm and 0.45cm of go] (ml) {\textbf{Modèle ML}\\\scriptsize retards};
-\draw[->] (pg) -- node[lbl,above,sloped]{JDBC} (br);
-\draw[->] (csv) -- (land);
-\draw[->] (land) -- (br);
-\draw[->,thick] (br) -- (si);
-\draw[->,thick] (si) -- (go);
-\draw[->] (si) -- (q);
-\draw[->] (go) -- (db);
-\draw[->] (go) -- (ml);
+  col/.style={draw=#1,thick,rounded corners=4pt,fill=#1!7,text width=3.75cm,align=left,
+              inner sep=6pt,font=\sffamily\footnotesize},
+  tag/.style={font=\sffamily\scriptsize\bfseries,text=white,fill=lhblue,rounded corners=2pt,inner sep=2.5pt},
+  op/.style={font=\sffamily\scriptsize,text=black!70,align=center}]
+
+% ---------------- Ligne 1 : ingestion ----------------
+\node[col=gray] (pg) at (0,1.2) {\textbf{PostgreSQL}\\ schéma \texttt{ventes}\\[3pt]
+  \texttt{orders}\\ \texttt{order\_items}\\ \texttt{order\_payments}};
+\node[col=gray] (csv) at (0,-2.0) {\textbf{Fichiers CSV}\\ dossier \texttt{data/olist/}\\[3pt]
+  \texttt{customers}\\ \texttt{products}\\ \texttt{sellers}\\ \texttt{category\_translation}};
+\node[col=darkgray] (land) at (5.35,-2.0) {\textbf{Landing}\\ \texttt{s3://landing/}\\[3pt]
+  un dossier par table\\ et par date de dépôt\\ fichiers non modifiés};
+\node[col=lhbronze] (br) at (11.0,-0.4) {\textbf{Bronze} -- 7 tables\\[3pt]
+  \texttt{orders}, \texttt{order\_items},\\ \texttt{order\_payments}\\[2pt]
+  \texttt{customers}, \texttt{products},\\ \texttt{sellers},\\ \texttt{category\_translation}\\[4pt]
+  \textit{colonnes ajoutées :}\\ \texttt{\_source}, \texttt{\_ingere\_le}};
+
+\draw[->,thick] (pg.east) -- node[op,above]{JDBC (lot 1, puis lot 2)} (pg.east -| br.west);
+\draw[->,thick] (csv) -- node[op,above]{dépôt} (land);
+\draw[->,thick] (land.east) -- node[op,above]{lecture\\en texte} (land.east -| br.west);
+
+% ---------------- Ligne 2 : préparation et usages ----------------
+\node[col=lhsilver] (si) at (11.0,-7.1) {\textbf{Silver} -- tables propres\\[3pt]
+  \texttt{customers}, \texttt{sellers}\\
+  \texttt{products} \textit{+ catégorie EN}\\
+  \texttt{orders} \textit{+ délais, retard}\\
+  \texttt{order\_items}\\
+  \texttt{order\_payments}};
+\node[col=gray, below=1.0cm of si] (q) {\textbf{Quarantaine}\\[2pt]
+  \texttt{quarantaine\_orders}\\ \texttt{quarantaine\_payments}};
+\node[col=lhgold] (go) at (5.35,-7.1) {\textbf{Gold} -- prêtes à l'usage\\[3pt]
+  \texttt{commandes}\\ \textit{\quad une ligne par commande}\\
+  \texttt{ventes\_mensuelles}\\
+  \texttt{ventes\_categorie}\\
+  \texttt{livraison\_etat}\\
+  \texttt{predictions\_retard}};
+\node[col=lhblue,text width=3.4cm] (sql) at (0,-5.2) {\textbf{Requêtes SQL}\\ questions de la direction};
+\node[col=lhblue,text width=3.4cm] (ml)  at (0,-7.1) {\textbf{Modèle ML}\\ scikit-learn : retards};
+\node[col=lhblue,text width=3.4cm] (db)  at (0,-9.0) {\textbf{Tableau de bord}\\ Streamlit};
+
+\draw[->,thick] (br.south) -- node[op,right,align=left]{typage, dédoublonnage,\\règles de qualité\\[2pt]\textit{lot 2 : \texttt{MERGE}}} (si.north);
+\draw[->] (si.south) -- node[op,right]{lignes rejetées} (q.north);
+\draw[->,thick] (si.west) -- node[op,above]{jointures,\\agrégats} (go.east);
+\draw[->,thick] (go.west) -- ++(-0.5,0) |- (sql.east);
+\draw[<->,thick] (go.west) -- (ml.east);
+\draw[->,thick] (go.west) -- ++(-0.5,0) |- (db.east);
+
+% ---------------- Notebooks ----------------
+\node[tag,anchor=south east] at (pg.north east)  {01\_bronze};
+\node[tag,anchor=south east] at (br.north east)  {01\_bronze};
+\node[tag,anchor=south east] at (si.north east)  {02\_silver};
+\node[tag,anchor=south east] at (go.north east)  {03\_gold\_sql\_incremental};
+\node[tag,anchor=south east] at (ml.north east)  {04\_ml\_retards};
+\node[tag,anchor=south east] at (db.north east)  {dashboard\_tp1.py};
 \end{tikzpicture}
-\end{center}
+\caption{Pipeline du TP 1. Les étiquettes bleues indiquent le notebook qui réalise chaque étape.
+Le modèle ML lit \texttt{gold.commandes} et y écrit \texttt{predictions\_retard}.}
+\label{fig:pipeline}
+\end{figure}
 
 \begin{center}
 \small
