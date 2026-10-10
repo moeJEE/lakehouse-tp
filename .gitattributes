@@ -5,3 +5,6 @@
 *.properties text eol=lf
 *.yml        text eol=lf
 Dockerfile   text eol=lf
+
+# Données : jamais de conversion des fins de ligne
+*.csv        -text

@@ -6,7 +6,12 @@ paiements et avis.
 
 - Source : <https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce>
 - Licence : CC BY-NC-SA 4.0 (usage non commercial, attribution, partage dans les mêmes conditions)
-- Données fournies par Olist. Elles sont redistribuées ici sans modification, pour un usage pédagogique.
+- Données fournies par Olist. Les fichiers de ce dossier sont une copie publiée sur GitHub en 2020
+  ([spdrio/Brazilian-E-Commerce-Public-Dataset-by-Olist](https://github.com/spdrio/Brazilian-E-Commerce-Public-Dataset-by-Olist)),
+  redistribuée ici pour un usage pédagogique, sans autre modification.
+- Les volumes des tables du TP 1 sont identiques à la version actuelle de Kaggle. La table des avis
+  (`order_reviews`, 100 000 lignes) correspond à une version plus ancienne : la version actuelle de
+  Kaggle en compte 99 224, après suppression de doublons.
 
 ## Fichiers attendus dans ce dossier
 
@@ -23,10 +28,7 @@ paiements et avis.
 
 `olist_geolocation_dataset.csv` (61 Mo) n'est pas utilisé et n'est pas versionné.
 
-## Pour l'enseignant : ajouter les fichiers au dépôt
+## Mettre à jour les données
 
-1. Télécharger l'archive depuis la page Kaggle (bouton *Download*, compte Kaggle requis).
-2. Décompresser les 8 fichiers ci-dessus dans ce dossier.
-3. `git add data/olist && git commit -m "Données Olist" && git push`
-
-Les étudiants récupèrent ensuite les données avec le dépôt, sans compte Kaggle.
+Pour utiliser la version actuelle de Kaggle : télécharger l'archive depuis la page Kaggle
+(compte requis), remplacer les fichiers de ce dossier, puis `git add data/olist && git commit && git push`.
