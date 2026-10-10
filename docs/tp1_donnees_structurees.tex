@@ -121,7 +121,7 @@ commerçants de vendre sur les grands sites de e-commerce. La direction vous pos
   \item Comment évoluent nos ventes, mois par mois ?
   \item Quelles catégories de produits rapportent le plus ?
   \item Tenons-nous nos promesses de délai de livraison, et où avons-nous des problèmes ?
-  \item \emph{(facultatif)} Peut-on prévoir un retard de livraison dès la commande ?
+  \item Peut-on prévoir un retard de livraison dès la commande ?
 \end{enumerate}
 
 Les données sont réparties entre deux systèmes : l'application de vente, qui écrit dans une base
@@ -176,7 +176,7 @@ personne d'une commande à l'autre, il faut utiliser \cmd{customer\_unique\_id}.
 \node[b=lhgold, right=0.45cm of si] (go) {\textbf{Gold}\\\scriptsize indicateurs};
 \node[b=lhred, below=0.5cm of si, minimum width=2.05cm] (q) {\textbf{Quarantaine}\\\scriptsize lignes rejetées};
 \node[b=lhteal, above right=0.15cm and 0.45cm of go] (db) {\textbf{Tableau}\\\textbf{de bord}};
-\node[b=lhviolet, below right=0.15cm and 0.45cm of go, dashed] (ml) {\textbf{Modèle ML}\\\scriptsize facultatif};
+\node[b=lhviolet, below right=0.15cm and 0.45cm of go] (ml) {\textbf{Modèle ML}\\\scriptsize retards};
 \draw[->] (pg) -- node[lbl,above,sloped]{JDBC} (br);
 \draw[->] (csv) -- (land);
 \draw[->] (land) -- (br);
@@ -184,7 +184,7 @@ personne d'une commande à l'autre, il faut utiliser \cmd{customer\_unique\_id}.
 \draw[->,thick] (si) -- (go);
 \draw[->] (si) -- (q);
 \draw[->] (go) -- (db);
-\draw[->,dashed] (go) -- (ml);
+\draw[->] (go) -- (ml);
 \end{tikzpicture}
 \end{center}
 
@@ -227,17 +227,25 @@ détaillées : les cellules marquées \cmd{\# À COMPLÉTER} sont à écrire. Ex
  & 02\_silver & Profilage, nettoyage, règles de qualité, quarantaine, intégrité & 1 h 45 \\
 \midrule
 \textbf{Séance 2}
- & 03\_gold\_sql\_incremental & Tables Gold, questions SQL, lot 2 avec \cmd{MERGE}, \emph{time travel} & 1 h 45 \\
- & apps/dashboard\_tp1.py & Tableau de bord Streamlit & 1 h 15 \\
-\midrule
-\textbf{Bonus} & 04\_ml\_retards & Prédiction des retards (facultatif) & 1 h 30 \\
+ & 03\_gold\_sql\_incremental & Tables Gold, questions SQL, lot 2 avec \cmd{MERGE}, \emph{time travel} & 1 h 15 \\
+ & 04\_ml\_retards & Modèle de prédiction des retards, prédictions écrites en Gold & 1 h \\
+ & apps/dashboard\_tp1.py & Tableau de bord Streamlit & 45 min \\
 \bottomrule
 \end{tabularx}
 \end{center}
 
+\begin{attention}
+\textbf{Un seul notebook actif à la fois.} Chaque notebook ouvert garde sa propre session Spark,
+qui réserve jusqu'à 2 Go de mémoire. Avant d'ouvrir le notebook suivant, arrêtez les précédents :
+panneau \emph{Running Terminals and Kernels} (barre de gauche) > \emph{Shut Down All}.
+Les tables restent dans le Lakehouse.
+\end{attention}
+
 \begin{astuce}
 Avant chaque séance : \cmd{docker compose up -d}, puis \cmd{git pull} pour récupérer les dernières
 versions. Si vous avez déjà modifié un notebook, faites-en une copie avant le \cmd{git pull}.
+Une erreur \og \texttt{Cellule à compléter : \dots} \fg{} signale simplement une partie que vous
+n'avez pas encore écrite.
 \end{astuce}
 
 % =====================================================================
@@ -296,25 +304,45 @@ Après le \cmd{MERGE}, \cmd{silver.orders} contient environ 99\,400 commandes, e
 commandes \cmd{shipped} est divisé par deux environ : elles ont été livrées entre-temps.
 \end{resultat}
 
+\subsection*{Partie 4 -- Prédire les retards \hfill \nb{04\_ml\_retards}}
+
+Vous entraînez deux modèles de classification (scikit-learn) qui estiment, au moment de la commande,
+la probabilité d'un retard de livraison, puis vous comparez leurs performances. Les prédictions sont
+écrites dans \cmd{gold.predictions\_retard} : le tableau de bord les affichera.
+
+\begin{notion}
+\textbf{Fuite de données.} Un modèle ne doit utiliser que des informations disponibles au moment de
+la prédiction. Le notebook vous fait ajouter volontairement le délai réel de livraison :
+le modèle devient presque parfait\dots{} et totalement inutilisable.
+\end{notion}
+
+\begin{resultat}
+Une AUC ROC modeste, de l'ordre de 0,7 : les causes principales des retards (transporteur, météo,
+grèves) ne figurent pas dans les données. Avec la fuite de données, l'AUC dépasse 0,95.
+\end{resultat}
+
 % =====================================================================
 \section{Le tableau de bord}\label{sec:dashboard}
 % =====================================================================
 
 Ouvrez \nb{apps/dashboard\_tp1.py} dans JupyterLab. Le chargement des données et le filtre de période
-sont fournis. Complétez les quatre éléments demandés :
+sont fournis. Complétez les cinq éléments demandés :
 
 \begin{enumerate}[leftmargin=*,nosep]
   \item une ligne de quatre indicateurs : chiffre d'affaires, nombre de commandes, panier moyen, taux de retard ;
   \item la courbe du chiffre d'affaires mensuel ;
   \item le top 10 des catégories ;
-  \item le taux de retard par état.
+  \item le taux de retard par état ;
+  \item les commandes au plus fort risque de retard, selon le modèle de la partie 4, avec un seuil réglable.
 \end{enumerate}
 
 Pour le lancer, ouvrez un terminal dans JupyterLab (\emph{File > New > Terminal}) :
 \begin{lstlisting}[style=shell]
 streamlit run apps/dashboard_tp1.py --server.address 0.0.0.0
 \end{lstlisting}
-Puis ouvrez \url{http://localhost:8501}. Chaque enregistrement du fichier met la page à jour.
+Puis ouvrez \url{http://localhost:8501} dans votre navigateur. N'utilisez pas l'adresse
+\cmd{http://0.0.0.0:8501} affichée dans le terminal : elle n'est valable qu'à l'intérieur du conteneur.
+Chaque enregistrement du fichier met la page à jour.
 
 \begin{attention}
 Le tableau de bord démarre sa propre session Spark. Sur une machine de 8 Go, arrêtez d'abord le
@@ -328,29 +356,14 @@ d'analyse, pas un détail.
 \end{astuce}
 
 % =====================================================================
-\section{Bonus : prédire les retards \hfill \nb{04\_ml\_retards}}
-% =====================================================================
-
-Vous entraînez un modèle de classification (scikit-learn) qui estime, au moment de la commande,
-la probabilité d'un retard de livraison. Ses prédictions sont écrites dans \cmd{gold.predictions\_retard},
-et le tableau de bord peut les afficher.
-
-\begin{notion}
-\textbf{Fuite de données.} Un modèle ne doit utiliser que des informations disponibles au moment de
-la prédiction. Le notebook vous fait ajouter volontairement le délai réel de livraison :
-le modèle devient presque parfait\dots{} et totalement inutilisable.
-\end{notion}
-
-% =====================================================================
 \section{Livrables et évaluation}\label{sec:livrables}
 % =====================================================================
 
 À déposer sur l'espace de cours, dans une archive \cmd{NOM\_Prenom\_TP1.zip} :
 \begin{itemize}[leftmargin=*,nosep]
-  \item les notebooks \cmd{01}, \cmd{02} et \cmd{03} \textbf{exécutés}, avec les réponses aux questions
+  \item les notebooks \cmd{01} à \cmd{04} \textbf{exécutés}, avec les réponses aux questions
         (cellules \og Question \fg{}) rédigées en Markdown ;
-  \item le fichier \cmd{apps/dashboard\_tp1.py} et une capture d'écran du tableau de bord ;
-  \item \emph{(bonus)} le notebook \cmd{04} exécuté.
+  \item le fichier \cmd{apps/dashboard\_tp1.py} et une capture d'écran du tableau de bord.
 \end{itemize}
 
 \begin{center}
@@ -361,14 +374,14 @@ le modèle devient presque parfait\dots{} et totalement inutilisable.
 \textbf{Critère} & \textbf{Points} \\
 \midrule
 Bronze : ingestion CSV et JDBC correcte, colonnes techniques présentes & 3 \\
-Silver : typage, dédoublonnage, règles de qualité, quarantaine & 5 \\
-Gold : table des commandes et tables d'indicateurs correctes & 3 \\
+Silver : typage, dédoublonnage, règles de qualité, quarantaine & 4 \\
+Gold : table des commandes et tables d'indicateurs correctes & 2 \\
 Requêtes SQL et ingestion incrémentale (\cmd{MERGE}, \emph{time travel}) & 3 \\
-Tableau de bord : complet, lisible, sans erreur d'analyse & 3 \\
+Machine Learning : évaluation correcte, fuite de données expliquée, prédictions en Gold & 3 \\
+Tableau de bord : complet, lisible, sans erreur d'analyse & 2 \\
 Réponses aux questions : justesse et esprit critique & 3 \\
 \midrule
 \textbf{Total} & \textbf{20} \\
-Bonus : modèle de ML évalué correctement, fuite de données expliquée & +2 \\
 \bottomrule
 \end{tabularx}
 \end{center}
@@ -384,6 +397,8 @@ Bonus : modèle de ML évalué correctement, fuite de données expliquée & +2 \
 \toprule
 \textbf{Symptôme} & \textbf{Solution} \\
 \midrule
+\texttt{Cellule à compléter : \dots} &
+  Une partie de la cellule n'est pas encore écrite : remplacez l'appel \cmd{a\_completer(...)} par votre code. \\
 \texttt{TABLE\_OR\_VIEW\_NOT\_FOUND} &
   La table vient d'une étape précédente non exécutée : relancez les cellules du notebook précédent, dans l'ordre. \\
 \texttt{Fichier introuvable : .../data/olist/...} &
@@ -394,6 +409,8 @@ Le noyau meurt, ou \texttt{Java gateway process exited} &
   Les colonnes de la source ne correspondent pas à la table cible : comparez avec \cmd{printSchema()}. \\
 Vous avez exécuté le lot 2 deux fois &
   Sans danger : le chargement est idempotent. Pour tout recommencer, relancez le lot 1, puis les notebooks 01 et 02. \\
+\url{http://0.0.0.0:8501} inaccessible &
+  Ouvrez \url{http://localhost:8501}. \\
 Le tableau de bord affiche une erreur Spark &
   Vérifiez que les tables Gold existent (\cmd{SHOW TABLES IN lakehouse.gold}) et que la session Spark des notebooks est arrêtée. \\
 \bottomrule

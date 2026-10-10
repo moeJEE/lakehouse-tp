@@ -60,6 +60,8 @@ st.caption(f"Période : {debut} → {fin} · Source : couche Gold du Lakehouse")
 # À COMPLÉTER : barres du taux de retard par état, triées du plus élevé au plus faible
 
 
-# ---------- Bonus ----------
-# Si vous avez fait la partie 5 (ML), ajoutez une section qui lit gold.predictions_retard
-# et liste les commandes dont la probabilité de retard dépasse un seuil choisi avec st.slider.
+# ---------- 5. Commandes à risque (modèle de la partie 4) ----------
+# À COMPLÉTER : lisez gold.predictions_retard avec lire(...), puis :
+#   - un curseur st.slider pour choisir le seuil de risque (entre 0 et 1) ;
+#   - deux indicateurs : le nombre de commandes signalées, et la part qui était réellement en retard ;
+#   - le tableau (st.dataframe) des commandes signalées, de la plus risquée à la moins risquée.
