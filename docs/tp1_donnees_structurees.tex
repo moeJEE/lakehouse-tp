@@ -30,6 +30,17 @@
 \usepackage{xurl}
 \usepackage{caption}
 \usepackage{float}
+\usepackage{graphicx}
+% Captures d'écran : déposer docs/images/tp1/<nom>.png ; tant que le fichier manque,
+% un cadre indique le nom attendu.
+\newcommand{\capture}[3]{%
+  \begin{figure}[H]\centering
+  \IfFileExists{images/tp1/#1.png}%
+    {\includegraphics[width=0.92\textwidth,height=0.42\textheight,keepaspectratio]{images/tp1/#1.png}}%
+    {\fbox{\parbox[c][3.2cm][c]{0.88\textwidth}{\centering\footnotesize
+       Capture à ajouter : \texttt{docs/images/tp1/\detokenize{#1}.png}}}}%
+  \caption{#2}\label{#3}
+  \end{figure}}
 \captionsetup{font=small,labelfont=bf,labelsep=period}
 
 \setlength{\parskip}{0.5em}
@@ -408,6 +419,9 @@ Les types sont fixés plus tard, en Silver, de façon explicite.
 86\,600 commandes : les autres n'existent pas encore au 1\textsuperscript{er} juillet 2018.
 \end{resultat}
 
+\capture{01_bronze_notebook}{Notebook \texttt{01\_bronze} : chargement du lot 1 et écriture des tables Bronze.}{fig:nb01}
+\capture{01_bronze_resultat}{Résultat attendu de la partie 1 : les 7 tables Bronze et le nombre de commandes.}{fig:res01}
+
 \subsection*{Partie 2 -- Silver \hfill \nb{02\_silver}}
 
 Vous mesurez d'abord les défauts (valeurs nulles, doublons), puis vous écrivez une table Silver par
@@ -424,6 +438,9 @@ elle part en \textbf{quarantaine}. Entre les deux, une incohérence sans gravit�
 Le bilan final compare Bronze et Silver table par table. Chaque écart s'explique par une règle :
 doublons retirés, lignes en quarantaine.
 \end{resultat}
+
+\capture{02_silver_notebook}{Notebook \texttt{02\_silver} : nettoyage, typage et quarantaine.}{fig:nb02}
+\capture{02_silver_resultat}{Résultat attendu de la partie 2 : le bilan Bronze / Silver table par table.}{fig:res02}
 
 \subsection*{Partie 3 -- Gold, SQL et ingestion incrémentale \hfill \nb{03\_gold\_sql\_incremental}}
 
@@ -492,6 +509,9 @@ Après le \cmd{MERGE}, \cmd{silver.orders} contient environ 99\,400 commandes, e
 commandes \cmd{shipped} est divisé par deux environ : elles ont été livrées entre-temps.
 \end{resultat}
 
+\capture{03_gold_notebook}{Notebook \texttt{03\_gold\_sql\_incremental} : tables Gold, requêtes SQL et lot 2.}{fig:nb03}
+\capture{03_gold_resultat}{Résultat attendu de la partie 3 : \texttt{silver.orders} après le \texttt{MERGE} et ses deux snapshots.}{fig:res03}
+
 
 \begin{figure}[H]
 \centering
@@ -544,6 +564,9 @@ Une AUC ROC modeste, de l'ordre de 0,7 : les causes principales des retards (tra
 grèves) ne figurent pas dans les données. Avec la fuite de données, l'AUC dépasse 0,95.
 \end{resultat}
 
+\capture{04_ml_notebook}{Notebook \texttt{04\_ml\_retards} : découpage temporel, entraînement et comparaison des modèles.}{fig:nb04}
+\capture{04_ml_resultat}{Résultat attendu de la partie 4 : AUC ROC des deux modèles, avec et sans fuite de données.}{fig:res04}
+
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[font=\sffamily\small, >=Stealth]
@@ -586,6 +609,9 @@ streamlit run notebooks/mon_travail/dashboard_tp1.py --server.address 0.0.0.0
 Puis ouvrez \url{http://localhost:8501} dans votre navigateur. N'utilisez pas l'adresse
 \cmd{http://0.0.0.0:8501} affichée dans le terminal : elle n'est valable qu'à l'intérieur du conteneur.
 Chaque enregistrement du fichier met la page à jour.
+
+\capture{dashboard_haut}{Tableau de bord attendu : les quatre indicateurs et le chiffre d'affaires mensuel.}{fig:dash1}
+\capture{dashboard_bas}{Tableau de bord attendu : top 10 des catégories, taux de retard par état et commandes à risque.}{fig:dash2}
 
 \begin{attention}
 Le tableau de bord démarre sa propre session Spark. Sur une machine de 8 Go, arrêtez d'abord le
