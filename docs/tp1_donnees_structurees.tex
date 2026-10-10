@@ -424,6 +424,19 @@ Les types sont fixés plus tard, en Silver, de façon explicite.
 \capture{01_bronze_notebook}{Notebook \texttt{01\_bronze} : chargement du lot 1 et écriture des tables Bronze.}{fig:nb01}
 \capture{01_bronze_resultat}{Résultat attendu de la partie 1 : les 7 tables Bronze et le nombre de commandes.}{fig:res01}
 
+Une table Iceberg n'est, physiquement, qu'un dossier de fichiers dans le stockage S3 :
+dans la console (\url{http://localhost:9001}), le dossier \cmd{lakehouse/warehouse/bronze/} contient
+un sous-dossier par table, avec ses fichiers de données Parquet (\cmd{data/}) et ses fichiers de
+métadonnées (\cmd{metadata/}).
+
+\capture{01_bronze_s3}{Les 7 tables Bronze vues dans la console du stockage S3 : un dossier par table.}{fig:s3bronze}
+
+\begin{attention}
+Ne supprimez jamais une table depuis la console S3 : les fichiers disparaissent, mais le catalogue
+continue de pointer vers eux et la table devient illisible. On supprime une table avec
+\cmd{DROP TABLE ... PURGE} dans Spark.
+\end{attention}
+
 \subsection*{Partie 2 -- Silver \hfill \nb{02\_silver}}
 
 Vous mesurez d'abord les défauts (valeurs nulles, doublons), puis vous écrivez une table Silver par

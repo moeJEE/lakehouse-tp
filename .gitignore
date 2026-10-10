@@ -25,3 +25,6 @@ data/olist/olist_geolocation_dataset.csv
 *.out
 *.toc
 *.synctex.gz
+
+# Corrigés : ne jamais publier
+*_corrige*
