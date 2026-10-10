@@ -324,8 +324,9 @@ données du Lakehouse. Vos notebooks, eux, restent dans le dossier \texttt{noteb
 \midrule
 Docker Desktop ne démarre pas (Windows) &
   Activer la virtualisation dans le BIOS (Intel VT-x ou AMD-V), puis relancer \cmd{wsl -{}-install}. \\
-\texttt{port is already allocated} &
-  Un autre logiciel utilise ce port : changez le numéro dans \cmd{.env} (ex. \cmd{PORT\_JUPYTER=8889}). \\
+\texttt{port is already allocated} ou \texttt{access permissions} &
+  Le port est pris par un autre logiciel ou réservé par Windows : changez le numéro dans \cmd{.env}
+  (ex. \cmd{PORT\_JUPYTER=8889}), puis relancez \cmd{docker compose up -d}. \\
 Un service s'arrête tout seul, ou le notebook plante &
   Mémoire insuffisante : fermez les autres applications, restez sans le profil \cmd{full},
   ou baissez \cmd{JUPYTER\_MEM\_LIMIT} dans \cmd{.env}. \\

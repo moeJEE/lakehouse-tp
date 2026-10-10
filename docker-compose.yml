@@ -36,6 +36,9 @@ services:
   # ---------- Catalogue Iceberg REST ----------
   iceberg-rest:
     image: apache/iceberg-rest-fixture:${ICEBERG_REST_VERSION}
+    # L'image tourne en utilisateur non-root : sans cela, elle ne peut pas
+    # écrire sa base SQLite dans le volume /catalog (SQLITE_CANTOPEN).
+    user: root
     environment:
       <<: *s3-env
       CATALOG_WAREHOUSE: s3://lakehouse/warehouse
@@ -63,7 +66,7 @@ services:
     volumes:
       - pg-data:/var/lib/postgresql/data
     ports:
-      - "127.0.0.1:${PORT_POSTGRES:-5432}:5432"
+      - "127.0.0.1:${PORT_POSTGRES:-15432}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${PG_USER} -d ${PG_DB}"]
       interval: 5s

@@ -8,7 +8,7 @@ Il sert aux TP 1, 2 et 3 du module.
 | JupyterLab + Spark | Développement (PySpark, DuckDB, Streamlit, MLflow) | http://localhost:8888 (jeton `lakehouse`) |
 | RustFS | Stockage objet compatible S3 | http://localhost:9001 |
 | Catalogue Iceberg REST | Référentiel des tables | http://localhost:8181 |
-| PostgreSQL | Base source transactionnelle | `localhost:5432` |
+| PostgreSQL | Base source transactionnelle | `localhost:15432` |
 | Trino *(profil `sql`/`full`)* | Moteur SQL interactif | http://localhost:8080 |
 | Superset *(profil `bi`/`full`)* | Tableaux de bord | http://localhost:8088 |
 
