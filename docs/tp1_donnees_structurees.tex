@@ -31,14 +31,16 @@
 \usepackage{caption}
 \usepackage{float}
 \usepackage{graphicx}
-% Captures d'écran : déposer docs/images/tp1/<nom>.png ; tant que le fichier manque,
-% un cadre indique le nom attendu.
+% Captures d'écran : <nom>.png à la racine du projet (Overleaf) ou dans images/tp1/ ;
+% tant que le fichier manque, un cadre indique le nom attendu.
 \newcommand{\capture}[3]{%
   \begin{figure}[H]\centering
-  \IfFileExists{images/tp1/#1.png}%
-    {\includegraphics[width=0.92\textwidth,height=0.42\textheight,keepaspectratio]{images/tp1/#1.png}}%
-    {\fbox{\parbox[c][3.2cm][c]{0.88\textwidth}{\centering\footnotesize
-       Capture à ajouter : \texttt{docs/images/tp1/\detokenize{#1}.png}}}}%
+  \IfFileExists{#1.png}%
+    {\includegraphics[width=0.92\textwidth,height=0.42\textheight,keepaspectratio]{#1.png}}%
+    {\IfFileExists{images/tp1/#1.png}%
+      {\includegraphics[width=0.92\textwidth,height=0.42\textheight,keepaspectratio]{images/tp1/#1.png}}%
+      {\fbox{\parbox[c][3.2cm][c]{0.88\textwidth}{\centering\footnotesize
+         Capture à ajouter : \texttt{\detokenize{#1}.png}}}}}%
   \caption{#2}\label{#3}
   \end{figure}}
 \captionsetup{font=small,labelfont=bf,labelsep=period}
