@@ -124,63 +124,37 @@ La figure~\ref{fig:archi} montre comment ils s'articulent ; les flux numérotés
 \centering
 \resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[
-  font=\sffamily\small, >=Stealth,
-  svc/.style={draw=#1,fill=#1!8,rounded corners=3pt,thick,minimum width=3.4cm,minimum height=1.15cm,align=center},
+  font=\sffamily\small, >=Stealth, node distance=1cm,
+  svc/.style={draw=#1,fill=#1!8,rounded corners=4pt,thick,minimum width=3.3cm,minimum height=1.2cm,align=center},
   opt/.style={svc=#1,dashed},
-  zone/.style={draw=black!35,rounded corners=6pt},
-  ztitre/.style={font=\sffamily\bfseries\footnotesize,text=black!60,anchor=north west},
-  num/.style={circle,fill=lhblue,text=white,font=\sffamily\bfseries\scriptsize,inner sep=1.3pt},
-  lbl/.style={font=\sffamily\scriptsize,text=black!70,align=center}]
+  num/.style={circle,fill=lhblue,text=white,font=\sffamily\bfseries\scriptsize,inner sep=1.4pt}]
 
-% Zones
-\draw[zone,dashed] (-4.8,3.85) rectangle (12.9,-7.7);
-\node[ztitre] at (-4.7,3.8) {Votre ordinateur};
-\draw[zone,fill=black!2] (-0.5,3.3) rectangle (12.6,-7.4);
-\node[ztitre] at (-0.4,3.25) {Docker : réseau privé du cours};
-% Conteneur jupyter : JupyterLab + Spark et dbt
-\draw[zone,dashed,draw=lhblue!60] (4.2,2.75) rectangle (8.0,-0.8);
-\node[font=\sffamily\scriptsize,text=lhblue,anchor=south west] at (4.2,2.75) {conteneur jupyter};
-\draw[zone,draw=lhbronze,fill=lhbronze!6] (-0.3,-3.95) rectangle (12.4,-7.15);
-\node[ztitre,text=lhbronze!80!black] at (-0.2,-4.0) {Stockage S3 -- RustFS};
+% Niveau 1 : les outils
+\node[svc=gray]   (pg)    at (0,0)    {\textbf{PostgreSQL}\\\scriptsize la source};
+\node[svc=lhblue] (jup)   at (4.6,0)  {\textbf{JupyterLab}\\\scriptsize Spark et dbt};
+\node[opt=lhblue] (trino) at (9.2,0)  {\textbf{Trino}\\\scriptsize SQL interactif};
+\node[opt=lhblue] (sup)   at (13.8,0) {\textbf{Superset}\\\scriptsize tableaux de bord};
 
-% Ligne 1
-\node[svc=gray] (pg) at (1.7,0) {\textbf{PostgreSQL}\\\scriptsize base source (TP 1)};
-\node[svc=lhblue] (jup) at (6.1,0) {\textbf{JupyterLab + Spark}\\\scriptsize vous codez ici};
-\node[svc=lhblue,minimum height=0.95cm] (dbt) at (6.1,1.75) {\textbf{dbt}\\\scriptsize modèles SQL testés (TP 2 et 3)};
-\node[opt=lhblue] (sup) at (10.5,0) {\textbf{Superset}\\\scriptsize tableaux de bord};
-% Ligne 2
-\node[svc=gray] (cat) at (6.1,-2.6) {\textbf{Catalogue Iceberg}\\\scriptsize annuaire des tables};
-\node[opt=lhblue] (trino) at (10.5,-2.6) {\textbf{Trino}\\\scriptsize requêtes SQL};
-% Ligne 3 : le stockage
-\node[svc=darkgray,fill=white,minimum height=1.6cm] (land) at (1.7,-5.75)
-  {\textbf{landing/}\\\scriptsize fichiers bruts\\\scriptsize (CSV, JSON, texte)};
-\node[svc=darkgray,fill=white,minimum width=7.6cm,minimum height=1.6cm] (wh) at (8.35,-5.75)
-  {\textbf{lakehouse/warehouse/}\\[2pt]
-   \colorbox{lhbronze!30}{bronze}\ \colorbox{lhsilver!30}{silver}\ \colorbox{lhgold!30}{gold}\\[2pt]
-   \scriptsize fichiers Parquet (données) + JSON (métadonnées)};
+% Niveau 2 : le catalogue
+\node[svc=gray] (cat) at (6.9,-2.3) {\textbf{Catalogue Iceberg}\\\scriptsize l'annuaire des tables};
 
-% Hors Docker
-\node[svc=gray,fill=white] (nav) at (-2.75,0) {\textbf{Navigateur}\\\scriptsize localhost:8888, :9001\dots};
-\node[svc=gray,fill=white] (dos) at (-2.75,-5.75) {\textbf{Votre dossier}\\\scriptsize notebooks/, data/};
-\draw[->] (nav.east) -- node[lbl,above]{ports} (-0.5,0);
-\draw[<->,dashed] (dos.east) -- node[lbl,above]{partagé} (-0.5,-5.75);
+% Niveau 3 : le stockage
+\node[svc=lhbronze, minimum width=15.4cm, minimum height=1.5cm] (s3) at (6.9,-4.6)
+  {\textbf{Stockage S3 (RustFS)}\\[3pt]
+   \texttt{landing} $\rightarrow$
+   \colorbox{lhbronze!30}{bronze} $\rightarrow$
+   \colorbox{lhsilver!30}{silver} $\rightarrow$
+   \colorbox{lhgold!30}{gold}};
 
-% Flux numérotés
-\draw[->] (dbt.south) -- node[lbl,right]{SQL exécuté par Spark} (jup.north);
-\draw[->,dashed] (dbt.east) -- node[lbl,above,pos=0.55]{ou exécuté par Trino (TP 3)} (12.4,1.75) |- (trino.east);
-\draw[->,thick] (pg.east) -- node[num,above=2pt]{1} node[lbl,below=2pt]{JDBC} (jup.west);
-\draw[->,thick] (land.north) |- (4.9,-1.35) -- (4.9,-0.575);
-\node[num] at (3.3,-1.35) {1};
-\draw[->,thick] (7.3,-0.575) |- (8.3,-1.35) -- (8.3,-4.95);
-\node[num] at (8.3,-3.4) {2};
-\node[lbl,right] at (8.45,-3.4) {écrit};
-\draw[->,thick] (jup.south) -- node[num,left=3pt]{3} (cat.north);
-\draw[->,thick] (trino.west) -- node[num,above=2pt]{4} (cat.east);
-\draw[->,thick] (trino.south) -- node[num,right=3pt]{5} (10.5,-4.95);
-\draw[->] (sup.south) -- node[lbl,right]{SQL} (trino.north);
-\draw[->,dashed] (cat.south) -- node[lbl,left,align=right,pos=0.4]{pointe vers les\\métadonnées} (6.1,-4.95);
+% Flux
+\draw[->,thick] (pg) -- node[num,above=3pt]{1} (jup);
+\draw[->,thick] ([xshift=-8mm]jup.south) -- node[num,left=3pt]{2} ([xshift=-8mm]jup.south |- s3.north);
+\draw[->,thick] ([xshift=6mm]jup.south) -- node[num,left=4pt]{3} ([xshift=-8mm]cat.north);
+\draw[->,thick] ([xshift=-6mm]trino.south) -- node[num,right=4pt]{4} ([xshift=8mm]cat.north);
+\draw[->,thick] ([xshift=8mm]trino.south) -- node[num,right=3pt]{5} ([xshift=8mm]trino.south |- s3.north);
+\draw[->] (sup) -- (trino);
 \end{tikzpicture}}
-\caption{Architecture de l'environnement. Encadrés en pointillés : services facultatifs (12~Go de RAM ou plus).}
+\caption{Architecture de l'environnement. Tous les services tournent dans Docker ; ceux en pointillés sont facultatifs.}
 \label{fig:archi}
 \end{figure}
 
