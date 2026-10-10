@@ -214,6 +214,8 @@ le nom \cmd{lakehouse.<couche>.<table>} : par exemple \cmd{lakehouse.silver.orde
 
 Les notebooks sont dans JupyterLab, dossier \nb{notebooks/tp1/}. Ils contiennent les consignes
 détaillées : les cellules marquées \cmd{\# À COMPLÉTER} sont à écrire. Exécutez-les \textbf{dans l'ordre}.
+Gardez sous la main l'\textbf{aide-mémoire PySpark} de la dernière page : il contient toutes les
+opérations dont vous aurez besoin.
 
 \begin{center}
 \small
@@ -223,13 +225,13 @@ détaillées : les cellules marquées \cmd{\# À COMPLÉTER} sont à écrire. Ex
 & \normalfont\textbf{Notebook} & \textbf{Contenu} & \textbf{Durée} \\
 \midrule
 \textbf{Séance 1}
- & 01\_bronze & Chargement de la source, dépôt des fichiers, ingestion CSV et JDBC & 1 h 15 \\
- & 02\_silver & Profilage, nettoyage, règles de qualité, quarantaine, intégrité & 1 h 45 \\
+ & 01\_bronze & Chargement de la source, dépôt des fichiers, ingestion CSV et JDBC & 1 h \\
+ & 02\_silver & Profilage, nettoyage, règles de qualité, quarantaine, intégrité & 2 h \\
 \midrule
 \textbf{Séance 2}
- & 03\_gold\_sql\_incremental & Tables Gold, questions SQL, lot 2 avec \cmd{MERGE}, \emph{time travel} & 1 h 15 \\
+ & 03\_gold\_sql\_incremental & Tables Gold, questions SQL, lot 2 avec \cmd{MERGE}, \emph{time travel} & 1 h 30 \\
  & 04\_ml\_retards & Modèle de prédiction des retards, prédictions écrites en Gold & 1 h \\
- & apps/dashboard\_tp1.py & Tableau de bord Streamlit & 45 min \\
+ & apps/dashboard\_tp1.py & Tableau de bord Streamlit & 30 min \\
 \bottomrule
 \end{tabularx}
 \end{center}
@@ -413,6 +415,56 @@ Vous avez exécuté le lot 2 deux fois &
   Ouvrez \url{http://localhost:8501}. \\
 Le tableau de bord affiche une erreur Spark &
   Vérifiez que les tables Gold existent (\cmd{SHOW TABLES IN lakehouse.gold}) et que la session Spark des notebooks est arrêtée. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\clearpage
+% =====================================================================
+\section*{Annexe -- Aide-mémoire PySpark}\label{sec:aidememoire}
+% =====================================================================
+
+Imports utilisés partout : \cmd{from pyspark.sql import functions as F, Window}.
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.22}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{4.1cm} >{\raggedright\arraybackslash\ttfamily\footnotesize}X@{}}
+\toprule
+\normalfont\textbf{Je veux\dots} & \normalfont\textbf{Code} \\
+\midrule
+\multicolumn{2}{@{}l}{\textbf{\textcolor{lhblue}{Lire}}} \\
+Lire une table du Lakehouse & df = spark.table("lakehouse.silver.orders") \\
+Lire des CSV (en texte) & spark.read.option("header", True).csv("s3a://landing/olist/sellers/") \\
+Lire une table PostgreSQL & spark.read.format("jdbc").options(**JDBC).option("dbtable", "ventes.orders").load() \\
+Regarder les données & df.show(5) \quad df.printSchema() \quad df.count() \\
+\midrule
+\multicolumn{2}{@{}l}{\textbf{\textcolor{lhblue}{Transformer}}} \\
+Choisir et renommer des colonnes & df.select(F.col("a").alias("b"), "c") \\
+Ajouter ou remplacer une colonne & df.withColumn("prix", F.col("prix").cast("double")) \\
+Nettoyer un texte & F.trim("ville") \quad F.upper("etat") \quad F.initcap("ville") \quad F.lpad("cp", 5, "0") \\
+Valeur conditionnelle & F.when(F.col("poids") > 0, F.col("poids")) \quad \textrm{(sinon : null)} \\
+Remplacer une valeur nulle & F.coalesce(F.col("categorie"), F.lit("inconnue")) \\
+Écart en jours entre deux dates & F.datediff("date\_fin", "date\_debut") \\
+Filtrer des lignes & df.filter("statut = 'delivered'") \quad df.filter(F.col("prix") > 0) \\
+Supprimer des colonnes & df.drop("\_source", "\_ingere\_le") \\
+Supprimer les doublons & df.dropDuplicates(["order\_id"]) \\
+Garder la ligne la plus récente & w = Window.partitionBy("id").orderBy(F.col("updated\_at").desc()) \newline
+  df.withColumn("r", F.row\_number().over(w)).filter("r = 1").drop("r") \\
+\midrule
+\multicolumn{2}{@{}l}{\textbf{\textcolor{lhblue}{Combiner et agréger}}} \\
+Jointure (gauche) & a.join(b, "order\_id", "left") \\
+Lignes de A absentes de B & a.join(b, "product\_id", "left\_anti") \\
+Lignes de A présentes dans B & a.join(b, "order\_id", "left\_semi") \\
+Agréger par groupe & df.groupBy("order\_id").agg(F.sum("price").alias("total"), F.count("*").alias("nb")) \\
+Valeur liée au maximum & F.max\_by("payment\_type", "payment\_value") \\
+\midrule
+\multicolumn{2}{@{}l}{\textbf{\textcolor{lhblue}{Écrire (tables Iceberg)}}} \\
+Créer ou remplacer une table & df.writeTo("lakehouse.silver.x").using("iceberg").createOrReplace() \\
+Ajouter des lignes & df.writeTo("lakehouse.bronze.x").append() \\
+Utiliser SQL & spark.sql("SELECT ... FROM lakehouse.gold.x") \\
+Exposer un DataFrame à SQL & df.createOrReplaceTempView("ma\_vue") \\
+Historique d'une table & spark.sql("SELECT * FROM lakehouse.silver.x.snapshots") \\
 \bottomrule
 \end{tabularx}
 \end{center}
