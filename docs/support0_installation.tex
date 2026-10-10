@@ -30,6 +30,7 @@
 \usepackage{xurl}
 \usepackage{graphicx}
 \usepackage{caption}
+\usepackage{xltabular}
 \captionsetup{font=small,labelfont=bf,labelsep=period}
 \graphicspath{{images/}}
 
@@ -307,6 +308,7 @@ git clone https://github.com/moeJEE/lakehouse-tp.git
 cd lakehouse-tp
 \end{lstlisting}
 Sans Git : téléchargez le fichier ZIP depuis la page du dépôt et décompressez-le.
+Le contenu du dossier est décrit à la section~\ref{sec:depot}.
 
 \begin{attention}
 Le dépôt est en \textbf{lecture seule} pour vous : vous récupérez le code, vous ne poussez rien
@@ -369,6 +371,85 @@ docker compose --profile full up -d
 La ligne 8 passe alors en \texttt{[OK]}. Il suffit de le faire une fois : ils redémarreront ensuite
 seuls avec Docker.
 \end{resultat}
+
+% =====================================================================
+\section{Le contenu du dépôt}\label{sec:depot}
+% =====================================================================
+
+Le dossier \cmd{lakehouse-tp} récupéré à l'étape~1 est organisé comme suit. Les noms en gras
+sont des dossiers ; les fichiers sont décalés sous le dossier qui les contient.
+
+\newcommand{\dossier}[2][0]{\hspace*{#1em}\textbf{\texttt{#2}}}
+\newcommand{\fic}[2][1.2]{\hspace*{#1em}\texttt{#2}}
+
+{\small
+\renewcommand{\arraystretch}{1.2}
+\begin{xltabular}{\textwidth}{@{}>{\raggedright\arraybackslash}p{5.6cm} >{\raggedright\arraybackslash}X@{}}
+\toprule
+\textbf{Élément} & \textbf{Rôle} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Élément} & \textbf{Rôle} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\dossier{lakehouse-tp/} & Racine du dépôt. \\
+\fic{README.md} & Page d'accueil du dépôt sur GitHub : démarrage rapide et règles. \\
+\fic{docker-compose.yml} & Description de tous les services (stockage, catalogue, PostgreSQL,
+  JupyterLab, Trino, Superset) : images, ports, volumes et profils. \\
+\fic{.env.example} & Modèle de configuration : versions des images, identifiants locaux, ports,
+  limites de mémoire. Copié en \cmd{.env} à l'étape~2. \\
+\fic{.gitignore} & Liste des fichiers que Git ignore, dont \cmd{.env} et \cmd{notebooks/mon\_travail/}. \\
+\fic{.gitattributes} & Empêche Git de modifier les fins de ligne des fichiers CSV. \\
+\addlinespace
+\dossier[1.2]{.github/workflows/} & \\*
+\fic[2.4]{images.yml} & Automatisation GitHub Actions qui construit et publie les images
+  JupyterLab et Superset. Réservé à l'enseignant. \\
+\addlinespace
+\dossier[1.2]{docker/} & Recettes de construction des images du cours. \\*
+\fic[2.4]{jupyter/Dockerfile} & Image JupyterLab : Java, Spark, connecteurs Iceberg, Delta et S3,
+  bibliothèques Python et dbt. \\
+\fic[2.4]{jupyter/requirements.txt} & Liste des bibliothèques Python et de leurs versions. \\
+\fic[2.4]{superset/Dockerfile} & Image Superset avec le pilote Trino. \\
+\fic[2.4]{superset/superset-init.sh} & Initialisation de Superset au premier démarrage
+  (base interne, compte \texttt{admin}). \\
+\addlinespace
+\dossier[1.2]{conf/} & Fichiers de configuration lus par les services au démarrage. \\*
+\fic[2.4]{spark/spark-defaults.conf} & Réglages de Spark : catalogue \texttt{lakehouse},
+  accès au stockage S3, extensions Iceberg et Delta. \\
+\fic[2.4]{trino/catalog/} & Catalogues SQL visibles dans Trino : \\*
+\fic[3.6]{lakehouse.properties} & connexion au même catalogue Iceberg que Spark ; \\
+\fic[3.6]{tpch.properties} & jeu de données de démonstration intégré à Trino. \\
+\fic[2.4]{dbt/profiles.yml} & Connexions de dbt : cible \texttt{spark} et cible \texttt{trino} (TP 2 et 3). \\
+\addlinespace
+\dossier[1.2]{scripts/} & Scripts Python exécutés dans le conteneur JupyterLab. \\*
+\fic[2.4]{init\_buckets.py} & Crée les espaces de stockage \texttt{landing} et \texttt{lakehouse}
+  (lancé automatiquement par le service \texttt{init-buckets}). \\
+\fic[2.4]{check\_env.py} & Test automatique de l'environnement (étape~6). \\
+\fic[2.4]{load\_postgres.py} & Charge les données Olist dans PostgreSQL, en deux lots (TP 1). \\
+\addlinespace
+\dossier[1.2]{data/olist/} & Jeu de données Olist (commerce en ligne brésilien). \\*
+\fic[2.4]{*.csv} & Les 8 fichiers de données : commandes, clients, produits, paiements, avis\dots \\
+\fic[2.4]{README.md} & Provenance et licence des données (CC BY-NC-SA 4.0). \\
+\addlinespace
+\dossier[1.2]{notebooks/} & \\*
+\fic[2.4]{tp1/} & Énoncés du TP 1 : quatre notebooks (bronze, silver, gold, ML). À copier, ne pas modifier. \\
+\fic[2.4]{\textbf{mon\_travail/}} & \textbf{Votre dossier de travail}, ignoré par Git : vous y copiez
+  les énoncés et y écrivez votre code. \\
+\addlinespace
+\dossier[1.2]{apps/} & \\*
+\fic[2.4]{dashboard\_tp1.py} & Squelette du tableau de bord Streamlit du TP 1. À copier, ne pas modifier. \\
+\addlinespace
+\dossier[1.2]{docs/} & Supports du module (sources \LaTeX{}) et leurs images. \\*
+\end{xltabular}
+}
+
+\textbf{À retenir :} Vous ne modifiez que deux choses : le fichier \cmd{.env} (créé à l'étape~2)
+et le contenu de \cmd{notebooks/mon\_travail/}. Tout le reste appartient au cours et est mis à jour
+par \cmd{git pull}. Les fichiers vides \cmd{.gitkeep} servent seulement à faire exister un dossier
+vide dans Git.
 
 % =====================================================================
 \section{Ouvrir les outils}
