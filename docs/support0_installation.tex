@@ -248,6 +248,12 @@ cd lakehouse-tp
 \end{lstlisting}
 Sans Git : téléchargez le fichier ZIP depuis la page du dépôt et décompressez-le.
 
+\begin{attention}
+Le dépôt est en \textbf{lecture seule} pour vous : vous récupérez le code, vous ne poussez rien
+(pas de \cmd{git commit} ni de \cmd{git push}). Votre travail se fait dans le dossier
+\cmd{notebooks/mon\_travail/}, que Git ignore, et se rend sur l'espace de cours.
+\end{attention}
+
 \subsection*{Étape 2 -- Créer le fichier de configuration}
 \begin{lstlisting}[style=shell]
 cp .env.example .env
@@ -328,7 +334,7 @@ Superset$^*$      & \url{http://localhost:8088} & \texttt{admin} / \texttt{admin
 \section{Premier test dans JupyterLab}
 % =====================================================================
 
-Dans JupyterLab, créez un notebook dans le dossier \texttt{notebooks/} et exécutez ces trois cellules.
+Dans JupyterLab, créez un notebook dans le dossier \texttt{notebooks/mon\_travail/} et exécutez ces trois cellules.
 
 \textbf{Cellule 1 -- Démarrer Spark}
 \begin{lstlisting}[language=Python]
@@ -394,7 +400,7 @@ Arrêter (en gardant mes données)   & docker compose -{}-profile full down \\
 
 \begin{attention}
 N'ajoutez \textbf{jamais} l'option \cmd{-v} à \cmd{docker compose down} : elle efface toutes les
-données du Lakehouse. Vos notebooks, eux, restent dans le dossier \texttt{notebooks/}.
+données du Lakehouse. Vos notebooks, eux, restent dans le dossier \texttt{notebooks/mon\_travail/}.
 \end{attention}
 
 % =====================================================================

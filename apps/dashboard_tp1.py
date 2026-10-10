@@ -1,7 +1,7 @@
 """TP 1 — Tableau de bord des ventes Olist.
 
 Lancement, depuis un terminal JupyterLab (menu File > New > Terminal) :
-    streamlit run apps/dashboard_tp1.py --server.address 0.0.0.0 --server.port 8501
+    streamlit run notebooks/mon_travail/dashboard_tp1.py --server.address 0.0.0.0 --server.port 8501
 puis ouvrir http://localhost:8501 . Le tableau de bord se recharge à chaque enregistrement du fichier.
 
 Documentation utile :

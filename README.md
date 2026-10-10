@@ -36,6 +36,19 @@ Le guide complet est dans [`docs/support0_installation.tex`](docs/support0_insta
 
 Les données Olist sont dans [`data/olist/`](data/olist/README.md).
 
+## Règle pour les étudiants
+
+Ce dépôt est **en lecture seule** : vous récupérez le code avec `git clone` puis `git pull`, vous ne
+poussez rien. Copiez les énoncés dans `notebooks/mon_travail/` (ignoré par Git) et travaillez
+uniquement dans ce dossier :
+
+```bash
+cp -r notebooks/tp1 apps/dashboard_tp1.py notebooks/mon_travail/
+```
+
+Si `git pull` refuse de s'exécuter, un fichier du cours a été modifié par erreur :
+`git restore .` le rétablit, sans toucher à `notebooks/mon_travail/`.
+
 ## Commandes utiles
 
 | Je veux… | Commande |
@@ -56,7 +69,9 @@ docker-compose.yml     services de l'environnement
 conf/                  configuration Spark et Trino
 docker/                images JupyterLab et Superset
 scripts/               création des buckets et test de l'environnement
-notebooks/ apps/       votre travail (conservé sur votre disque)
+notebooks/tp1/        énoncés du TP 1 (à copier, ne pas modifier)
+notebooks/mon_travail/ votre travail (ignoré par Git)
+apps/                  squelettes des applications
 data/olist/            jeux de données des TP (Olist)
 docs/                  supports du module
 ```

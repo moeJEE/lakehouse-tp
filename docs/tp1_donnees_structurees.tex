@@ -211,8 +211,17 @@ le nom \cmd{lakehouse.<couche>.<table>} : par exemple \cmd{lakehouse.silver.orde
 \section{Déroulé}
 % =====================================================================
 
-Les notebooks sont dans JupyterLab, dossier \nb{notebooks/tp1/}. Ils contiennent les consignes
-détaillées : les cellules marquées \cmd{\# À COMPLÉTER} sont à écrire. Exécutez-les \textbf{dans l'ordre}.
+\textbf{Avant de commencer, copiez les énoncés dans votre dossier personnel.} Dans JupyterLab, ouvrez un
+terminal (\emph{File > New > Terminal}) et tapez :
+\begin{lstlisting}[style=shell]
+cp -r notebooks/tp1 apps/dashboard_tp1.py notebooks/mon_travail/
+\end{lstlisting}
+Travaillez \textbf{uniquement} dans \nb{notebooks/mon\_travail/}. Git ignore ce dossier : vos fichiers ne
+seront jamais écrasés, et \cmd{git pull} récupérera sans conflit les mises à jour publiées par l'enseignant.
+Ne faites ni \cmd{git commit} ni \cmd{git push} : le dépôt du cours est en lecture seule.
+
+Les notebooks contiennent les consignes détaillées : les cellules marquées \cmd{\# À COMPLÉTER} sont à
+écrire. Exécutez-les \textbf{dans l'ordre}.
 Gardez sous la main l'\textbf{aide-mémoire PySpark} de la dernière page : il contient toutes les
 opérations dont vous aurez besoin.
 
@@ -244,8 +253,8 @@ Les tables restent dans le Lakehouse.
 
 \begin{astuce}
 Avant chaque séance : \cmd{docker compose up -d}, puis \cmd{git pull} pour récupérer les dernières
-versions. Si vous avez déjà modifié un notebook, faites-en une copie avant le \cmd{git pull}.
-Une erreur \og \texttt{Cellule à compléter : \dots} \fg{} signale simplement une partie que vous
+versions. Si \cmd{git pull} refuse de s'exécuter, c'est qu'un fichier du cours a été modifié
+par erreur : \cmd{git restore .} rétablit l'original, sans toucher à \nb{mon\_travail/}. Une erreur \og \texttt{Cellule à compléter : \dots} \fg{} signale simplement une partie que vous
 n'avez pas encore écrite.
 \end{astuce}
 
@@ -326,7 +335,7 @@ grèves) ne figurent pas dans les données. Avec la fuite de données, l'AUC dé
 \section{Le tableau de bord}\label{sec:dashboard}
 % =====================================================================
 
-Ouvrez \nb{apps/dashboard\_tp1.py} dans JupyterLab. Le chargement des données et le filtre de période
+Ouvrez \nb{notebooks/mon\_travail/dashboard\_tp1.py} dans JupyterLab. Le chargement des données et le filtre de période
 sont fournis. Complétez les cinq éléments demandés :
 
 \begin{enumerate}[leftmargin=*,nosep]
@@ -339,7 +348,7 @@ sont fournis. Complétez les cinq éléments demandés :
 
 Pour le lancer, ouvrez un terminal dans JupyterLab (\emph{File > New > Terminal}) :
 \begin{lstlisting}[style=shell]
-streamlit run apps/dashboard_tp1.py --server.address 0.0.0.0
+streamlit run notebooks/mon_travail/dashboard_tp1.py --server.address 0.0.0.0
 \end{lstlisting}
 Puis ouvrez \url{http://localhost:8501} dans votre navigateur. N'utilisez pas l'adresse
 \cmd{http://0.0.0.0:8501} affichée dans le terminal : elle n'est valable qu'à l'intérieur du conteneur.
@@ -364,7 +373,7 @@ d'analyse, pas un détail.
 \begin{itemize}[leftmargin=*,nosep]
   \item le \textbf{compte rendu} au format PDF (\cmd{NOM\_Prenom\_TP1.pdf}) ;
   \item les notebooks \cmd{01} à \cmd{04} \textbf{exécutés} ;
-  \item le fichier \cmd{apps/dashboard\_tp1.py}.
+  \item le fichier \cmd{dashboard\_tp1.py}.
 \end{itemize}
 
 \subsection*{Le compte rendu}

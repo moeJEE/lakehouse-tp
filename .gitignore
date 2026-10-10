@@ -1,3 +1,7 @@
+# Travail personnel des étudiants : jamais versionné, jamais touché par git pull
+notebooks/mon_travail/*
+!notebooks/mon_travail/.gitkeep
+
 # Configuration locale (copiée depuis .env.example)
 .env
 
