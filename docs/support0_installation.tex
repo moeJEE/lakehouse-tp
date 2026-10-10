@@ -230,7 +230,13 @@ docker compose exec jupyter python /opt/lakehouse/scripts/check_env.py
 ENVIRONNEMENT PRÊT
 \end{lstlisting}
 \textbf{Faites une capture d'écran de ce résultat : c'est votre livrable.}
-La ligne 7 en \texttt{[--]} est normale tant que Trino n'est pas lancé.
+La ligne 7 en \texttt{[--]} est normale : Trino et Superset \textbf{ne démarrent pas automatiquement}
+(ils demandent 2,5 Go de RAM en plus). Avec 16 Go de RAM, lancez-les puis refaites le test :
+\begin{lstlisting}[style=shell]
+docker compose --profile full up -d
+\end{lstlisting}
+La ligne 7 passe alors en \texttt{[OK]}. Il suffit de le faire une fois : ils redémarreront ensuite
+seuls avec Docker.
 \end{resultat}
 
 % =====================================================================
