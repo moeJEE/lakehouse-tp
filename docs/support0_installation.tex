@@ -139,6 +139,45 @@ Une seule commande démarre l'ensemble des services suivants.
 {\footnotesize Pointillés : services facultatifs, à lancer seulement avec 12 Go de RAM ou plus.}
 \end{center}
 
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{@{}>{\bfseries\raggedright\arraybackslash}p{2.9cm}
+  >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}p{3.2cm} c@{}}
+\toprule
+\normalfont\textbf{Composant} & \textbf{Rôle} & \textbf{Équivalent en entreprise} & \textbf{Démarrage} \\
+\midrule
+JupyterLab + Spark &
+  Votre poste de travail : vous y écrivez le code (Python, SQL) qui lit, transforme et écrit
+  les données. Spark est le moteur de calcul ; DuckDB et Streamlit y sont aussi installés. &
+  Databricks, notebooks d'AWS EMR & auto \\
+Stockage S3 (RustFS) &
+  Le disque du Lakehouse : il garde tous les fichiers (bruts dans \texttt{landing},
+  puis les tables bronze, silver et gold). &
+  Amazon S3, Azure Data Lake & auto \\
+Catalogue Iceberg &
+  L'annuaire des tables : il associe un nom (\texttt{lakehouse.silver.commandes}) aux fichiers
+  correspondants, pour que tous les outils voient la même version des données. &
+  Unity Catalog, AWS Glue & auto \\
+PostgreSQL &
+  Une base de données classique qui joue le rôle d'application métier : c'est une
+  \emph{source} que l'on ingère dans le Lakehouse (TP 1). &
+  Base d'un ERP ou d'un site e-commerce & auto \\
+Trino &
+  Un second moteur SQL, rapide pour les requêtes interactives, qui lit les mêmes tables
+  que Spark. &
+  Amazon Athena, Starburst & \texttt{-{}-profile} \\
+Superset &
+  L'outil de tableaux de bord : graphiques et indicateurs construits sur la couche gold. &
+  Power BI, Tableau & \texttt{-{}-profile} \\
+\bottomrule
+\end{tabularx}
+
+\smallskip
+{\footnotesize \textbf{auto} : démarre avec \cmd{docker compose up -d}. \quad
+\textbf{-{}-profile} : démarre seulement avec \cmd{docker compose -{}-profile full up -d}.}
+\end{center}
+
 \textbf{L'idée à retenir.} Les données sont stockées \emph{une seule fois} dans le stockage S3.
 Le catalogue sait où se trouve chaque table. Plusieurs outils (Spark, Trino, Superset) lisent
 \emph{les mêmes tables} sans les copier : c'est le principe du Lakehouse.
