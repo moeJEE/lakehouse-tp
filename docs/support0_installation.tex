@@ -58,9 +58,9 @@
 
 % ---------- Encadrés : texte simple, sans boîte ----------
 % Un titre en gras introduit le paragraphe ; seul « Attention » est en rouge.
-\newenvironment{resultat}{\par\medskip\noindent\textbf{Résultat attendu.}\ }{\par\medskip}
-\newenvironment{astuce}{\par\medskip\noindent\textbf{Astuce.}\ }{\par\medskip}
-\newenvironment{attention}{\par\medskip\noindent\textbf{\textcolor{lhred}{Attention.}}\ }{\par\medskip}
+\newenvironment{resultat}{\par\medskip\noindent\textbf{Résultat attendu :}\ }{\par\medskip}
+\newenvironment{astuce}{\par\medskip\noindent\textbf{Astuce :}\ }{\par\medskip}
+\newenvironment{attention}{\par\medskip\noindent\textbf{\textcolor{lhred}{Attention :}}\ }{\par\medskip}
 
 % ---------- Code ----------
 \lstset{
@@ -183,7 +183,7 @@ Superset &
 \textbf{-{}-profile} : démarre seulement avec \cmd{docker compose -{}-profile full up -d}.}
 \end{center}
 
-\textbf{L'idée à retenir.} Les données sont stockées \emph{une seule fois} dans le stockage S3.
+\textbf{L'idée à retenir :} Les données sont stockées \emph{une seule fois} dans le stockage S3.
 Le catalogue sait où se trouve chaque table. Plusieurs outils (Spark, Trino, Superset) lisent
 \emph{les mêmes tables} sans les copier : c'est le principe du Lakehouse.
 
@@ -203,10 +203,10 @@ Linux   & \cmd{curl -fsSL https://get.docker.com | sh} \newline
 \bottomrule
 \end{tabularx}
 
-\textbf{Mémoire.} Dans Docker Desktop, menu \emph{Settings > Resources}, donnez à Docker
+\textbf{Mémoire :} Dans Docker Desktop, menu \emph{Settings > Resources}, donnez à Docker
 \textbf{6~Go} (machine de 8~Go) ou \textbf{10~Go} (machine de 16~Go).
 
-\textbf{Windows uniquement : intégration WSL.} Dans \emph{Settings > Resources > WSL integration},
+\textbf{Intégration WSL (Windows uniquement) :} Dans \emph{Settings > Resources > WSL integration},
 cochez \emph{Enable integration with my default WSL distro} et activez \textbf{Ubuntu}
 (figure~\ref{fig:wsl}). Sans ce réglage, la commande \cmd{docker} n'existe pas dans le terminal Ubuntu.
 
@@ -217,7 +217,7 @@ cochez \emph{Enable integration with my default WSL distro} et activez \textbf{U
 \label{fig:wsl}
 \end{figure}
 
-\textbf{Vérification.} Ouvrez un terminal (sous Windows : \cmd{wsl -d Ubuntu}), puis tapez :
+\textbf{Vérification :} Ouvrez un terminal (sous Windows : \cmd{wsl -d Ubuntu}), puis tapez :
 \begin{lstlisting}[style=shell]
 docker --version
 docker compose version
