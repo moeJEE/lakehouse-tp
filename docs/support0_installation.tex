@@ -28,6 +28,10 @@
 \usepackage[htt]{hyphenat}
 \usepackage[hidelinks]{hyperref}
 \usepackage{xurl}
+\usepackage{graphicx}
+\usepackage{caption}
+\captionsetup{font=small,labelfont=bf,labelsep=period}
+\graphicspath{{images/}}
 
 \setlength{\parskip}{0.5em}
 \setlength{\parindent}{0pt}
@@ -200,17 +204,36 @@ Linux   & \cmd{curl -fsSL https://get.docker.com | sh} \newline
 \end{tabularx}
 
 \textbf{Mémoire.} Dans Docker Desktop, menu \emph{Settings > Resources}, donnez à Docker
-\textbf{6 Go} (machine de 8 Go) ou \textbf{10 Go} (machine de 16 Go).
+\textbf{6~Go} (machine de 8~Go) ou \textbf{10~Go} (machine de 16~Go).
 
-\textbf{Vérification} dans un terminal :
+\textbf{Windows uniquement : intégration WSL.} Dans \emph{Settings > Resources > WSL integration},
+cochez \emph{Enable integration with my default WSL distro} et activez \textbf{Ubuntu}
+(figure~\ref{fig:wsl}). Sans ce réglage, la commande \cmd{docker} n'existe pas dans le terminal Ubuntu.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.78\textwidth]{docker_wsl_integration.png}
+\caption{Docker Desktop : activer l'intégration WSL pour la distribution Ubuntu.}
+\label{fig:wsl}
+\end{figure}
+
+\textbf{Vérification.} Ouvrez un terminal (sous Windows : \cmd{wsl -d Ubuntu}), puis tapez :
 \begin{lstlisting}[style=shell]
+docker --version
 docker compose version
 docker run --rm hello-world
 \end{lstlisting}
 
 \begin{resultat}
-Une version \texttt{v2.x} s'affiche, puis le message \texttt{Hello from Docker!}
+Les deux versions s'affichent, puis le message \texttt{Hello from Docker!} (figure~\ref{fig:verif}).
 \end{resultat}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.85\textwidth]{docker_verification.png}
+\caption{Vérification de l'installation de Docker depuis le terminal Ubuntu (WSL).}
+\label{fig:verif}
+\end{figure}
 
 % =====================================================================
 \section{Installer l'environnement du cours}
@@ -373,39 +396,6 @@ Arrêter (en gardant mes données)   & docker compose -{}-profile full down \\
 N'ajoutez \textbf{jamais} l'option \cmd{-v} à \cmd{docker compose down} : elle efface toutes les
 données du Lakehouse. Vos notebooks, eux, restent dans le dossier \texttt{notebooks/}.
 \end{attention}
-
-% =====================================================================
-\section{En cas de problème}
-% =====================================================================
-
-\begin{center}
-\renewcommand{\arraystretch}{1.3}
-\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{5.2cm}X@{}}
-\toprule
-\textbf{Symptôme} & \textbf{Solution} \\
-\midrule
-Docker Desktop ne démarre pas (Windows) &
-  Activer la virtualisation dans le BIOS (Intel VT-x ou AMD-V), puis relancer \cmd{wsl -{}-install}. \\
-\texttt{port is already allocated} ou \texttt{access permissions} &
-  Le port est pris par un autre logiciel ou réservé par Windows : changez le numéro dans \cmd{.env}
-  (ex. \cmd{PORT\_JUPYTER=8889}), puis relancez \cmd{docker compose up -d}. \\
-Un service s'arrête tout seul, ou le notebook plante &
-  Mémoire insuffisante : fermez les autres applications, restez sans le profil \cmd{full},
-  ou baissez \cmd{JUPYTER\_MEM\_LIMIT} dans \cmd{.env}. \\
-Erreur \texttt{RequestTimeTooSkewed} après une mise en veille &
-  Redémarrez Docker Desktop (Windows : \cmd{wsl -{}-shutdown}). \\
-\texttt{Permission denied} dans \texttt{notebooks/} (Linux) &
-  \cmd{sudo chown -R 1000:1000 notebooks apps} \\
-Téléchargement bloqué sur le réseau de l'école &
-  Téléchargez chez vous, ou demandez la clé USB du kit hors ligne. \\
-\bottomrule
-\end{tabularx}
-\end{center}
-
-\begin{astuce}
-Toujours bloqué ? Envoyez à l'enseignant la sortie de ces deux commandes :
-\cmd{docker compose ps} et \cmd{docker compose logs -{}-tail 50 <service>}.
-\end{astuce}
 
 % =====================================================================
 \section{Avant la séance 1}
