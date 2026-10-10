@@ -12,6 +12,8 @@ mlruns/
 # Données volumineuses (fournies séparément)
 data/*
 !data/.gitkeep
+!data/olist/
+data/olist/olist_geolocation_dataset.csv
 
 # LaTeX
 *.aux

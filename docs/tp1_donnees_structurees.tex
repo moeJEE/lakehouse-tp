@@ -1,0 +1,403 @@
+% =====================================================================
+%  Module Data Lakehouse -- TP 1 : Ingestion et traitement de données structurées
+%  Compilation : pdflatex (2 passes)
+% =====================================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+\usepackage[babel=true]{microtype}
+
+\usepackage[a4paper,margin=2.3cm,headheight=14pt]{geometry}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{needspace}
+\usepackage{enumitem}
+\usepackage{amssymb}
+\usepackage[table]{xcolor}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,babel}
+\usepackage{listings}
+\usepackage[most]{tcolorbox}
+\usepackage[htt]{hyphenat}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xurl}
+
+\setlength{\parskip}{0.5em}
+\setlength{\parindent}{0pt}
+\setlength{\emergencystretch}{3em}
+
+% ---------- Couleurs ----------
+\definecolor{lhblue}{HTML}{1F4E79}
+\definecolor{lhteal}{HTML}{0F766E}
+\definecolor{lhred}{HTML}{B91C1C}
+\definecolor{lhviolet}{HTML}{6D28D9}
+\definecolor{lhgray}{HTML}{F3F4F6}
+\definecolor{lhbronze}{HTML}{A16207}
+\definecolor{lhsilver}{HTML}{64748B}
+\definecolor{lhgold}{HTML}{CA8A04}
+
+% ---------- Titres, en-têtes ----------
+\titleformat{\section}{\needspace{6\baselineskip}\Large\bfseries\color{lhblue}}{\thesection.}{0.6em}{}
+\titleformat{\subsection}{\large\bfseries\color{lhblue}}{\thesubsection}{0.6em}{}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{lhblue}Module Data Lakehouse}
+\fancyhead[R]{\small\color{lhblue}TP 1 -- Données structurées}
+\fancyfoot[C]{\small\thepage}
+
+% ---------- Encadrés ----------
+\newtcolorbox{resultat}{enhanced,colback=green!4,colframe=green!45!black,
+  fonttitle=\bfseries,title={Résultat attendu},left=6pt,right=6pt}
+\newtcolorbox{attention}{enhanced,colback=lhred!5,colframe=lhred,
+  fonttitle=\bfseries,title={Attention},left=6pt,right=6pt}
+\newtcolorbox{astuce}{enhanced,colback=lhteal!6,colframe=lhteal,
+  fonttitle=\bfseries,title={Astuce},left=6pt,right=6pt}
+
+% ---------- Code ----------
+\lstset{
+  basicstyle=\ttfamily\small, columns=fullflexible, keepspaces=true,
+  breaklines=true, showstringspaces=false, upquote=true,
+  frame=single, framesep=5pt, xleftmargin=6pt, xrightmargin=6pt,
+  backgroundcolor=\color{lhgray}, rulecolor=\color{black!15},
+  commentstyle=\color{black!55}\itshape,
+  keywordstyle=\color{lhblue}\bfseries, stringstyle=\color{lhteal},
+  literate=
+   {é}{{\'e}}1 {è}{{\`e}}1 {ê}{{\^e}}1 {à}{{\`a}}1 {ç}{{\c c}}1
+   {ù}{{\`u}}1 {î}{{\^i}}1 {ô}{{\^o}}1 {É}{{\'E}}1 {Ê}{{\^E}}1
+}
+\lstdefinestyle{shell}{language=bash,backgroundcolor=\color{black!85},
+  basicstyle=\ttfamily\small\color{white},rulecolor=\color{black!85},
+  commentstyle=\color{green!60}\itshape,keywordstyle=\color{white}}
+
+\newcommand{\cmd}[1]{\texttt{#1}}
+\newcommand{\cocher}{$\square$\ }
+\pdfstringdefDisableCommands{\def\cmd#1{#1}}
+
+\newtcolorbox{notion}{enhanced,colback=lhblue!4,colframe=lhblue,
+  fonttitle=\bfseries,title={Notion clé},left=6pt,right=6pt}
+\newcommand{\nb}[1]{\textcolor{lhteal}{\texttt{#1}}}
+
+% =====================================================================
+\begin{document}
+% =====================================================================
+
+\begin{tikzpicture}[remember picture,overlay]
+  \fill[lhblue] (current page.north west) rectangle ([yshift=-5.2cm]current page.north east);
+  \node[anchor=north west,text=white,font=\sffamily] at ([xshift=2.3cm,yshift=-1.3cm]current page.north west)
+    {Module Data Lakehouse -- Cycle ingénieur 4\textsuperscript{e}/5\textsuperscript{e} année};
+  \node[anchor=north west,text=white,font=\sffamily\bfseries\fontsize{26}{30}\selectfont] at ([xshift=2.3cm,yshift=-2.2cm]current page.north west)
+    {TP 1 -- Données structurées};
+  \node[anchor=north west,text=white!85!lhblue,font=\sffamily\large] at ([xshift=2.3cm,yshift=-3.6cm]current page.north west)
+    {De la base de données au tableau de bord, en passant par Bronze, Silver et Gold};
+\end{tikzpicture}
+\thispagestyle{empty}
+\vspace*{4.2cm}
+
+\begin{tcolorbox}[colback=lhgray,colframe=lhblue,title=\textbf{En bref},fonttitle=\bfseries]
+\begin{tabularx}{\linewidth}{@{}>{\bfseries}l X@{}}
+Objectif & Construire un pipeline Lakehouse complet sur les données réelles d'un site
+           de e-commerce, puis en tirer des indicateurs et un tableau de bord. \\
+Durée    & 2 séances de 3 h (+ environ 2 h de travail personnel). \\
+Prérequis & Support 0 terminé : \cmd{check\_env.py} affiche \og ENVIRONNEMENT PRÊT \fg{}. \\
+À rendre & Les notebooks exécutés, l'application de tableau de bord et une capture d'écran
+           (détail en section~\ref{sec:livrables}). \\
+\end{tabularx}
+\end{tcolorbox}
+
+% =====================================================================
+\section{Le scénario}
+% =====================================================================
+
+Vous rejoignez l'équipe data d'\textbf{Olist}, une place de marché brésilienne qui permet à de petits
+commerçants de vendre sur les grands sites de e-commerce. La direction vous pose quatre questions :
+
+\begin{enumerate}[leftmargin=*,nosep]
+  \item Comment évoluent nos ventes, mois par mois ?
+  \item Quelles catégories de produits rapportent le plus ?
+  \item Tenons-nous nos promesses de délai de livraison, et où avons-nous des problèmes ?
+  \item \emph{(facultatif)} Peut-on prévoir un retard de livraison dès la commande ?
+\end{enumerate}
+
+Les données sont réparties entre deux systèmes : l'application de vente, qui écrit dans une base
+\textbf{PostgreSQL}, et des \textbf{fichiers CSV} exportés par d'autres services (clients, produits,
+vendeurs). Votre mission : les réunir dans le Lakehouse, les rendre fiables, puis répondre aux questions.
+
+% =====================================================================
+\section{Les données}
+% =====================================================================
+
+Le jeu de données public \textbf{Olist} (Kaggle, licence CC BY-NC-SA 4.0) décrit environ
+100\,000 commandes réelles passées entre 2016 et 2018. Il est fourni dans le dossier
+\cmd{data/olist/} du dépôt.
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{@{}>{\ttfamily}l l X r@{}}
+\toprule
+\normalfont\textbf{Table} & \textbf{Arrive par} & \textbf{Contenu} & \textbf{Lignes} \\
+\midrule
+orders          & PostgreSQL & Une ligne par commande : statut, dates (achat, livraison, estimation) & 99\,441 \\
+order\_items    & PostgreSQL & Les articles de chaque commande : produit, vendeur, prix, frais de port & 112\,650 \\
+order\_payments & PostgreSQL & Les paiements : moyen, nombre d'échéances, montant & 103\,886 \\
+customers       & CSV & Les clients : identifiant, ville, état & 99\,441 \\
+products        & CSV & Les produits : catégorie (en portugais), poids, dimensions & 32\,951 \\
+sellers         & CSV & Les vendeurs : ville, état & 3\,095 \\
+category\_translation & CSV & Traduction des catégories en anglais & 71 \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{attention}
+Dans Olist, un \cmd{customer\_id} est créé \textbf{à chaque commande}. Pour identifier une même
+personne d'une commande à l'autre, il faut utiliser \cmd{customer\_unique\_id}.
+\end{attention}
+
+% =====================================================================
+\section{Ce que vous allez construire}
+% =====================================================================
+
+\begin{center}
+\begin{tikzpicture}[
+  font=\sffamily\small, >=Stealth,
+  b/.style={draw=#1,fill=#1!10,rounded corners=3pt,thick,minimum height=1.1cm,align=center,minimum width=2.05cm},
+  lbl/.style={font=\sffamily\scriptsize,text=black!60}]
+\node[b=gray] (pg) {\textbf{PostgreSQL}\\\scriptsize ventes};
+\node[b=gray, below=0.5cm of pg] (csv) {\textbf{Fichiers CSV}\\\scriptsize référentiels};
+\node[b=darkgray, right=0.5cm of csv] (land) {\textbf{Landing}\\\scriptsize fichiers bruts};
+\node[b=lhbronze, right=0.5cm of land, yshift=0.8cm] (br) {\textbf{Bronze}\\\scriptsize copie fidèle};
+\node[b=lhsilver, right=0.45cm of br] (si) {\textbf{Silver}\\\scriptsize propre, typé};
+\node[b=lhgold, right=0.45cm of si] (go) {\textbf{Gold}\\\scriptsize indicateurs};
+\node[b=lhred, below=0.5cm of si, minimum width=2.05cm] (q) {\textbf{Quarantaine}\\\scriptsize lignes rejetées};
+\node[b=lhteal, above right=0.15cm and 0.45cm of go] (db) {\textbf{Tableau}\\\textbf{de bord}};
+\node[b=lhviolet, below right=0.15cm and 0.45cm of go, dashed] (ml) {\textbf{Modèle ML}\\\scriptsize facultatif};
+\draw[->] (pg) -- node[lbl,above,sloped]{JDBC} (br);
+\draw[->] (csv) -- (land);
+\draw[->] (land) -- (br);
+\draw[->,thick] (br) -- (si);
+\draw[->,thick] (si) -- (go);
+\draw[->] (si) -- (q);
+\draw[->] (go) -- (db);
+\draw[->,dashed] (go) -- (ml);
+\end{tikzpicture}
+\end{center}
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{@{}>{\bfseries}p{2.2cm} X X@{}}
+\toprule
+\normalfont\textbf{Couche} & \textbf{Rôle} & \textbf{Règle d'or} \\
+\midrule
+Bronze & Copie des sources, avec deux colonnes techniques : \cmd{\_source} et \cmd{\_ingere\_le} &
+  On ne modifie rien. On ajoute, on n'écrase jamais l'historique. \\
+Silver & Données nettoyées, typées, dédoublonnées et contrôlées &
+  Une ligne invalide n'est pas supprimée en silence : elle va en quarantaine. \\
+Gold & Tables prêtes à l'usage : une ligne par commande et des agrégats &
+  Chaque indicateur se recalcule à partir de Silver. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Toutes les tables sont au format \textbf{Apache Iceberg} et enregistrées dans le catalogue sous
+le nom \cmd{lakehouse.<couche>.<table>} : par exemple \cmd{lakehouse.silver.orders}.
+
+% =====================================================================
+\section{Déroulé}
+% =====================================================================
+
+Les notebooks sont dans JupyterLab, dossier \nb{notebooks/tp1/}. Ils contiennent les consignes
+détaillées : les cellules marquées \cmd{\# À COMPLÉTER} sont à écrire. Exécutez-les \textbf{dans l'ordre}.
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{@{}l >{\ttfamily}l X r@{}}
+\toprule
+& \normalfont\textbf{Notebook} & \textbf{Contenu} & \textbf{Durée} \\
+\midrule
+\textbf{Séance 1}
+ & 01\_bronze & Chargement de la source, dépôt des fichiers, ingestion CSV et JDBC & 1 h 15 \\
+ & 02\_silver & Profilage, nettoyage, règles de qualité, quarantaine, intégrité & 1 h 45 \\
+\midrule
+\textbf{Séance 2}
+ & 03\_gold\_sql\_incremental & Tables Gold, questions SQL, lot 2 avec \cmd{MERGE}, \emph{time travel} & 1 h 45 \\
+ & apps/dashboard\_tp1.py & Tableau de bord Streamlit & 1 h 15 \\
+\midrule
+\textbf{Bonus} & 04\_ml\_retards & Prédiction des retards (facultatif) & 1 h 30 \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{astuce}
+Avant chaque séance : \cmd{docker compose up -d}, puis \cmd{git pull} pour récupérer les dernières
+versions. Si vous avez déjà modifié un notebook, faites-en une copie avant le \cmd{git pull}.
+\end{astuce}
+
+% =====================================================================
+\section{Partie par partie}
+% =====================================================================
+
+\subsection*{Partie 1 -- Bronze \hfill \nb{01\_bronze}}
+
+Vous chargez la base PostgreSQL dans l'état où elle était le \textbf{1\textsuperscript{er} juillet 2018}
+(lot 1), vous déposez les fichiers CSV dans la zone \cmd{s3://landing/}, puis vous écrivez sept tables Bronze.
+
+\begin{notion}
+\textbf{On lit les fichiers bruts en texte.} Laisser Spark deviner les types (\cmd{inferSchema})
+transforme le code postal \cmd{09790} en nombre \cmd{9790} : le zéro est perdu pour toujours.
+Les types sont fixés plus tard, en Silver, de façon explicite.
+\end{notion}
+
+\begin{resultat}
+\cmd{SHOW TABLES IN lakehouse.bronze} liste 7 tables. \cmd{bronze.orders} contient environ
+86\,600 commandes : les autres n'existent pas encore au 1\textsuperscript{er} juillet 2018.
+\end{resultat}
+
+\subsection*{Partie 2 -- Silver \hfill \nb{02\_silver}}
+
+Vous mesurez d'abord les défauts (valeurs nulles, doublons), puis vous écrivez une table Silver par
+source. Un exemple complet est fourni pour \cmd{customers} ; vous traitez les autres sur le même modèle.
+
+\begin{notion}
+\textbf{Une valeur nulle n'est pas forcément une erreur.} Une commande en cours n'a pas de date de
+livraison : c'est normal. Une commande \og livrée \fg{} sans date de livraison est une erreur :
+elle part en \textbf{quarantaine}. Entre les deux, une incohérence sans gravité devient une
+\textbf{alerte} : on la garde et on la signale.
+\end{notion}
+
+\begin{resultat}
+Le bilan final compare Bronze et Silver table par table. Chaque écart s'explique par une règle :
+doublons retirés, lignes en quarantaine.
+\end{resultat}
+
+\subsection*{Partie 3 -- Gold, SQL et ingestion incrémentale \hfill \nb{03\_gold\_sql\_incremental}}
+
+Vous construisez \cmd{gold.commandes} (une ligne par commande) et trois tables d'indicateurs,
+puis vous répondez en SQL aux questions de la direction. Vous chargez ensuite le \textbf{lot 2} :
+deux mois et demi de nouvelles commandes et de changements de statut.
+
+\begin{notion}
+\textbf{Ingestion incrémentale.} On ne relit que les lignes modifiées depuis la dernière ingestion,
+grâce à la colonne \cmd{updated\_at} (le \emph{filigrane}). L'instruction \cmd{MERGE INTO} applique
+ces changements en Silver en une seule transaction : mise à jour des commandes existantes,
+insertion des nouvelles. Iceberg garde l'ancienne version de la table : on peut la relire
+avec \cmd{VERSION AS OF} (\emph{time travel}).
+\end{notion}
+
+\begin{resultat}
+Après le \cmd{MERGE}, \cmd{silver.orders} contient environ 99\,400 commandes, et le nombre de
+commandes \cmd{shipped} est divisé par deux environ : elles ont été livrées entre-temps.
+\end{resultat}
+
+% =====================================================================
+\section{Le tableau de bord}\label{sec:dashboard}
+% =====================================================================
+
+Ouvrez \nb{apps/dashboard\_tp1.py} dans JupyterLab. Le chargement des données et le filtre de période
+sont fournis. Complétez les quatre éléments demandés :
+
+\begin{enumerate}[leftmargin=*,nosep]
+  \item une ligne de quatre indicateurs : chiffre d'affaires, nombre de commandes, panier moyen, taux de retard ;
+  \item la courbe du chiffre d'affaires mensuel ;
+  \item le top 10 des catégories ;
+  \item le taux de retard par état.
+\end{enumerate}
+
+Pour le lancer, ouvrez un terminal dans JupyterLab (\emph{File > New > Terminal}) :
+\begin{lstlisting}[style=shell]
+streamlit run apps/dashboard_tp1.py --server.address 0.0.0.0
+\end{lstlisting}
+Puis ouvrez \url{http://localhost:8501}. Chaque enregistrement du fichier met la page à jour.
+
+\begin{attention}
+Le tableau de bord démarre sa propre session Spark. Sur une machine de 8 Go, arrêtez d'abord le
+noyau des notebooks (\emph{Kernel > Shut Down Kernel}) pour libérer la mémoire.
+\end{attention}
+
+\begin{astuce}
+Pensez à l'utilisateur : un titre clair, des unités (R\$, \%, jours), et des mois partiels exclus par
+défaut. Un graphique qui fait croire à un effondrement des ventes en fin de période est une erreur
+d'analyse, pas un détail.
+\end{astuce}
+
+% =====================================================================
+\section{Bonus : prédire les retards \hfill \nb{04\_ml\_retards}}
+% =====================================================================
+
+Vous entraînez un modèle de classification (scikit-learn) qui estime, au moment de la commande,
+la probabilité d'un retard de livraison. Ses prédictions sont écrites dans \cmd{gold.predictions\_retard},
+et le tableau de bord peut les afficher.
+
+\begin{notion}
+\textbf{Fuite de données.} Un modèle ne doit utiliser que des informations disponibles au moment de
+la prédiction. Le notebook vous fait ajouter volontairement le délai réel de livraison :
+le modèle devient presque parfait\dots{} et totalement inutilisable.
+\end{notion}
+
+% =====================================================================
+\section{Livrables et évaluation}\label{sec:livrables}
+% =====================================================================
+
+À déposer sur l'espace de cours, dans une archive \cmd{NOM\_Prenom\_TP1.zip} :
+\begin{itemize}[leftmargin=*,nosep]
+  \item les notebooks \cmd{01}, \cmd{02} et \cmd{03} \textbf{exécutés}, avec les réponses aux questions
+        (cellules \og Question \fg{}) rédigées en Markdown ;
+  \item le fichier \cmd{apps/dashboard\_tp1.py} et une capture d'écran du tableau de bord ;
+  \item \emph{(bonus)} le notebook \cmd{04} exécuté.
+\end{itemize}
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{0.9\textwidth}{@{}X r@{}}
+\toprule
+\textbf{Critère} & \textbf{Points} \\
+\midrule
+Bronze : ingestion CSV et JDBC correcte, colonnes techniques présentes & 3 \\
+Silver : typage, dédoublonnage, règles de qualité, quarantaine & 5 \\
+Gold : table des commandes et tables d'indicateurs correctes & 3 \\
+Requêtes SQL et ingestion incrémentale (\cmd{MERGE}, \emph{time travel}) & 3 \\
+Tableau de bord : complet, lisible, sans erreur d'analyse & 3 \\
+Réponses aux questions : justesse et esprit critique & 3 \\
+\midrule
+\textbf{Total} & \textbf{20} \\
+Bonus : modèle de ML évalué correctement, fuite de données expliquée & +2 \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+% =====================================================================
+\section{En cas de problème}
+% =====================================================================
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{5.4cm}X@{}}
+\toprule
+\textbf{Symptôme} & \textbf{Solution} \\
+\midrule
+\texttt{TABLE\_OR\_VIEW\_NOT\_FOUND} &
+  La table vient d'une étape précédente non exécutée : relancez les cellules du notebook précédent, dans l'ordre. \\
+\texttt{Fichier introuvable : .../data/olist/...} &
+  Les données ne sont pas dans votre dossier : \cmd{git pull}, puis vérifiez \cmd{data/olist/}. \\
+Le noyau meurt, ou \texttt{Java gateway process exited} &
+  Mémoire insuffisante : \emph{Kernel > Restart}, fermez les autres notebooks et le tableau de bord. \\
+\texttt{MERGE} : \texttt{cannot resolve ... columns} &
+  Les colonnes de la source ne correspondent pas à la table cible : comparez avec \cmd{printSchema()}. \\
+Vous avez exécuté le lot 2 deux fois &
+  Sans danger : le chargement est idempotent. Pour tout recommencer, relancez le lot 1, puis les notebooks 01 et 02. \\
+Le tableau de bord affiche une erreur Spark &
+  Vérifiez que les tables Gold existent (\cmd{SHOW TABLES IN lakehouse.gold}) et que la session Spark des notebooks est arrêtée. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\end{document}

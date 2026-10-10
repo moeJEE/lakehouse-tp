@@ -27,6 +27,15 @@ Le test doit se terminer par **ENVIRONNEMENT PRÊT**.
 
 Le guide complet est dans [`docs/support0_installation.tex`](docs/support0_installation.tex).
 
+## Supports du module
+
+| Support | Document | Notebooks |
+|---|---|---|
+| Support 0 — Installation | [`docs/support0_installation.tex`](docs/support0_installation.tex) | — |
+| TP 1 — Données structurées | [`docs/tp1_donnees_structurees.tex`](docs/tp1_donnees_structurees.tex) | `notebooks/tp1/`, `apps/dashboard_tp1.py` |
+
+Les données Olist sont dans [`data/olist/`](data/olist/README.md).
+
 ## Commandes utiles
 
 | Je veux… | Commande |
@@ -48,7 +57,7 @@ conf/                  configuration Spark et Trino
 docker/                images JupyterLab et Superset
 scripts/               création des buckets et test de l'environnement
 notebooks/ apps/       votre travail (conservé sur votre disque)
-data/                  jeux de données des TP (non versionnés)
+data/olist/            jeux de données des TP (Olist)
 docs/                  supports du module
 ```
 
