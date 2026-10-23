@@ -9,7 +9,7 @@ ARG PYTHON_VERSION=3.11
 USER root
 RUN python -m venv /opt/airflow-venv \
  && /opt/airflow-venv/bin/pip install --no-cache-dir \
-      "apache-airflow[postgres]==${AIRFLOW_VERSION}" \
+      "apache-airflow[postgres]==${AIRFLOW_VERSION}" apache-airflow-providers-standard \
       --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PYTHON_VERSION}.txt" \
  && ln -s /opt/airflow-venv/bin/airflow /usr/local/bin/airflow \
  && airflow version

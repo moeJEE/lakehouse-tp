@@ -17,6 +17,8 @@ mlruns/
 data/*
 !data/.gitkeep
 !data/olist/
+!data/catalogue/
+!data/modeles/
 data/olist/olist_geolocation_dataset.csv
 
 # LaTeX

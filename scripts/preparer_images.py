@@ -4,7 +4,7 @@ Sortie (dans data/catalogue/) :
     produits.jsonl              une fiche produit JSON par ligne (sous-ensemble des listings ABO)
     photos/vendeur=XX/*.jpg     les photos envoyées par les vendeurs, avec des défauts volontaires
     LISEZMOI.md                 provenance, licence, défauts ajoutés
-et models/mobilenet_v3_small.onnx (extracteur de caractéristiques d'images).
+et data/modeles/mobilenet_v3_small.onnx (extracteur de caractéristiques d'images).
 
 Exécuté une fois par le workflow « Préparer les images » ; inutile de le relancer pendant le TP.
 """
@@ -152,11 +152,11 @@ def exporter_modele():
     import torchvision
     modele = torchvision.models.mobilenet_v3_small(weights="IMAGENET1K_V1").eval()
     extracteur = torch.nn.Sequential(modele.features, modele.avgpool, torch.nn.Flatten())
-    Path("models").mkdir(exist_ok=True)
-    torch.onnx.export(extracteur, torch.randn(1, 3, 224, 224), "models/mobilenet_v3_small.onnx",
+    Path("data/modeles").mkdir(parents=True, exist_ok=True)
+    torch.onnx.export(extracteur, torch.randn(1, 3, 224, 224), "data/modeles/mobilenet_v3_small.onnx",
                       input_names=["image"], output_names=["vecteur"],
                       dynamic_axes={"image": {0: "lot"}, "vecteur": {0: "lot"}}, opset_version=17)
-    print("modèle exporté : models/mobilenet_v3_small.onnx")
+    print("modèle exporté : data/modeles/mobilenet_v3_small.onnx")
 
 
 if __name__ == "__main__":

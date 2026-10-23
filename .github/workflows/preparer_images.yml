@@ -30,11 +30,11 @@ jobs:
         run: |
           python - <<'PY'
           import numpy as np, onnxruntime as ort
-          s = ort.InferenceSession("models/mobilenet_v3_small.onnx")
+          s = ort.InferenceSession("data/modeles/mobilenet_v3_small.onnx")
           out = s.run(None, {"image": np.zeros((2, 3, 224, 224), np.float32)})[0]
           print("sortie du modèle :", out.shape)
           PY
-          du -sh data/catalogue models
+          du -sh data/catalogue data/modeles
           find data/catalogue/photos -type f | wc -l
       - name: Publier sur la branche donnees-tp3
         if: always()
@@ -43,6 +43,6 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b donnees-tp3
           git add -f preparation.log
-          git add data/catalogue models || true
+          git add -f data/catalogue data/modeles
           git commit -m "TP 3 : catalogue photo (sous-ensemble ABO) et modèle MobileNet ONNX"
           git push --force origin donnees-tp3

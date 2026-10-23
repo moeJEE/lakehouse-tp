@@ -154,7 +154,11 @@ services:
   trino:
     image: trinodb/trino:${TRINO_VERSION}
     profiles: ["sql", "full"]
-    environment: *s3-env
+    environment:
+      <<: *s3-env
+      PG_USER: ${PG_USER}
+      PG_PASSWORD: ${PG_PASSWORD}
+      PG_DB: ${PG_DB}
     volumes:
       - ./conf/trino/catalog:/etc/trino/catalog:ro
     ports:
