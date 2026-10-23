@@ -1,0 +1,46 @@
+# Prépare une fois le catalogue photo du TP 3 (sous-ensemble d'ABO) et le modèle ONNX,
+# puis les ajoute au dépôt. Déclenchement : modification de ce fichier ou du script, sur tp3.
+name: Préparer les images
+
+on:
+  push:
+    branches: [tp3]
+    paths: [".github/workflows/preparer_images.yml", "scripts/preparer_images.py"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  preparer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Installer les dépendances
+        run: |
+          pip install --quiet torch==2.5.1 torchvision==0.20.1 --index-url https://download.pytorch.org/whl/cpu
+          pip install --quiet pillow onnx onnxruntime numpy
+      - name: Préparer le catalogue et le modèle
+        run: python scripts/preparer_images.py
+      - name: Vérifier le modèle ONNX
+        run: |
+          python - <<'PY'
+          import numpy as np, onnxruntime as ort
+          s = ort.InferenceSession("models/mobilenet_v3_small.onnx")
+          out = s.run(None, {"image": np.zeros((2, 3, 224, 224), np.float32)})[0]
+          print("sortie du modèle :", out.shape)
+          PY
+          du -sh data/catalogue models
+          find data/catalogue/photos -type f | wc -l
+      - name: Ajouter au dépôt
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/catalogue models
+          git commit -m "TP 3 : catalogue photo (sous-ensemble ABO) et modèle MobileNet ONNX"
+          git pull --rebase
+          git push

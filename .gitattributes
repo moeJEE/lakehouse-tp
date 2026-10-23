@@ -9,3 +9,6 @@ Dockerfile   text eol=lf
 # Données : jamais de conversion des fins de ligne
 *.csv        -text
 *.json       -text
+*.jpg        binary
+*.onnx       binary
+*.jsonl      -text
