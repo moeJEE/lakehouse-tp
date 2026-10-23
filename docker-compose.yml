@@ -111,6 +111,45 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  # ---------- Orchestration : Apache Airflow (profil orchestration, TP 3) ----------
+  airflow:
+    image: ${AIRFLOW_IMAGE}
+    build:
+      context: ./docker/airflow
+    profiles: ["orchestration"]
+    environment:
+      <<: *s3-env
+      SPARK_CONF_DIR: /opt/spark-conf
+      PG_HOST: postgres
+      PG_USER: ${PG_USER}
+      PG_PASSWORD: ${PG_PASSWORD}
+      PG_DB: ${PG_DB}
+      CATALOG_URI: http://iceberg-rest:8181
+      DBT_PROFILES_DIR: /opt/dbt-profiles
+      DBT_SEND_ANONYMOUS_USAGE_STATS: "false"
+      # Les DAG sont lus dans votre dossier de travail
+      AIRFLOW__CORE__DAGS_FOLDER: /home/etudiant/work/notebooks/mon_travail/tp3/dags
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__PARALLELISM: "1"          # une tâche Spark à la fois : la mémoire est limitée
+      AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_ALL_ADMINS: "true"   # pas de mot de passe en local
+      AIRFLOW__DAG_PROCESSOR__REFRESH_INTERVAL: "30"
+    volumes:
+      - ./conf/dbt:/opt/dbt-profiles:ro
+      - ./notebooks:/home/etudiant/work/notebooks
+      - ./data:/home/etudiant/work/data
+      - ./conf/spark:/opt/spark-conf:ro
+      - ./scripts:/opt/lakehouse/scripts:ro
+    ports:
+      - "127.0.0.1:${PORT_AIRFLOW:-8085}:8080"
+    mem_limit: ${AIRFLOW_MEM_LIMIT:-3g}
+    depends_on:
+      iceberg-rest:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
   # ---------- Moteur SQL interactif (profil sql / full) ----------
   trino:
     image: trinodb/trino:${TRINO_VERSION}
