@@ -498,14 +498,20 @@ dbt run   --project-dir dbt_etoile --select fait_avis   # un seul modèle
 \end{lstlisting}
 
 \begin{resultat}
-\cmd{dbt build} se termine par \cmd{Completed successfully} : 7 modèles construits et 24 tests réussis.
-Les avis des commandes livrées en retard sont beaucoup plus souvent négatifs que ceux des commandes
-livrées à l'heure.
+\cmd{dbt build} se termine par \cmd{Completed successfully} et \cmd{PASS=31} : 7 modèles et 24 tests
+(22 déclarés dans \cmd{schema.yml}, 2 écrits en SQL dans \cmd{tests/}). Environ 55~\% des avis sont
+négatifs quand la livraison est en retard, contre environ 10~\% sinon.
 \end{resultat}
 
-\capture{tp2_03_dbt_build}{Résultat attendu de \texttt{dbt build} : 7 modèles et 24 tests, sans erreur.}{fig:dbtbuild}
+\capture{tp2_03_dbt_build}{Résultat attendu de \texttt{dbt build} : 7 modèles et 24 tests, sans erreur (\texttt{PASS=31}).}{fig:dbtbuild}
 \capture{tp2_03_lineage}{La documentation générée par dbt : le graphe des dépendances (\emph{lineage}) de la couche Gold.}{fig:lineage}
 \capture{tp2_03_resultat}{Résultat attendu de la partie 3 : avis négatifs selon le retard de livraison (question Q1).}{fig:res03}
+
+\begin{attention}
+Une corrélation n'est pas une cause : les colis qui ont subi un incident reçoivent de moins bonnes
+notes, mais ils sont aussi plus souvent en retard. Le notebook vous fait refaire la comparaison
+\emph{à retard égal} pour démasquer cette \textbf{variable de confusion}.
+\end{attention}
 
 \begin{attention}
 Une jointure entre deux faits de grains différents multiplie les lignes : une commande de trois
