@@ -25,7 +25,7 @@ jobs:
           pip install --quiet torch==2.5.1 torchvision==0.20.1 --index-url https://download.pytorch.org/whl/cpu
           pip install --quiet pillow onnx onnxruntime numpy
       - name: Préparer le catalogue et le modèle
-        run: python scripts/preparer_images.py
+        run: python scripts/preparer_images.py 2>&1 | tee preparation.log
       - name: Vérifier le modèle ONNX
         run: |
           python - <<'PY'
@@ -36,11 +36,13 @@ jobs:
           PY
           du -sh data/catalogue models
           find data/catalogue/photos -type f | wc -l
-      - name: Ajouter au dépôt
+      - name: Publier sur la branche donnees-tp3
+        if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/catalogue models
+          git checkout -b donnees-tp3
+          git add -f preparation.log
+          git add data/catalogue models || true
           git commit -m "TP 3 : catalogue photo (sous-ensemble ABO) et modèle MobileNet ONNX"
-          git pull --rebase
-          git push
+          git push --force origin donnees-tp3
