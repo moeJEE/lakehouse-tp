@@ -11,6 +11,7 @@ Il sert aux TP 1, 2 et 3 du module.
 | PostgreSQL | Base source transactionnelle | `localhost:15432` |
 | Trino *(profil `sql`/`full`)* | Moteur SQL interactif | http://localhost:8080 |
 | Superset *(profil `bi`/`full`)* | Tableaux de bord | http://localhost:8088 |
+| Airflow *(profil `orchestration`)* | Orchestration du pipeline (TP 3) | http://localhost:8085 |
 
 ## Démarrage rapide
 
@@ -18,7 +19,7 @@ Il sert aux TP 1, 2 et 3 du module.
 git clone https://github.com/moeJEE/lakehouse-tp.git
 cd lakehouse-tp
 cp .env.example .env              # machine de 8 Go : JUPYTER_MEM_LIMIT=3g
-docker compose --profile full pull
+docker compose --profile full --profile orchestration pull
 docker compose up -d
 docker compose exec jupyter python /opt/lakehouse/scripts/check_env.py
 ```
@@ -33,8 +34,10 @@ Le guide complet est dans [`docs/support0_installation.tex`](docs/support0_insta
 |---|---|---|
 | Support 0 — Installation | [`docs/support0_installation.tex`](docs/support0_installation.tex) | — |
 | TP 1 — Données structurées | [`docs/tp1_donnees_structurees.tex`](docs/tp1_donnees_structurees.tex) | `notebooks/tp1/`, `apps/dashboard_tp1.py` |
+| TP 2 — Texte et JSON | [`docs/tp2_texte_json.tex`](docs/tp2_texte_json.tex) | `notebooks/tp2/` (dont le projet dbt), `apps/dashboard_tp2.py` |
+| TP 3 — Images, orchestration et BI | [`docs/tp3_images_orchestration_bi.tex`](docs/tp3_images_orchestration_bi.tex) | `notebooks/tp3/` (notebooks, `pipeline/`, DAG Airflow) |
 
-Les données Olist sont dans [`data/olist/`](data/olist/README.md).
+Les données Olist sont dans [`data/olist/`](data/olist/README.md) ; le catalogue photo du TP 3 dans [`data/catalogue/`](data/catalogue/LISEZMOI.md).
 
 ## Règle pour les étudiants
 
@@ -55,6 +58,7 @@ Si `git pull` refuse de s'exécuter, un fichier du cours a été modifié par er
 |---|---|
 | Démarrer | `docker compose up -d` |
 | Démarrer avec Trino et Superset | `docker compose --profile full up -d` |
+| Démarrer Airflow (TP 3) | `docker compose --profile orchestration up -d` |
 | Voir l'état | `docker compose ps` |
 | Voir les erreurs d'un service | `docker compose logs --tail 50 jupyter` |
 | Arrêter (données conservées) | `docker compose --profile full down` |
@@ -78,9 +82,9 @@ docs/                  supports du module
 
 ## Pour l'enseignant
 
-Les images `ghcr.io/moejee/lakehouse-jupyter` et `ghcr.io/moejee/lakehouse-superset` sont construites
+Les images `ghcr.io/moejee/lakehouse-jupyter`, `lakehouse-superset` et `lakehouse-airflow` sont construites
 (amd64 + arm64) par le workflow **Images Docker** (onglet *Actions*). Après la première exécution,
-rendre les deux paquets publics dans *Packages > Package settings > Change visibility*, pour que les
+rendre les trois paquets publics dans *Packages > Package settings > Change visibility*, pour que les
 étudiants puissent les télécharger sans compte.
 
 Les identifiants de `.env.example` sont prévus pour un usage strictement local : tous les ports sont

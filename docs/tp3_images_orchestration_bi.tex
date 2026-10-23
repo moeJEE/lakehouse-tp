@@ -1,0 +1,500 @@
+% =====================================================================
+%  Module Data Lakehouse -- TP 3 : Images, orchestration et BI
+%  Compilation : pdflatex (2 passes)
+% =====================================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+\usepackage[babel=true]{microtype}
+
+\usepackage[a4paper,margin=2.3cm,headheight=14pt]{geometry}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{needspace}
+\usepackage{enumitem}
+\usepackage{amssymb}
+
+\usepackage[table]{xcolor}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,babel}
+\usepackage{listings}
+
+\usepackage[htt]{hyphenat}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xurl}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{graphicx}
+% Captures d'écran : <nom>.png à la racine du projet (Overleaf) ou dans images/tp3/ ;
+% tant que le fichier manque, un cadre indique le nom attendu.
+\newcommand{\capture}[3]{%
+  \begin{figure}[H]\centering
+  \IfFileExists{#1.png}%
+    {\includegraphics[width=0.92\textwidth,height=0.42\textheight,keepaspectratio]{#1.png}}%
+    {\IfFileExists{images/tp3/#1.png}%
+      {\includegraphics[width=0.92\textwidth,height=0.42\textheight,keepaspectratio]{images/tp3/#1.png}}%
+      {\fbox{\parbox[c][3.2cm][c]{0.88\textwidth}{\centering\footnotesize
+         Capture à ajouter : \texttt{\detokenize{#1}.png}}}}}%
+  \caption{#2}\label{#3}
+  \end{figure}}
+\captionsetup{font=small,labelfont=bf,labelsep=period}
+
+\setlength{\parskip}{0.5em}
+\setlength{\parindent}{0pt}
+\setlength{\emergencystretch}{3em}
+
+% ---------- Couleurs ----------
+\definecolor{lhblue}{HTML}{1F4E79}
+\definecolor{lhteal}{HTML}{0F766E}
+\definecolor{lhred}{HTML}{B91C1C}
+\definecolor{lhviolet}{HTML}{6D28D9}
+\definecolor{lhgray}{HTML}{F3F4F6}
+\definecolor{lhbronze}{HTML}{A16207}
+\definecolor{lhsilver}{HTML}{64748B}
+\definecolor{lhgold}{HTML}{CA8A04}
+
+% ---------- Titres, en-têtes ----------
+\titleformat{\section}{\needspace{6\baselineskip}\Large\bfseries\color{lhblue}}{\thesection.}{0.6em}{}
+\titleformat{\subsection}{\large\bfseries\color{lhblue}}{\thesubsection}{0.6em}{}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{lhblue}Module Data Lakehouse}
+\fancyhead[R]{\small\color{lhblue}TP 3 -- Images, orchestration et BI}
+\fancyfoot[C]{\small\thepage}
+
+% ---------- Encadrés : texte simple, sans boîte ----------
+% Un titre en gras introduit le paragraphe ; seul « Attention » est en rouge.
+\newenvironment{resultat}{\par\medskip\noindent\textbf{Résultat attendu :}\ }{\par\medskip}
+\newenvironment{astuce}{\par\medskip\noindent\textbf{Astuce :}\ }{\par\medskip}
+\newenvironment{attention}{\par\medskip\noindent\textbf{\textcolor{lhred}{Attention :}}\ }{\par\medskip}
+
+% ---------- Code ----------
+\lstset{
+  basicstyle=\ttfamily\small, columns=fullflexible, keepspaces=true,
+  breaklines=true, showstringspaces=false, upquote=true,
+  frame=single, framesep=5pt, xleftmargin=6pt, xrightmargin=6pt,
+  backgroundcolor=\color{lhgray}, rulecolor=\color{black!15},
+  commentstyle=\color{black!55}\itshape,
+  keywordstyle=\color{lhblue}\bfseries, stringstyle=\color{black!70},
+  literate=
+   {é}{{\'e}}1 {è}{{\`e}}1 {ê}{{\^e}}1 {à}{{\`a}}1 {ç}{{\c c}}1
+   {ù}{{\`u}}1 {î}{{\^i}}1 {ô}{{\^o}}1 {É}{{\'E}}1 {Ê}{{\^E}}1
+}
+\lstdefinestyle{shell}{language=bash,backgroundcolor=\color{black!85},
+  basicstyle=\ttfamily\small\color{white},rulecolor=\color{black!85},
+  commentstyle=\color{black!35}\itshape,keywordstyle=\color{white}}
+
+\newcommand{\cmd}[1]{\texttt{#1}}
+\newcommand{\cocher}{$\square$\ }
+\newcommand{\etape}[1]{\tikz[baseline=(n.base)]\node[circle,fill=lhblue,text=white,
+  font=\sffamily\bfseries\scriptsize,inner sep=1.3pt](n){#1};}
+\pdfstringdefDisableCommands{\def\cmd#1{#1}}
+
+\newenvironment{notion}{\par\medskip\noindent\textbf{\textcolor{lhblue}{Notion clé :}}\ }{\par\medskip}
+\newcommand{\nb}[1]{\textcolor{lhblue}{\texttt{#1}}}
+
+% =====================================================================
+\begin{document}
+% =====================================================================
+
+\begin{tikzpicture}[remember picture,overlay]
+  \fill[lhblue] (current page.north west) rectangle ([yshift=-5.2cm]current page.north east);
+  \node[anchor=north west,text=white,font=\sffamily] at ([xshift=2.3cm,yshift=-1.3cm]current page.north west)
+    {Module Data Lakehouse -- Cycle ingénieur 4\textsuperscript{e}/5\textsuperscript{e} année};
+  \node[anchor=north west,text=white,font=\sffamily\bfseries\fontsize{26}{30}\selectfont] at ([xshift=2.3cm,yshift=-2.2cm]current page.north west)
+    {TP 3 -- Images, orchestration et BI};
+  \node[anchor=north west,text=white!85!lhblue,font=\sffamily\large] at ([xshift=2.3cm,yshift=-3.6cm]current page.north west)
+    {Un pipeline de bout en bout : automatisé, contrôlé, optimisé et exposé};
+\end{tikzpicture}
+\thispagestyle{empty}
+\vspace*{4.2cm}
+
+{\large\bfseries\color{lhblue}En bref}\par\smallskip
+\begin{tabularx}{\linewidth}{@{}>{\bfseries}l X@{}}
+\toprule
+Objectif & Faire entrer des photos dans le Lakehouse et les analyser, automatiser tout le pipeline avec
+           Airflow, l'optimiser, puis l'exposer aux équipes métier avec Trino et Superset. \\
+Durée    & 3 séances de 3 h (+ environ 3 h de travail personnel). \\
+Prérequis & TP 1 et TP 2 terminés (tables Silver, projet dbt). Images du cours en version
+            \cmd{2026.2} (section~\ref{sec:deroule}). \\
+À rendre & Un compte rendu, les notebooks exécutés, le dossier \cmd{pipeline/}, les deux DAG et le
+           tableau de bord Superset (section~\ref{sec:livrables}). \\
+\bottomrule
+\end{tabularx}
+
+% =====================================================================
+\section{Le scénario}
+% =====================================================================
+
+Olist ouvre un \textbf{catalogue photo} : chaque vendeur envoie les photos de ses produits, avec une
+fiche descriptive. La direction pose trois exigences :
+
+\begin{enumerate}[leftmargin=*,nosep]
+  \item \textbf{Fiabilité :} aucune photo illisible, minuscule ou en double ne doit arriver dans le
+        catalogue, et les fiches mal catégorisées doivent être repérées.
+  \item \textbf{Automatisation :} le traitement doit tourner seul, chaque jour, et s'arrêter de
+        lui-même si un lot est douteux.
+  \item \textbf{Accès :} les équipes métier veulent interroger les données en SQL et disposer d'un
+        tableau de bord partagé, sans dépendre de l'équipe data.
+\end{enumerate}
+
+Ce TP termine le module : vous assemblez une architecture complète, de la donnée brute au tableau de
+bord, comme en entreprise.
+
+% =====================================================================
+\section{Les données}
+% =====================================================================
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{@{}l l X r@{}}
+\toprule
+\textbf{Source} & \textbf{Format} & \textbf{Contenu} & \textbf{Volume} \\
+\midrule
+Photos des produits & JPEG & Une photo par produit, 256 pixels au plus, rangées par vendeur
+  (\cmd{data/catalogue/photos/vendeur=XX/}) & $\approx$ 3\,000 fichiers \\
+Fiches produits & JSON & Une fiche par ligne : titre, type de produit, marque, couleur, vendeur
+  (\cmd{data/catalogue/produits.jsonl}) & 2\,906 fiches \\
+Modèle de vision & ONNX & Le réseau MobileNet, pré-entraîné (\cmd{data/modeles/}) & 3,7 Mo \\
+Tables des TP 1 et 2 & Iceberg & Commandes, avis, livraisons, schéma en étoile & -- \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Les photos et les fiches sont un sous-ensemble du jeu public \textbf{Amazon Berkeley Objects}
+(Amazon et université de Berkeley, licence CC BY-NC 4.0) : six types de produits (chaises,
+canapés, tables, tapis, chaussures et sacs à main), environ 500 par type, répartis entre douze
+vendeurs fictifs. Comme dans la
+réalité, le lot contient des défauts, ajoutés volontairement : fichiers coupés pendant l'envoi,
+fichier qui n'est pas une image, vignettes minuscules, même photo envoyée deux fois, ou recadrée.
+
+\begin{notion}
+\textbf{Une image est une donnée non structurée :} pour un ordinateur, ce n'est qu'une grille de
+pixels. Pour l'exploiter, on en extrait des informations \emph{structurées} : ses dimensions, une
+empreinte qui permet de reconnaître les doublons, et un \textbf{vecteur} de caractéristiques
+calculé par un réseau de neurones, qui résume ce qu'elle montre.
+\end{notion}
+
+% =====================================================================
+\section{L'architecture de bout en bout}
+% =====================================================================
+
+La figure~\ref{fig:archi} rassemble tout ce que vous avez construit pendant le module. Le TP 3 y
+ajoute les photos, l'\textbf{orchestration} (Airflow, qui déclenche et surveille chaque étape) et
+l'\textbf{exposition} (Trino et Superset, pour les équipes métier).
+
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  font=\sffamily\small, >=Stealth,
+  col/.style={draw=#1,thick,rounded corners=4pt,fill=#1!7,text width=3.3cm,align=left,
+              inner sep=6pt,font=\sffamily\footnotesize,minimum height=3.0cm},
+  op/.style={font=\sffamily\scriptsize,text=black!70,align=center},
+  num/.style={circle,fill=lhblue,text=white,font=\sffamily\bfseries\scriptsize,inner sep=1.4pt}]
+
+\node[col=gray] (src) at (0,0) {\textbf{Sources}\\[3pt] PostgreSQL (TP 1)\\ CSV, avis (TP 1, 2)\\ JSON du suivi (TP 2)\\ \textbf{photos, fiches (TP 3)}};
+\node[col=darkgray] (land) at (4.3,0) {\textbf{Landing}\\ \texttt{s3://landing/}\\[3pt] fichiers déposés\\ tels quels};
+\node[col=lhbronze] (br) at (8.6,0) {\textbf{Bronze}\\[3pt] copie fidèle\\ \texttt{photos} : octets\\ et empreinte \texttt{sha256}};
+\node[col=lhsilver] (si) at (12.9,0) {\textbf{Silver}\\[3pt] contrôlé, dédoublonné\\ \texttt{photos}\\ + quarantaine};
+\node[col=lhgold] (go) at (17.2,0) {\textbf{Gold}\\[3pt] étoile (dbt)\\ \texttt{photos\_vecteurs}\\ \texttt{photos\_controle}};
+
+\draw[->,thick] (src) -- node[num]{1} (land);
+\draw[->,thick] (land) -- node[num]{2} (br);
+\draw[->,thick] (br) -- node[num]{3} (si);
+\draw[->,thick] (si) -- node[num]{4} (go);
+
+% Orchestration
+\node[draw=lhblue,thick,rounded corners=4pt,fill=lhblue!5,minimum width=17.6cm,minimum height=1.1cm,
+      font=\sffamily\footnotesize,align=center] (af) at (10.75,3.0)
+  {\textbf{Apache Airflow} -- DAG \texttt{catalogue\_photos} (chaque jour) et \texttt{maintenance\_iceberg} (chaque semaine)};
+\node[num] at ([xshift=4mm]af.west) {5};
+\foreach \n in {land,br,si,go} \draw[->,lhblue,thick] (af.south -| \n) -- (\n.north);
+
+% Exposition et usages
+\node[col=lhblue,minimum height=1.4cm,text width=3.3cm] (tr) at (17.2,-3.6) {\textbf{Trino}\\ SQL interactif\\ et fédération};
+\node[col=lhblue,minimum height=1.4cm,text width=3.3cm] (ss) at (12.9,-3.6) {\textbf{Superset}\\ tableau de bord\\ de l'entreprise};
+\node[col=lhblue,minimum height=1.4cm,text width=3.3cm] (ml) at (21.5,-3.6) {\textbf{Vision}\\ MobileNet (ONNX)\\ + scikit-learn};
+\draw[->,thick] (go.south) -- node[num]{6} (tr.north);
+\draw[->,thick] (tr.west) -- node[num]{7} (ss.east);
+\draw[<->,thick] (go.east) -| node[num,pos=0.75]{8} (ml.north);
+\draw[->,thick] (src.south) -- ++(0,-4.1) -| node[num,pos=0.25]{9} (tr.south);
+\node[op,anchor=south west] at (0.2,-5.0) {fédération : Trino lit aussi PostgreSQL en direct};
+\end{tikzpicture}}
+\caption{L'architecture complète du module. Les numéros renvoient aux étapes décrites ci-dessous.}
+\label{fig:archi}
+\end{figure}
+
+\begin{description}[leftmargin=1.4em,labelindent=0pt,itemsep=3pt,font=\normalfont]
+\item[\etape{1}] \textbf{Dépôt :} les vendeurs envoient leurs photos dans la zone d'atterrissage,
+  par lots (script \cmd{deposer\_photos.py}).
+\item[\etape{2}] \textbf{Bronze :} chaque nouvelle photo devient une ligne de \cmd{bronze.photos} :
+  son chemin, son vendeur, sa taille, son empreinte exacte (\cmd{sha256}) et ses octets.
+\item[\etape{3}] \textbf{Silver :} chaque photo est décodée et contrôlée ; les photos illisibles,
+  trop petites ou en double partent en quarantaine.
+\item[\etape{4}] \textbf{Gold :} le réseau MobileNet calcule le vecteur de chaque photo ; un
+  classifieur reconnaît le type de produit et signale les fiches incohérentes. dbt reconstruit
+  l'étoile du TP 2.
+\item[\etape{5}] \textbf{Orchestration :} Airflow enchaîne ces étapes chaque jour, attend les
+  nouvelles photos, relance une étape en cas d'erreur passagère, arrête tout si un contrôle
+  échoue, et compacte les tables chaque semaine.
+\item[\etape{6}] \textbf{SQL interactif :} Trino lit les tables Gold, sans Spark et sans copie.
+\item[\etape{7}] \textbf{Tableau de bord :} Superset présente les indicateurs, à partir de Trino.
+\item[\etape{8}] \textbf{Vision par ordinateur :} les vecteurs servent à classer les photos et à
+  retrouver les photos semblables.
+\item[\etape{9}] \textbf{Fédération :} Trino joint, dans une même requête, la base PostgreSQL de
+  l'application de vente et les tables du Lakehouse.
+\end{description}
+
+% =====================================================================
+\section{Déroulé}\label{sec:deroule}
+% =====================================================================
+
+\textbf{Mettre à jour l'environnement (une fois, au début de la séance 1) :} le TP 3 utilise de
+nouvelles versions des images (avec la lecture d'images et Airflow). Dans le terminal Ubuntu, depuis
+le dossier du dépôt :
+\begin{lstlisting}[style=shell]
+git pull
+cp .env.example .env          # nouvelles versions des images (2026.2)
+docker compose --profile full --profile orchestration pull
+docker compose up -d
+\end{lstlisting}
+Si vous aviez modifié \cmd{.env} (machine de 8 Go), refaites la même modification. Puis, dans un
+terminal JupyterLab, copiez les énoncés :
+\begin{lstlisting}[style=shell]
+cp -r notebooks/tp3 notebooks/mon_travail/
+\end{lstlisting}
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{@{}l X l@{}}
+\toprule
+\textbf{Partie} & \textbf{Contenu} & \textbf{Services nécessaires} \\
+\midrule
+1 & Les photos dans le Lakehouse (notebook \nb{01\_images\_catalogue}) & de base \\
+2 & Le pipeline et Airflow (\nb{02\_pipeline\_airflow}, \nb{pipeline/}, \nb{dags/}) & \cmd{-{}-profile orchestration} \\
+3 & Mesurer et optimiser (\nb{03\_optimiser}) & de base, Airflow \\
+4 & Trino et Superset (\nb{04\_trino\_superset}) & \cmd{-{}-profile full} \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{attention}
+\textbf{Mémoire :} JupyterLab, Airflow, Trino et Superset ne doivent pas tourner tous ensemble sur une
+machine de 8 Go. Arrêtez ce qui ne sert pas à la partie en cours :
+\cmd{docker compose -{}-profile orchestration stop airflow} ou
+\cmd{docker compose -{}-profile full stop trino superset}.
+\end{attention}
+
+% =====================================================================
+\section{Partie par partie}
+% =====================================================================
+
+\subsection*{Partie 1 -- Des photos dans le Lakehouse \hfill \nb{01\_images\_catalogue}}
+
+Vous ingérez le premier lot de photos en Bronze, vous contrôlez chaque photo en Silver, puis vous
+calculez les vecteurs MobileNet en Gold, pour retrouver les photos semblables et contrôler les
+types de produits déclarés.
+
+\begin{notion}
+\textbf{Deux sortes de doublons :} l'empreinte \cmd{sha256} identifie un fichier \emph{à l'octet
+près} : elle reconnaît la même photo, même renommée ou envoyée par un autre vendeur. Mais une photo
+recadrée ou recompressée a une empreinte complètement différente : on applique donc aussi une règle
+métier, \og une seule photo par produit \fg{}. Comparer les photos d'un produit à l'autre serait
+trompeur : beaucoup de fiches sont des variantes d'un même modèle, photographiées de la même façon.
+\end{notion}
+
+\begin{notion}
+\textbf{L'apprentissage par transfert :} MobileNet a appris, sur des millions d'images, à reconnaître
+des formes, des textures et des parties d'objets. On ne le réentraîne pas : on récupère, pour chaque
+photo, le vecteur de 576 nombres qu'il calcule avant sa décision finale, et une simple régression
+logistique apprend nos six types de produits à partir de ces vecteurs. Le modèle est fourni au
+format \textbf{ONNX}, lisible sans PyTorch.
+\end{notion}
+
+\begin{resultat}
+Le lot 1 compte 1\,977 photos ; 76 partent en quarantaine (22 trop petites, 21 doublons exacts,
+17 illisibles, 16 photos en double). Le type de produit est reconnu sur environ 95~\% des photos ;
+une cinquantaine de fiches sont signalées, dont beaucoup sont réellement mal catégorisées (un canapé
+déclaré comme chaise, des barquettes déclarées comme table).
+\end{resultat}
+
+\capture{tp3_01_doublons}{Partie 1 : un produit envoyé avec deux photos, la même recadrée.}{fig:res01a}
+\capture{tp3_01_similaires}{Partie 1 : une photo et les cinq photos les plus semblables selon MobileNet.}{fig:res01b}
+
+\subsection*{Partie 2 -- Du notebook au pipeline \hfill \nb{02\_pipeline\_airflow}}
+
+Le code du notebook devient quatre scripts, un par étape, puis un DAG Airflow les enchaîne
+(figure~\ref{fig:dag}).
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\sffamily\footnotesize, >=Stealth, node distance=0.55cm,
+  t/.style={draw=lhblue,thick,rounded corners=3pt,fill=lhblue!6,align=center,inner sep=4pt,minimum height=0.95cm,text width=2.05cm}]
+\node[t] (a) {\texttt{attendre\_}\\\texttt{photos}};
+\node[t,right=of a] (b) {\texttt{bronze\_}\\\texttt{photos}};
+\node[t,right=of b] (c) {\texttt{silver\_}\\\texttt{photos}};
+\node[t,right=of c] (d) {\texttt{gold\_}\\\texttt{photos}};
+\node[t,right=of d] (e) {\texttt{controle\_}\\\texttt{qualite}};
+\node[t,right=of e] (f) {\texttt{dbt\_build}};
+\foreach \x/\y in {a/b,b/c,c/d,d/e,e/f} \draw[->,thick] (\x) -- (\y);
+\node[font=\sffamily\scriptsize,text=black!65,below=2pt of a,align=center] {capteur};
+\node[font=\sffamily\scriptsize,text=lhred,below=2pt of e,align=center] {bloquant};
+\end{tikzpicture}
+\caption{Le DAG \texttt{catalogue\_photos}. Une tâche ne démarre que si la précédente a réussi.}
+\label{fig:dag}
+\end{figure}
+
+\begin{notion}
+\textbf{Orchestrer un pipeline :} un orchestrateur comme \textbf{Apache Airflow} décrit les étapes
+d'un traitement et leur ordre dans un \textbf{DAG}, un graphe de tâches écrit en Python. Il les
+déclenche selon un \textbf{calendrier} (\cmd{@daily}) ou quand une condition est remplie (un
+\emph{capteur} attend de nouvelles photos), \textbf{relance} une tâche après une erreur passagère,
+n'exécute une tâche que si les précédentes ont réussi, et garde le \textbf{journal} et la durée de
+chaque exécution.
+\end{notion}
+
+\begin{notion}
+\textbf{Idempotence :} une étape idempotente peut être relancée sans changer le résultat. C'est
+indispensable dès qu'un pipeline est automatisé : les relances sont fréquentes (panne, relance
+automatique, rejeu). Les scripts du TP sont incrémentaux : ils ne traitent que les photos qu'ils
+n'ont pas encore vues.
+\end{notion}
+
+\begin{resultat}
+Le DAG s'exécute sans erreur sur le lot 1, puis, après le dépôt du lot 2, ne traite que les
+nouvelles photos. Avec un seuil de rejet abaissé à 1~\%, la tâche \cmd{controle\_qualite} échoue
+après ses relances, et \cmd{dbt\_build} n'est pas exécutée.
+\end{resultat}
+
+\capture{tp3_02_graph}{Partie 2 : le DAG \texttt{catalogue\_photos} dans Airflow, vue \emph{Graph}.}{fig:res02a}
+\capture{tp3_02_gantt}{Partie 2 : la durée de chaque tâche, vue \emph{Gantt}, pour le lot 1 et le lot 2.}{fig:res02b}
+
+\subsection*{Partie 3 -- Mesurer, puis optimiser \hfill \nb{03\_optimiser}}
+
+Vous mesurez l'effet des petits fichiers, vous compactez une table, vous partitionnez une table par
+vendeur, puis vous confiez la maintenance à un second DAG, hebdomadaire.
+
+\begin{notion}
+\textbf{Ranger les fichiers :} chaque écriture ajoute des fichiers et une version à une table
+Iceberg. Le \textbf{compactage} (\cmd{rewrite\_data\_files}) regroupe les petits fichiers ; la
+\textbf{purge} (\cmd{expire\_snapshots}) supprime les versions trop anciennes. Le
+\textbf{partitionnement} range les fichiers par valeur d'une colonne : une requête filtrée ne lit
+que les fichiers utiles.
+\end{notion}
+
+\begin{resultat}
+Après 90 petites écritures, la table de démonstration compte plus de 90 fichiers ; le compactage
+les ramène à un seul. La table partitionnée compte un fichier par vendeur.
+\end{resultat}
+
+\capture{tp3_03_fichiers}{Partie 3 : le nombre de fichiers avant et après le compactage.}{fig:res03}
+
+\subsection*{Partie 4 -- Trino et Superset \hfill \nb{04\_trino\_superset}}
+
+Vous interrogez le Lakehouse avec Trino, vous joignez la base PostgreSQL et les tables Iceberg dans
+une même requête, puis vous construisez le tableau de bord de l'entreprise dans Superset.
+
+\begin{notion}
+\textbf{Séparer le stockage et le calcul :} les tables Iceberg sont de simples fichiers dans S3,
+décrits par le catalogue. Plusieurs moteurs les utilisent \emph{en même temps} et sans copie :
+Spark pour les traitements lourds, Trino pour les requêtes interactives, Superset au-dessus de
+Trino. Chacun se dimensionne et se remplace indépendamment des données.
+\end{notion}
+
+\begin{resultat}
+La requête fédérée montre les quelques commandes de PostgreSQL absentes de \cmd{silver.orders} :
+celles mises en quarantaine au TP 1.
+\end{resultat}
+
+% =====================================================================
+\section{Le tableau de bord}\label{sec:dashboard}
+% =====================================================================
+
+Dans Superset (\url{http://localhost:8088}, \cmd{admin} / \cmd{admin}) :
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+  \item \textbf{Connecter Trino :} \emph{Settings > Database Connections > + Database}, choisir
+        \emph{Trino}, adresse \cmd{trino://superset@trino:8080/lakehouse}, puis \emph{Test connection}.
+  \item \textbf{Déclarer les jeux de données :} \emph{Datasets > + Dataset} pour
+        \cmd{gold.fait\_avis}, \cmd{gold.fait\_livraisons} et \cmd{gold.photos\_controle}. Dans
+        \emph{SQL Lab}, exécutez la requête de l'étape 4 du notebook 04 et enregistrez-la comme jeu
+        de données (\emph{Save dataset}).
+  \item \textbf{Construire au moins cinq graphiques :} la note moyenne et la part d'avis négatifs
+        (indicateurs), la part d'avis négatifs par mois, les incidents par transporteur, la part de
+        photos rejetées par vendeur, et le tableau des fiches incohérentes.
+  \item \textbf{Assembler le tableau de bord}, avec un \textbf{filtre} commun (par exemple l'état
+        du client), et donnez-lui un titre clair.
+\end{enumerate}
+
+\capture{tp3_dashboard}{Le tableau de bord Superset attendu.}{fig:dash}
+
+% =====================================================================
+\section{Livrables}\label{sec:livrables}
+% =====================================================================
+
+\subsection*{Le compte rendu}
+
+Il ne recopie pas le code : il explique vos choix et vos résultats.
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+  \item \textbf{Architecture} : votre schéma de bout en bout, et le rôle de chaque composant.
+  \item \textbf{Images} : le stockage choisi, les règles de qualité, le bilan de la quarantaine, et ce
+        que montrent la recherche de photos semblables et le contrôle des types.
+  \item \textbf{Orchestration} : votre DAG, l'idempotence de vos scripts, le comportement en cas
+        d'échec et de relance, les captures des vues \emph{Graph} et \emph{Gantt}.
+  \item \textbf{Optimisation} : vos mesures avant et après, et vos choix de partitionnement.
+  \item \textbf{Exposition} : la requête fédérée, une capture du tableau de bord Superset, et la
+        comparaison avec Streamlit.
+  \item \textbf{Réponses aux questions} des notebooks, rédigées et argumentées.
+  \item \textbf{Limites et améliorations} : ce qu'il faudrait de plus pour passer en production
+        (surveillance et alertes, droits d'accès, montée en charge, coûts).
+\end{enumerate}
+
+\clearpage
+% =====================================================================
+\section*{Annexe -- Aide-mémoire}\label{sec:aidememoire}
+% =====================================================================
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.22}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{4.1cm} >{\raggedright\arraybackslash\ttfamily\footnotesize}X@{}}
+\toprule
+\normalfont\textbf{Je veux\dots} & \normalfont\textbf{Code} \\
+\midrule
+\multicolumn{2}{@{}l}{\textbf{\textcolor{lhblue}{Fichiers et images}}} \\
+Lire des fichiers binaires & spark.read.format("binaryFile").option("recursiveFileLookup", True).load(chemin) \\
+Empreinte exacte d'un fichier & F.sha2("content", 256) \\
+Décoder une image & Image.open(io.BytesIO(octets)) \quad img.load() \\
+\midrule
+\multicolumn{2}{@{}l}{\textbf{\textcolor{lhblue}{Airflow}}} \\
+Démarrer / arrêter Airflow & docker compose -{}-profile orchestration up -d \quad \dots stop airflow \\
+Une tâche qui lance un script & BashOperator(task\_id="x", bash\_command="python x.py") \\
+Attendre une condition & PythonSensor(task\_id="x", python\_callable=f, mode="reschedule") \\
+Ordre des tâches & a >{}> b >{}> c \\
+Relances automatiques & default\_args=\{"retries": 2, "retry\_delay": timedelta(minutes=1)\} \\
+Calendrier & schedule="@daily" \quad schedule="0 3 * * 0" \textrm{(dimanche, 3 h)} \\
+\midrule
+\multicolumn{2}{@{}l}{\textbf{\textcolor{lhblue}{Iceberg}}} \\
+Fichiers d'une table & SELECT * FROM lakehouse.silver.photos.files \\
+Compacter & CALL lakehouse.system.rewrite\_data\_files(table => 'silver.photos') \\
+Purger l'historique & CALL lakehouse.system.expire\_snapshots(table => '...', older\_than => TIMESTAMP '...') \\
+Partitionner & CREATE TABLE ... USING iceberg PARTITIONED BY (vendeur) AS SELECT ... \\
+\midrule
+\multicolumn{2}{@{}l}{\textbf{\textcolor{lhblue}{Trino}}} \\
+Nom complet d'une table & lakehouse.gold.fait\_avis \quad postgres.ventes.orders \\
+Versions d'une table & SELECT * FROM lakehouse.silver."orders\$snapshots" \\
+Relire une version & SELECT ... FROM lakehouse.silver.orders FOR VERSION AS OF <snapshot\_id> \\
+Connexion Superset & trino://superset@trino:8080/lakehouse \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\end{document}
