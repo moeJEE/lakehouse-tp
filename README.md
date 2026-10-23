@@ -12,6 +12,8 @@ Il sert aux TP 1, 2 et 3 du module.
 | Trino *(profil `sql`/`full`)* | Moteur SQL interactif | http://localhost:8080 |
 | Superset *(profil `bi`/`full`)* | Tableaux de bord | http://localhost:8088 |
 | Airflow *(profil `orchestration`)* | Orchestration du pipeline (TP 3) | http://localhost:8085 |
+| Grafana, Prometheus *(profil `observabilite`)* | Supervision : métriques, tableaux de bord, alertes (TP 3) | http://localhost:3000, http://localhost:9090 |
+| Marquez *(profil `observabilite`)* | Observabilité des données : lineage OpenLineage (TP 3) | http://localhost:3001 |
 
 ## Démarrage rapide
 
@@ -19,7 +21,7 @@ Il sert aux TP 1, 2 et 3 du module.
 git clone https://github.com/moeJEE/lakehouse-tp.git
 cd lakehouse-tp
 cp .env.example .env              # machine de 8 Go : JUPYTER_MEM_LIMIT=3g
-docker compose --profile full --profile orchestration pull
+docker compose --profile full --profile orchestration --profile observabilite pull
 docker compose up -d
 docker compose exec jupyter python /opt/lakehouse/scripts/check_env.py
 ```

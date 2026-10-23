@@ -1,0 +1,10 @@
+# Prometheus interroge (« scrape ») chaque source de métriques toutes les 15 secondes.
+global:
+  scrape_interval: 15s
+scrape_configs:
+  - job_name: conteneurs          # CPU et mémoire de chaque conteneur (cAdvisor)
+    static_configs: [{targets: ["cadvisor:8080"]}]
+  - job_name: airflow             # métriques d'Airflow, reçues en StatsD et converties
+    static_configs: [{targets: ["statsd-exporter:9102"]}]
+  - job_name: prometheus
+    static_configs: [{targets: ["localhost:9090"]}]

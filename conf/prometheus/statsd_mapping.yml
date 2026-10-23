@@ -1,0 +1,15 @@
+# Traduit les métriques StatsD d'Airflow en métriques Prometheus avec des étiquettes.
+mappings:
+  - match: "airflow.dag.*.*.duration"
+    name: "airflow_tache_duree_secondes"
+    labels: {dag_id: "$1", task_id: "$2"}
+  - match: "airflow.ti.finish.*.*.*"
+    name: "airflow_tache_terminee_total"
+    labels: {dag_id: "$1", task_id: "$2", etat: "$3"}
+  - match: "airflow.ti_failures"
+    name: "airflow_taches_en_echec_total"
+  - match: "airflow.ti_successes"
+    name: "airflow_taches_reussies_total"
+  - match: "airflow.dagrun.duration.*.*"
+    name: "airflow_execution_dag_duree_secondes"
+    labels: {etat: "$1", dag_id: "$2"}

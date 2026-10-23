@@ -119,7 +119,8 @@
 \begin{tabularx}{\linewidth}{@{}>{\bfseries}l X@{}}
 \toprule
 Objectif & Faire entrer des photos dans le Lakehouse et les analyser, automatiser tout le pipeline avec
-           Airflow, l'optimiser, puis l'exposer aux équipes métier avec Trino et Superset. \\
+           Airflow, l'optimiser, l'exposer aux équipes métier avec Trino et Superset, puis le surveiller
+           (Prometheus, Grafana) et l'observer (OpenLineage, Marquez). \\
 Durée    & 3 séances de 3 h (+ environ 3 h de travail personnel). \\
 Prérequis & TP 1 et TP 2 terminés (tables Silver, projet dbt). Images du cours en version
             \cmd{2026.2} (section~\ref{sec:deroule}). \\
@@ -188,7 +189,8 @@ calculé par un réseau de neurones, qui résume ce qu'elle montre.
 
 La figure~\ref{fig:archi} rassemble tout ce que vous avez construit pendant le module. Le TP 3 y
 ajoute les photos, l'\textbf{orchestration} (Airflow, qui déclenche et surveille chaque étape) et
-l'\textbf{exposition} (Trino et Superset, pour les équipes métier).
+l'\textbf{exposition} (Trino et Superset, pour les équipes métier), puis la \textbf{supervision} et
+l'\textbf{observabilité} de toute la plateforme.
 
 \begin{figure}[H]
 \centering
@@ -216,6 +218,9 @@ l'\textbf{exposition} (Trino et Superset, pour les équipes métier).
       font=\sffamily\footnotesize,align=center] (af) at (10.75,3.0)
   {\textbf{Apache Airflow} -- DAG \texttt{catalogue\_photos} (chaque jour) et \texttt{maintenance\_iceberg} (chaque semaine)};
 \node[num] at ([xshift=4mm]af.west) {5};
+\node[draw=lhteal,thick,rounded corners=4pt,fill=lhteal!6,minimum width=17.6cm,minimum height=0.8cm,
+      font=\sffamily\footnotesize,align=center] (obs) at (10.75,4.45)
+  {\textbf{Supervision et observabilité} -- Prometheus + Grafana (métriques, alertes) \quad OpenLineage + Marquez (lineage)};
 \foreach \n in {land,br,si,go} \draw[->,lhblue,thick] (af.south -| \n) -- (\n.north);
 
 % Exposition et usages
@@ -263,7 +268,7 @@ le dossier du dépôt :
 \begin{lstlisting}[style=shell]
 git pull
 cp .env.example .env          # nouvelles versions des images (2026.2)
-docker compose --profile full --profile orchestration pull
+docker compose --profile full --profile orchestration --profile observabilite pull
 docker compose up -d
 \end{lstlisting}
 Si vous aviez modifié \cmd{.env} (machine de 8 Go), refaites la même modification. Puis, dans un
@@ -283,6 +288,7 @@ cp -r notebooks/tp3 notebooks/mon_travail/
 2 & Le pipeline et Airflow (\nb{02\_pipeline\_airflow}, \nb{pipeline/}, \nb{dags/}) & \cmd{-{}-profile orchestration} \\
 3 & Mesurer et optimiser (\nb{03\_optimiser}) & de base, Airflow \\
 4 & Trino et Superset (\nb{04\_trino\_superset}) & \cmd{-{}-profile full} \\
+5 & Surveiller et observer (\nb{05\_surveiller\_observer}) & \cmd{-{}-profile observabilite}, Airflow \\
 \bottomrule
 \end{tabularx}
 \end{center}
@@ -291,7 +297,8 @@ cp -r notebooks/tp3 notebooks/mon_travail/
 \textbf{Mémoire :} JupyterLab, Airflow, Trino et Superset ne doivent pas tourner tous ensemble sur une
 machine de 8 Go. Arrêtez ce qui ne sert pas à la partie en cours :
 \cmd{docker compose -{}-profile orchestration stop airflow} ou
-\cmd{docker compose -{}-profile full stop trino superset}.
+\cmd{docker compose -{}-profile full stop trino superset}. Les outils de la partie 5 ajoutent
+environ 1,5 Go.
 \end{attention}
 
 % =====================================================================
@@ -337,8 +344,8 @@ Le code du notebook devient quatre scripts, un par étape, puis un DAG Airflow l
 
 \begin{figure}[H]
 \centering
-\begin{tikzpicture}[font=\sffamily\footnotesize, >=Stealth, node distance=0.55cm,
-  t/.style={draw=lhblue,thick,rounded corners=3pt,fill=lhblue!6,align=center,inner sep=4pt,minimum height=0.95cm,text width=2.05cm}]
+\begin{tikzpicture}[font=\sffamily\footnotesize, >=Stealth, node distance=0.4cm,
+  t/.style={draw=lhblue,thick,rounded corners=3pt,fill=lhblue!6,align=center,inner sep=4pt,minimum height=0.95cm,text width=1.95cm}]
 \node[t] (a) {\texttt{attendre\_}\\\texttt{photos}};
 \node[t,right=of a] (b) {\texttt{bronze\_}\\\texttt{photos}};
 \node[t,right=of b] (c) {\texttt{silver\_}\\\texttt{photos}};
@@ -415,6 +422,52 @@ La requête fédérée montre les quelques commandes de PostgreSQL absentes de \
 celles mises en quarantaine au TP 1.
 \end{resultat}
 
+\subsection*{Partie 5 -- Surveiller et observer \hfill \nb{05\_surveiller\_observer}}
+
+Tout est déjà configuré : vous utilisez les outils comme une équipe d'exploitation. Vous lisez le
+tableau de bord Grafana pendant une exécution du DAG, vous créez une alerte sur les tâches en échec,
+puis vous suivez dans Marquez le lineage de \cmd{gold.photos\_controle}.
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{@{}l X X@{}}
+\toprule
+& \textbf{Monitoring (supervision)} & \textbf{Observabilité des données} \\
+\midrule
+Question & Les \emph{services} tournent-ils bien ? & Les \emph{données} sont-elles fiables, d'où viennent-elles ? \\
+Mesures & processeur, mémoire, durée et échecs des tâches & lineage, historique des exécutions, schémas \\
+Outils du TP & Prometheus (métriques) + Grafana (tableaux de bord, alertes) & OpenLineage (format des événements) + Marquez (stockage, interface) \\
+En entreprise & Datadog, CloudWatch, Azure Monitor & DataHub, Unity Catalog, Monte Carlo, Atlan \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{notion}
+\textbf{Le lineage :} le graphe qui relie chaque table aux jobs qui la produisent et aux tables
+qu'ils lisent. Avec OpenLineage, chaque job Spark envoie lui-même la description de ses entrées et de
+ses sorties à chaque exécution : le graphe n'est pas dessiné à la main, il est \emph{déduit des
+exécutions réelles}. Il sert à trouver l'origine d'une erreur (\emph{analyse de cause}) et à savoir
+ce qui sera touché par un changement (\emph{analyse d'impact}).
+\end{notion}
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{@{}l l X@{}}
+\toprule
+\textbf{Outil} & \textbf{Adresse} & \textbf{Connexion} \\
+\midrule
+Grafana    & \url{http://localhost:3000} & \cmd{admin} / \cmd{admin}, tableau \emph{Lakehouse -- supervision} \\
+Prometheus & \url{http://localhost:9090} & sans mot de passe (onglet \emph{Graph} pour essayer PromQL) \\
+Marquez    & \url{http://localhost:3001} & sans mot de passe, espace de noms \cmd{lakehouse} \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\capture{tp3_05_grafana}{Partie 5 : le tableau de bord Grafana pendant une exécution du DAG.}{fig:grafana}
+\capture{tp3_05_lineage}{Partie 5 : le lineage de \texttt{gold.photos\_controle} dans Marquez.}{fig:marquez}
+
 % =====================================================================
 \section{Le tableau de bord}\label{sec:dashboard}
 % =====================================================================
@@ -452,9 +505,11 @@ Il ne recopie pas le code : il explique vos choix et vos résultats.
   \item \textbf{Optimisation} : vos mesures avant et après, et vos choix de partitionnement.
   \item \textbf{Exposition} : la requête fédérée, une capture du tableau de bord Superset, et la
         comparaison avec Streamlit.
+  \item \textbf{Supervision et observabilité} : ce que montrent Grafana et Marquez, l'alerte créée,
+        et la différence entre les deux approches.
   \item \textbf{Réponses aux questions} des notebooks, rédigées et argumentées.
   \item \textbf{Limites et améliorations} : ce qu'il faudrait de plus pour passer en production
-        (surveillance et alertes, droits d'accès, montée en charge, coûts).
+        (droits d'accès, montée en charge, coûts, astreinte).
 \end{enumerate}
 
 \clearpage
@@ -493,6 +548,11 @@ Nom complet d'une table & lakehouse.gold.fait\_avis \quad postgres.ventes.orders
 Versions d'une table & SELECT * FROM lakehouse.silver."orders\$snapshots" \\
 Relire une version & SELECT ... FROM lakehouse.silver.orders FOR VERSION AS OF <snapshot\_id> \\
 Connexion Superset & trino://superset@trino:8080/lakehouse \\
+\midrule
+\multicolumn{2}{@{}l}{\textbf{\textcolor{lhblue}{Supervision}}} \\
+Démarrer les outils & docker compose -{}-profile observabilite up -d \\
+Mémoire des conteneurs (PromQL) & container\_memory\_working\_set\_bytes\{name=\~{}"lakehouse-.*"\} \\
+Tâches en échec sur 5 min & sum(increase(airflow\_taches\_en\_echec\_total[5m])) \\
 \bottomrule
 \end{tabularx}
 \end{center}

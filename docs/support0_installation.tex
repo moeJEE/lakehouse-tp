@@ -220,13 +220,20 @@ Airflow &
   L'orchestrateur : il enchaîne automatiquement les étapes du pipeline, chaque jour, et
   surveille leur exécution (TP 3). &
   Airflow géré (AWS, Google Cloud) & \texttt{-{}-profile} \\
+Prometheus, Grafana &
+  La supervision : métriques des conteneurs et des tâches, tableaux de bord, alertes (TP 3). &
+  Datadog, CloudWatch & \texttt{-{}-profile} \\
+Marquez &
+  L'observabilité des données : le lineage (quelle table est produite par quel job, à partir de
+  quoi), reçu au format OpenLineage (TP 3). &
+  DataHub, Unity Catalog & \texttt{-{}-profile} \\
 \bottomrule
 \end{tabularx}
 
 \smallskip
 {\footnotesize \textbf{auto} : démarre avec \cmd{docker compose up -d}. \quad
 \textbf{-{}-profile} : utilisés au TP 3, démarrés avec \cmd{docker compose -{}-profile full up -d}
-(Trino, Superset) ou \cmd{-{}-profile orchestration} (Airflow).}
+(Trino, Superset), \cmd{-{}-profile orchestration} (Airflow) ou \cmd{-{}-profile observabilite}.}
 \end{center}
 
 \subsection*{Ce qui est conservé, et où}
@@ -329,7 +336,7 @@ cp .env.example .env
 
 \subsection*{Étape 3 -- Télécharger les images (le plus long)}
 \begin{lstlisting}[style=shell]
-docker compose --profile full --profile orchestration pull
+docker compose --profile full --profile orchestration --profile observabilite pull
 \end{lstlisting}
 Si le téléchargement s'interrompt, relancez simplement la même commande.
 
@@ -429,6 +436,8 @@ sont des dossiers ; les fichiers sont décalés sous le dossier qui les contient
 \fic[3.6]{lakehouse.properties} & connexion au même catalogue Iceberg que Spark ; \\
 \fic[3.6]{postgres.properties} & la base PostgreSQL du TP 1 (fédération, TP 3) ; \\
 \fic[3.6]{tpch.properties} & jeu de données de démonstration intégré à Trino. \\
+\fic[2.4]{spark-airflow/} & Réglages de Spark pour les tâches Airflow, avec l'envoi du lineage (TP 3). \\
+\fic[2.4]{prometheus/}, \texttt{grafana/} & Supervision : sources de métriques, tableau de bord Grafana (TP 3). \\
 \fic[2.4]{dbt/profiles.yml} & Connexions de dbt : cible \texttt{spark} et cible \texttt{trino} (TP 2 et 3). \\
 \addlinespace
 \dossier[1.2]{scripts/} & Scripts Python exécutés dans le conteneur JupyterLab. \\*
@@ -482,12 +491,15 @@ Spark UI          & \url{http://localhost:4040} & visible pendant qu'un notebook
 Trino$^*$         & \url{http://localhost:8080} & nom d'utilisateur libre \\
 Superset$^*$      & \url{http://localhost:8088} & \texttt{admin} / \texttt{admin} \\
 Airflow$^{**}$    & \url{http://localhost:8085} & sans mot de passe \\
+Grafana$^{\dagger}$ & \url{http://localhost:3000} & \texttt{admin} / \texttt{admin} \\
+Marquez$^{\dagger}$ & \url{http://localhost:3001} & sans mot de passe \\
 \bottomrule
 \end{tabularx}
 
 \smallskip
 {\footnotesize $^*$ Après \cmd{docker compose -{}-profile full up -d}. \quad
-$^{**}$ Après \cmd{docker compose -{}-profile orchestration up -d} (TP 3).}
+$^{**}$ Après \cmd{docker compose -{}-profile orchestration up -d} (TP 3). \quad
+$^{\dagger}$ Après \cmd{docker compose -{}-profile observabilite up -d} (TP 3).}
 \end{center}
 
 % =====================================================================
