@@ -647,7 +647,7 @@ Coller deux textes & F.concat\_ws(" ", "titre", "message") \\
 Découper en mots & F.split(c, " ") \\
 \midrule
 \multicolumn{2}{@{}l}{\textbf{\textcolor{lhblue}{dbt (dans un terminal, depuis \texttt{mon\_travail/tp2})}}} \\
-Vérifier le projet et la connexion & dbt debug -{}-project-dir dbt\_etoile \\
+Vérifier la connexion & dbt debug -{}-connection -{}-project-dir dbt\_etoile \\
 Construire un modèle & dbt run -{}-project-dir dbt\_etoile -{}-select dim\_produit \\
 Tout construire et tester & dbt build -{}-project-dir dbt\_etoile \\
 Générer la documentation & dbt docs generate -{}-static -{}-project-dir dbt\_etoile \\
