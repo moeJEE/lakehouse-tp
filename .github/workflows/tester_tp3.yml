@@ -1,0 +1,33 @@
+# Vérifie les fonctions d'images du TP 3 sur le vrai catalogue (sans Spark) et publie le journal.
+name: Tester TP 3 (images)
+
+on:
+  push:
+    branches: [tp3]
+    paths: [".github/workflows/tester_tp3.yml", ".github/scripts/tester_vision.py", "notebooks/tp3/pipeline/commun.py"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  tester:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install --quiet numpy==1.26.4 pillow==10.4.0 onnxruntime==1.20.1 scikit-learn==1.5.2 boto3
+      - name: Tester
+        run: python .github/scripts/tester_vision.py 2>&1 | tee test_vision.log
+      - name: Publier le journal
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan resultats-tp3
+          git rm -rq --cached .
+          git add -f test_vision.log
+          git commit -qm "Journal du test des images"
+          git push -qf origin resultats-tp3
