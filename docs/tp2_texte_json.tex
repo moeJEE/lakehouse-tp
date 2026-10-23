@@ -170,7 +170,7 @@ directement : texte libre, image, son. Un Lakehouse accueille les trois.
 \textbf{Source} & \textbf{Format} & \textbf{Contenu} & \textbf{Volume} \\
 \midrule
 Avis des clients & CSV & Une note de 1 à 5 et, pour 42~\% des avis, un titre et un commentaire
-  en portugais, saisis librement & 100\,000 avis \\
+  saisis librement en portugais et traduits automatiquement en anglais & 100\,000 avis \\
 Suivi des colis & JSON & Un message par colis : le transporteur, les étapes du suivi
   (prise en charge, transit, livraison) et, depuis 2018, les incidents & $\approx$ 98\,200 messages \\
 Tables Silver du TP 1 & Iceberg & Commandes, articles, clients, produits, vendeurs & -- \\
@@ -178,7 +178,7 @@ Tables Silver du TP 1 & Iceberg & Commandes, articles, clients, produits, vendeu
 \end{tabularx}
 \end{center}
 
-Les avis sont les vrais avis Olist (fichier \cmd{data/olist/olist\_order\_reviews\_dataset.csv}).
+Les avis sont les vrais avis Olist. Les clients écrivent en portugais : pour ce TP, les titres et les commentaires ont été traduits automatiquement en anglais par un modèle open source (OPUS-MT), en gardant la mise en forme d'origine (fichier \cmd{data/olist/olist\_order\_reviews\_dataset\_en.csv} ; l'original en portugais est à côté). La traduction est bonne dans l'ensemble, avec quelques maladresses.
 Les messages de suivi sont dans le dossier \cmd{data/olist/suivi/}, un fichier par mois. Ils ont
 été produits par le script \cmd{scripts/generer\_suivi.py} à partir des \textbf{vraies dates} de
 remise au transporteur et de livraison des commandes ; les transporteurs, les lieux de transit et
@@ -530,8 +530,8 @@ prédictions dans \cmd{gold.avis\_sentiment}.
 \textbf{TF-IDF :} pour qu'un modèle lise du texte, chaque commentaire devient un vecteur : un poids
 par terme du vocabulaire. Ce poids est élevé quand le terme est fréquent \emph{dans ce commentaire}
 et rare \emph{dans l'ensemble des commentaires}. Les termes peuvent être des mots seuls ou des groupes
-de deux mots (\emph{n-grammes}) : \og nao recomendo \fg{} ne dit pas la même chose que
-\og recomendo \fg{}. Une régression logistique apprend ensuite un coefficient par terme : le modèle
+de deux mots (\emph{n-grammes}) : \og not recommend \fg{} ne dit pas la même chose que
+\og recommend \fg{}. Une régression logistique apprend ensuite un coefficient par terme : le modèle
 reste lisible.
 \end{notion}
 
@@ -540,9 +540,9 @@ reste lisible.
 \resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[font=\sffamily\footnotesize, >=Stealth, node distance=0.9cm,
   b/.style={draw=#1,thick,rounded corners=3pt,fill=#1!7,align=center,inner sep=5pt,text width=3.0cm,minimum height=1.5cm}]
-\node[b=gray] (a) {\og Não recomendo!!\\ Chegou quebrado. \fg{}};
-\node[b=lhsilver,right=of a] (b) {texte normalisé\\[2pt] \texttt{\scriptsize nao recomendo chegou quebrado}};
-\node[b=lhblue,right=of b] (c) {vecteur TF-IDF\\[2pt] \scriptsize nao recomendo : 0,52\\ quebrado : 0,48\\ \dots};
+\node[b=gray] (a) {\og I do NOT recommend!!\\ Arrived broken. \fg{}};
+\node[b=lhsilver,right=of a] (b) {texte normalisé\\[2pt] \texttt{\scriptsize i do not recommend arrived broken}};
+\node[b=lhblue,right=of b] (c) {vecteur TF-IDF\\[2pt] \scriptsize not recommend : 0,52\\ broken : 0,48\\ \dots};
 \node[b=lhblue,right=of c] (d) {régression\\ logistique};
 \node[b=lhgold,right=of d] (e) {probabilité d'un\\ avis négatif :\\ \textbf{0,98}};
 \foreach \x/\y in {a/b,b/c,c/d,d/e} \draw[->,thick] (\x) -- (\y);
@@ -553,9 +553,10 @@ classification. Les valeurs sont données à titre d'illustration.}
 \end{figure}
 
 \begin{attention}
-Les listes de \emph{mots vides} (articles, prépositions\dots) toutes faites contiennent souvent la
-négation (\og não \fg{}). La retirer transforme \og nao recomendo \fg{} en \og recomendo \fg{} :
-le notebook vous le fait constater.
+Les listes de \emph{mots vides} (articles, pronoms, prépositions\dots) toutes faites contiennent
+souvent la négation : celle de scikit-learn retire \og not \fg{}, \og no \fg{} et \og never \fg{}. Avec
+elle, \og i do not recommend \fg{} devient \og recommend \fg{} et passe pour un avis positif : le
+notebook vous le fait constater.
 \end{attention}
 
 \begin{resultat}

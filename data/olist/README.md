@@ -24,10 +24,20 @@ paiements et avis.
 | `olist_products_dataset.csv` | TP 1 (fichier CSV) |
 | `olist_sellers_dataset.csv` | TP 1 (fichier CSV) |
 | `product_category_name_translation.csv` | TP 1 (fichier CSV) |
-| `olist_order_reviews_dataset.csv` | TP 2 et TP 3 |
+| `olist_order_reviews_dataset.csv` | Avis d'origine, en portugais |
+| `olist_order_reviews_dataset_en.csv` | TP 2 : les mêmes avis, titres et commentaires traduits en anglais (voir ci-dessous) |
 | `suivi/mois=AAAA-MM/suivi-AAAA-MM.json` | TP 2 : messages de suivi des colis (voir ci-dessous) |
 
 `olist_geolocation_dataset.csv` (61 Mo) n'est pas utilisé et n'est pas versionné.
+
+## Avis traduits en anglais (`olist_order_reviews_dataset_en.csv`)
+
+Mêmes lignes et mêmes colonnes que le fichier d'origine ; seuls `review_comment_title` et
+`review_comment_message` sont traduits du portugais vers l'anglais, ligne par ligne (les retours à la ligne
+sont conservés). Traduction automatique par le modèle open source `Helsinki-NLP/opus-mt-ROMANCE-en`
+(OPUS-MT), avec `scripts/traduire_avis.py` exécuté par le workflow *Traduire les avis*. La traduction est
+bonne dans l'ensemble, avec quelques maladresses ; c'est une adaptation du jeu de données Olist, diffusée
+sous la même licence (CC BY-NC-SA 4.0).
 
 ## Messages de suivi des colis (`suivi/`)
 
