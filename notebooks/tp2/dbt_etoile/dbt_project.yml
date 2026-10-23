@@ -1,0 +1,14 @@
+# Projet dbt du TP 2 : la couche Gold en schéma en étoile.
+# Lancement (depuis le dossier qui contient ce projet) : dbt build --project-dir dbt_etoile
+name: etoile
+version: "1.0.0"
+profile: lakehouse          # connexion définie dans conf/dbt/profiles.yml (cible spark)
+
+model-paths: ["models"]
+test-paths: ["tests"]
+clean-targets: ["target", "logs"]
+
+models:
+  etoile:
+    +materialized: table    # chaque modèle devient une table
+    +file_format: iceberg   # au format Iceberg, dans lakehouse.gold

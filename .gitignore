@@ -28,3 +28,9 @@ data/olist/olist_geolocation_dataset.csv
 
 # Corrigés : ne jamais publier
 *_corrige*
+
+# Artefacts dbt
+target/
+logs/
+dbt_packages/
+*.joblib

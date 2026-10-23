@@ -1,0 +1,14 @@
+version: 2
+
+# Les tables Silver construites aux TP 1 et 2 : le point de départ des modèles.
+sources:
+  - name: silver
+    schema: silver
+    tables:
+      - name: orders
+      - name: order_items
+      - name: customers
+      - name: sellers
+      - name: products
+      - name: avis
+      - name: suivi_colis

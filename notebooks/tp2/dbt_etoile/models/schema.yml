@@ -1,0 +1,73 @@
+version: 2
+
+models:
+  # ---------- Dimensions ----------
+  - name: dim_date
+    description: "Calendrier : une ligne par jour de 2016 à 2018."
+    columns:
+      - name: date_id
+        description: "Clé de la date, entier AAAAMMJJ."
+        data_tests: [unique, not_null]
+
+  - name: dim_client
+    description: "Clients : une ligne par customer_id (un client Olist reçoit un customer_id par commande)."
+    columns:
+      - name: customer_id
+        data_tests: [unique, not_null]
+
+  - name: dim_vendeur
+    description: "Vendeurs de la marketplace."
+    columns:
+      - name: seller_id
+        data_tests: [unique, not_null]
+
+  - name: dim_produit
+    description: "Produits, avec leur catégorie traduite en anglais."
+    columns:
+      - name: product_id
+        data_tests: [unique, not_null]
+      - name: categorie
+        data_tests: [not_null]
+
+  # ---------- Faits ----------
+  - name: fait_ventes
+    description: "Ventes. Grain : un article d'une commande."
+    columns:
+      - name: order_id
+        data_tests: [not_null]
+      - name: date_achat_id
+        data_tests:
+          - relationships:
+              arguments: {to: ref('dim_date'), field: date_id}
+      - name: customer_id
+        data_tests:
+          - relationships:
+              arguments: {to: ref('dim_client'), field: customer_id}
+      - name: product_id
+        data_tests:
+          - relationships:
+              arguments: {to: ref('dim_produit'), field: product_id}
+      - name: seller_id
+        data_tests:
+          - relationships:
+              arguments: {to: ref('dim_vendeur'), field: seller_id}
+
+  - name: fait_avis
+    description: "Avis des clients. Grain : l'avis d'une commande."
+    columns:
+      # À COMPLÉTER :
+      #   - note : non nulle, valeurs acceptées 1 à 5 (accepted_values avec quote: false)
+      #   - date_avis_id : doit exister dans dim_date (relationships)
+      #   - customer_id : doit exister dans dim_client (relationships)
+      - name: review_id
+        data_tests: [not_null]
+
+  - name: fait_livraisons
+    description: "Livraisons suivies par le transporteur. Grain : un colis."
+    columns:
+      # À COMPLÉTER :
+      #   - colis_id : unique et non nul
+      #   - transporteur : valeurs acceptées Correios, Jadlog, Total Express, Loggi
+      #   - customer_id : doit exister dans dim_client
+      - name: order_id
+        data_tests: [not_null]
