@@ -179,9 +179,10 @@ Tables Silver du TP 1 & Iceberg & Commandes, articles, clients, produits, vendeu
 \end{center}
 
 Les avis sont les vrais avis Olist (fichier \cmd{data/olist/olist\_order\_reviews\_dataset.csv}).
-Les messages de suivi sont produits par le script \cmd{scripts/generer\_suivi.py} à partir des
-\textbf{vraies dates} de remise au transporteur et de livraison des commandes ; les transporteurs,
-les lieux de transit et les incidents sont simulés. Voici un message reçu en 2018 :
+Les messages de suivi sont dans le dossier \cmd{data/olist/suivi/}, un fichier par mois. Ils ont
+été produits par le script \cmd{scripts/generer\_suivi.py} à partir des \textbf{vraies dates} de
+remise au transporteur et de livraison des commandes ; les transporteurs, les lieux de transit et
+les incidents sont simulés. Voici un message reçu en 2018 :
 
 \begin{lstlisting}[language=json,basicstyle=\ttfamily\footnotesize]
 {"colis_id": "CL0005A1A1728C", "order_id": "0005a1a1728c9d785b8e2b08b904576c",
@@ -223,7 +224,7 @@ droite} sur la première ligne (ingestion), puis \textbf{de droite à gauche} su
 
 % ---------------- Ligne 1 : ingestion ----------------
 \node[col=gray] (csv) at (0,1.0) {\textbf{Avis des clients}\\ fichier CSV\\ \texttt{data/olist/}};
-\node[col=gray] (gen) at (0,-2.0) {\textbf{Transporteurs}\\ messages JSON\\ \texttt{generer\_suivi.py}};
+\node[col=gray] (gen) at (0,-2.0) {\textbf{Suivi des colis}\\ fichiers JSON\\ \texttt{data/olist/suivi/}};
 \node[col=darkgray] (land) at (5.35,-0.5) {\textbf{Landing}\\ \texttt{s3://landing/olist/}\\[3pt]
   \texttt{avis/}\\ \texttt{suivi/mois=AAAA-MM/}\\ fichiers non modifiés};
 \node[col=lhbronze] (br) at (10.85,-0.5) {\textbf{Bronze} -- 2 tables\\[3pt]
@@ -277,8 +278,8 @@ bleues indiquent le notebook qui réalise chaque étape.}
 \begin{description}[leftmargin=1.4em,labelindent=0pt,itemsep=3pt,font=\normalfont]
 \item[\etape{1}] \textbf{Dépôt des avis :} le fichier CSV des avis est copié tel quel dans
   \cmd{s3://landing/olist/avis/}.
-\item[\etape{2}] \textbf{Réception du suivi :} les messages des transporteurs arrivent dans la zone
-  d'atterrissage (\cmd{suivi/}), un fichier par mois, un message JSON par ligne.
+\item[\etape{2}] \textbf{Dépôt du suivi :} les messages des transporteurs, un fichier par mois et un
+  message JSON par ligne, sont copiés dans la zone d'atterrissage (\cmd{suivi/}).
 \item[\etape{3}] \textbf{Ingestion en Bronze :} Spark lit les avis en texte, en autorisant les
   commentaires sur plusieurs lignes, et garde chaque message JSON \emph{comme un texte}, sans le
   découper. Les deux tables reçoivent les colonnes \cmd{\_source} et \cmd{\_ingere\_le}.

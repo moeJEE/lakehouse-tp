@@ -6,9 +6,10 @@ vraies dates des commandes Olist ; seuls les lieux de transit, les transporteurs
 sont simulés, ainsi que deux défauts réels de ce type de flux : des messages renvoyés deux fois et
 des messages tronqués. Le résultat est identique à chaque exécution.
 
-Usage (dans le conteneur JupyterLab) :
-    python /opt/lakehouse/scripts/generer_suivi.py              # dépôt dans S3
-    python /opt/lakehouse/scripts/generer_suivi.py --local DIR  # écriture locale (test)
+Les fichiers produits sont fournis dans data/olist/suivi/ : le TP les copie dans S3, il n'est pas
+nécessaire de lancer ce script. Usage (dans le conteneur JupyterLab, depuis /home/etudiant/work) :
+    python /opt/lakehouse/scripts/generer_suivi.py --local data/olist/suivi   # régénérer les fichiers
+    python /opt/lakehouse/scripts/generer_suivi.py                            # dépôt direct dans S3
 """
 import argparse
 import json
