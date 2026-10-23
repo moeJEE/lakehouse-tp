@@ -29,6 +29,7 @@ SERVICES = {"Correios": ["PAC", "SEDEX"], "Jadlog": [".Package", ".Com"],
 CENTRES = {"SP": "Cajamar", "RJ": "Duque De Caxias", "MG": "Contagem", "PR": "Curitiba",
            "RS": "Porto Alegre", "SC": "Itajai", "BA": "Salvador", "PE": "Recife",
            "GO": "Goiania", "DF": "Brasilia", "CE": "Fortaleza", "ES": "Serra"}
+FIABILITE = {"Correios": 1.0, "Jadlog": 1.3, "Total Express": 1.7, "Loggi": 0.5}  # risque d'incident relatif
 INCIDENTS = ["DESTINATAIRE_ABSENT", "ADRESSE_INCOMPLETE", "COLIS_ENDOMMAGE", "RETARD_CENTRE_TRI"]
 
 
@@ -88,7 +89,7 @@ def construire_messages():
             msg["transporteur"]["service"] = rng.choice(SERVICES[transporteur])
             en_retard = pd.notna(arrivee) and arrivee > o.order_estimated_delivery_date
             incidents = []
-            if rng.random() < (0.55 if en_retard else 0.04):
+            if rng.random() < (0.5 if en_retard else 0.035) * FIABILITE[transporteur]:
                 t = depart + duree * rng.uniform(0.3, 0.9)
                 incidents.append({"type": rng.choice(INCIDENTS), "horodatage": fmt(t)})
             msg["incidents"] = incidents
