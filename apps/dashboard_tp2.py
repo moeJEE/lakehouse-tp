@@ -87,7 +87,7 @@ st.caption(f"Période : {debut} → {fin} · Source : schéma en étoile de la c
 
 # ---------- 4. Transporteurs ----------
 # À COMPLÉTER : barres de la part de colis avec incident par transporteur,
-#   colorées par la durée médiane de transit (tableau transporteurs)
+#   avec la durée médiane de transit en info-bulle (hover_data) ou en légende (tableau transporteurs)
 
 
 # ---------- 5. Tester un commentaire (modèle de la partie 4) ----------
