@@ -1,0 +1,36 @@
+# Traduit une fois les commentaires des avis Olist en anglais et ajoute le fichier au dépôt.
+# Déclenchement : modification de ce fichier ou du script, sur la branche tp2.
+name: Traduire les avis
+
+on:
+  push:
+    branches: [tp2]
+    paths: [".github/workflows/traduire_avis.yml", "scripts/traduire_avis.py"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  traduire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Installer les dépendances
+        run: |
+          pip install --quiet torch --index-url https://download.pytorch.org/whl/cpu
+          pip install --quiet pandas "transformers<5" sentencepiece sacremoses
+      - name: Traduire
+        run: python scripts/traduire_avis.py data/olist
+      - name: Ajouter le fichier traduit au dépôt
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/olist/olist_order_reviews_dataset_en.csv
+          git commit -m "Avis Olist traduits en anglais (traduction automatique OPUS-MT)"
+          git pull --rebase
+          git push
