@@ -400,7 +400,8 @@ que les fichiers utiles.
 
 \begin{resultat}
 Après 90 petites écritures, la table de démonstration compte plus de 90 fichiers ; le compactage
-les ramène à un seul. La table partitionnée compte un fichier par vendeur.
+les ramène à un seul. La table partitionnée compte un fichier par vendeur : pour le vendeur 03, la
+requête n'en lit qu'un, contre tous les fichiers de la table non partitionnée.
 \end{resultat}
 
 \capture{tp3_03_fichiers}{Partie 3 : le nombre de fichiers avant et après le compactage.}{fig:res03}
