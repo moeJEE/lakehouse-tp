@@ -425,9 +425,11 @@ celles mises en quarantaine au TP 1.
 
 \subsection*{Partie 5 -- Surveiller et observer \hfill \nb{05\_surveiller\_observer}}
 
-Tout est déjà configuré : vous utilisez les outils comme une équipe d'exploitation. Vous lisez le
-tableau de bord Grafana pendant une exécution du DAG, vous créez une alerte sur les tâches en échec,
-puis vous suivez dans Marquez le lineage de \cmd{gold.photos\_controle}.
+Tout est déjà configuré, et vous ne programmez rien : vous utilisez les outils comme une équipe
+d'exploitation. Le notebook rejoue le pipeline photo dans Airflow, cette fois sous surveillance ; vous
+lisez pendant ce temps le tableau de bord Grafana. Il lance ensuite une panne simulée : vous regardez
+l'alerte fournie se déclencher. Enfin, vous suivez dans Marquez le lineage de
+\cmd{gold.photos\_controle}, construit à partir de ces exécutions.
 
 \begin{attention}
 Démarrez la supervision \emph{avant} Airflow, ou redémarrez Airflow après elle
@@ -517,7 +519,7 @@ Il ne recopie pas le code : il explique vos choix et vos résultats.
   \item \textbf{Optimisation} : vos mesures avant et après, et vos choix de partitionnement.
   \item \textbf{Exposition} : la requête fédérée, une capture du tableau de bord Superset, et la
         comparaison avec Streamlit.
-  \item \textbf{Supervision et observabilité} : ce que montrent Grafana et Marquez, l'alerte créée,
+  \item \textbf{Supervision et observabilité} : ce que montrent Grafana et Marquez, le déclenchement de l'alerte,
         et la différence entre les deux approches.
   \item \textbf{Réponses aux questions} des notebooks, rédigées et argumentées.
   \item \textbf{Limites et améliorations} : ce qu'il faudrait de plus pour passer en production

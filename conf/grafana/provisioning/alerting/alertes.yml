@@ -1,0 +1,41 @@
+# Règle d'alerte fournie (TP 3, partie 5) : au moins une tâche Airflow en échec sur 5 minutes.
+apiVersion: 1
+groups:
+  - orgId: 1
+    name: lakehouse
+    folder: Lakehouse
+    interval: 1m
+    rules:
+      - uid: tache-airflow-en-echec
+        title: Tâche Airflow en échec
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: {from: 600, to: 0}
+            datasourceUid: prometheus
+            model:
+              refId: A
+              expr: sum(increase(airflow_taches_en_echec_total[5m]))
+              instant: true
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: reduce
+              expression: A
+              reducer: last
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: B
+              conditions:
+                - evaluator: {type: gt, params: [0]}
+        noDataState: OK
+        execErrState: Error
+        for: 0s
+        annotations:
+          summary: Au moins une tâche Airflow a échoué dans les 5 dernières minutes.
+        labels:
+          equipe: data
