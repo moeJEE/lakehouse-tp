@@ -488,7 +488,10 @@ Dans Superset (\url{http://localhost:8088}, \cmd{admin} / \cmd{admin}) :
   \item \textbf{Déclarer les jeux de données :} \emph{Datasets > + Dataset} pour
         \cmd{gold.fait\_avis}, \cmd{gold.fait\_livraisons} et \cmd{gold.photos\_controle}. Dans
         \emph{SQL Lab}, exécutez la requête de l'étape 4 du notebook 04 et enregistrez-la comme jeu
-        de données (\emph{Save dataset}).
+        de données (\emph{Save dataset}). Les tables de faits ne contiennent que des clés
+        (\cmd{date\_avis\_id}, \cmd{customer\_id}) : pour grouper par mois ou filtrer par état,
+        enregistrez de la même façon une requête qui joint \cmd{fait\_avis} à \cmd{dim\_date} et à
+        \cmd{dim\_client}.
   \item \textbf{Construire au moins cinq graphiques :} la note moyenne et la part d'avis négatifs
         (indicateurs), la part d'avis négatifs par mois, les incidents par transporteur, la part de
         photos rejetées par vendeur, et le tableau des fiches incohérentes.
