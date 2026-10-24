@@ -3,7 +3,7 @@ name: Tester TP 3 (images)
 
 on:
   push:
-    branches: [tp3]
+    branches: [main]
     paths: [".github/workflows/tester_tp3.yml", ".github/scripts/tester_vision.py", "notebooks/tp3/pipeline/commun.py"]
   workflow_dispatch:
 

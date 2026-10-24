@@ -4,7 +4,7 @@ name: Préparer les images
 
 on:
   push:
-    branches: [tp3]
+    branches: [main]
     paths: [".github/workflows/preparer_images.yml", "scripts/preparer_images.py"]
   workflow_dispatch:
 

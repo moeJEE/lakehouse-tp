@@ -1,10 +1,10 @@
 # Traduit une fois les commentaires des avis Olist en anglais et ajoute le fichier au dépôt.
-# Déclenchement : modification de ce fichier ou du script, sur la branche tp2.
+# Déclenchement : modification de ce fichier ou du script, sur la branche main.
 name: Traduire les avis
 
 on:
   push:
-    branches: [tp2]
+    branches: [main]
     paths: [".github/workflows/traduire_avis.yml", "scripts/traduire_avis.py"]
   workflow_dispatch:
 
