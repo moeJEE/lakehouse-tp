@@ -170,15 +170,16 @@ services:
       - ./conf/prometheus/statsd_mapping.yml:/etc/statsd/mapping.yml:ro
     restart: unless-stopped
 
-  cadvisor:                   # mesure le processeur et la mémoire de chaque conteneur
-    image: gcr.io/cadvisor/cadvisor:${CADVISOR_VERSION}
+  mesure-conteneurs:          # mesure le processeur et la mémoire de chaque conteneur (API Docker)
+    # Remplace cAdvisor, qui ne reconnaît pas les conteneurs avec Docker Desktop (Windows, Mac).
+    image: ${LAKEHOUSE_IMAGE}
     profiles: ["observabilite"]
-    privileged: true
+    user: root                # accès au socket Docker, en lecture seule
+    command: ["python", "/opt/lakehouse/scripts/mesurer_conteneurs.py"]
     volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:ro
-      - /sys:/sys:ro
-      - /var/lib/docker/:/var/lib/docker:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./scripts:/opt/lakehouse/scripts:ro
+    mem_limit: 256m
     restart: unless-stopped
 
   prometheus:                 # stocke les métriques et les rend interrogeables (PromQL)
