@@ -428,6 +428,14 @@ Tout est déjà configuré : vous utilisez les outils comme une équipe d'exploi
 tableau de bord Grafana pendant une exécution du DAG, vous créez une alerte sur les tâches en échec,
 puis vous suivez dans Marquez le lineage de \cmd{gold.photos\_controle}.
 
+\begin{attention}
+Démarrez la supervision \emph{avant} Airflow, ou redémarrez Airflow après elle
+(\cmd{docker compose -{}-profile orchestration restart airflow}) : Airflow ne cherche le service de
+métriques qu'à son démarrage. Le message \cmd{Could not configure StatsClient} dans ses logs signifie
+qu'il n'enverra aucune métrique ; il est normal pendant les parties 2 à 4, où la supervision n'est pas
+lancée.
+\end{attention}
+
 \begin{center}
 \small
 \renewcommand{\arraystretch}{1.25}
@@ -550,7 +558,8 @@ Relire une version & SELECT ... FROM lakehouse.silver.orders FOR VERSION AS OF <
 Connexion Superset & trino://superset@trino:8080/lakehouse \\
 \midrule
 \multicolumn{2}{@{}l}{\textbf{\textcolor{lhblue}{Supervision}}} \\
-Démarrer les outils & docker compose -{}-profile observabilite up -d \\
+Démarrer les outils & docker compose -{}-profile observabilite -{}-profile orchestration up -d \\
+Puis redémarrer Airflow & docker compose -{}-profile orchestration restart airflow \\
 Mémoire des conteneurs (PromQL) & container\_memory\_working\_set\_bytes\{name=\~{}"lakehouse-.*"\} \\
 Tâches en échec sur 5 min & sum(increase(airflow\_taches\_en\_echec\_total[5m])) \\
 \bottomrule
