@@ -45,8 +45,10 @@ services:
       CATALOG_IO__IMPL: org.apache.iceberg.aws.s3.S3FileIO
       CATALOG_S3_ENDPOINT: http://rustfs:9000
       CATALOG_S3_PATH__STYLE__ACCESS: "true"
-      # Catalogue persistant (sinon il est perdu à chaque redémarrage)
-      CATALOG_URI: jdbc:sqlite:file:/catalog/iceberg_catalog.db
+      # Catalogue persistant (sinon il est perdu à chaque redémarrage).
+      # busy_timeout : une écriture attend jusqu'à 30 s qu'une autre se termine, au lieu d'échouer
+      # aussitôt (SQLITE_BUSY) ; journal WAL : les lectures ne bloquent pas les écritures.
+      CATALOG_URI: "jdbc:sqlite:file:/catalog/iceberg_catalog.db?busy_timeout=30000&journal_mode=WAL"
     volumes:
       - iceberg-catalog:/catalog
     ports:
