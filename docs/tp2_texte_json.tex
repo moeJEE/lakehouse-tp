@@ -113,7 +113,7 @@
   \node[anchor=north west,text=white,font=\sffamily\bfseries\fontsize{26}{30}\selectfont] at ([xshift=2.3cm,yshift=-2.2cm]current page.north west)
     {TP 2 -- Texte et JSON};
   \node[anchor=north west,text=white!85!lhblue,font=\sffamily\large] at ([xshift=2.3cm,yshift=-3.6cm]current page.north west)
-    {Avis clients, suivi des colis, schéma en étoile avec dbt et analyse du texte};
+    {Avis clients, suivi des colis, modélisation dimensionnelle avec dbt et analyse du texte};
 \end{tikzpicture}
 \thispagestyle{empty}
 \vspace*{4.2cm}
@@ -122,7 +122,7 @@
 \begin{tabularx}{\linewidth}{@{}>{\bfseries}l X@{}}
 \toprule
 Objectif & Faire entrer dans le Lakehouse du texte libre et des messages JSON, construire une couche
-           Gold en schéma en étoile avec dbt, puis repérer automatiquement les clients mécontents. \\
+           Gold en schéma en constellation avec dbt, puis repérer automatiquement les clients mécontents. \\
 Durée    & 2 séances de 3 h (+ environ 2 h de travail personnel). \\
 Prérequis & TP 1 terminé : les tables Silver \cmd{orders}, \cmd{order\_items}, \cmd{customers},
             \cmd{products} et \cmd{sellers} existent. \\
@@ -245,7 +245,7 @@ droite} sur la première ligne (ingestion), puis \textbf{de droite à gauche} su
   \textit{+ tables Silver du TP 1}};
 \node[col=gray, below=0.9cm of si] (q) {\textbf{Quarantaine}\\[2pt]
   \texttt{quarantaine\_avis}\\ \texttt{quarantaine\_suivi}};
-\node[col=lhgold] (go) at (5.35,-6.6) {\textbf{Gold} -- schéma en étoile\\[3pt]
+\node[col=lhgold] (go) at (5.35,-6.6) {\textbf{Gold} -- constellation\\[3pt]
   \texttt{dim\_date}, \texttt{dim\_client},\\ \texttt{dim\_produit}, \texttt{dim\_vendeur}\\[2pt]
   \texttt{fait\_ventes}, \texttt{fait\_avis},\\ \texttt{fait\_livraisons}\\[2pt]
   \texttt{avis\_sentiment}};
@@ -288,9 +288,9 @@ bleues indiquent le notebook qui réalise chaque étape.}
   l'avance, dédoublonnés, puis \og dépliés \fg{} : une ligne par colis, une ligne par étape du suivi.
 \item[\etape{5}] \textbf{Quarantaine :} les avis dont la commande est inconnue et les messages
   tronqués sont isolés.
-\item[\etape{6}] \textbf{Modélisation avec dbt :} un projet dbt construit le schéma en étoile à partir
+\item[\etape{6}] \textbf{Modélisation avec dbt :} un projet dbt construit le schéma en constellation à partir
   des tables Silver des TP 1 et 2, puis vérifie chaque table par des tests de qualité.
-\item[\etape{7}] \textbf{Analyse :} des requêtes SQL sur l'étoile répondent aux questions de la direction.
+\item[\etape{7}] \textbf{Analyse :} des requêtes SQL sur ce schéma répondent aux questions de la direction.
 \item[\etape{8}] \textbf{Analyse du texte :} un modèle apprend à reconnaître un avis négatif à partir
   de son commentaire, puis écrit ses prédictions dans \cmd{gold.avis\_sentiment}.
 \item[\etape{9}] \textbf{Restitution :} le tableau de bord présente la satisfaction des clients et
@@ -300,10 +300,10 @@ bleues indiquent le notebook qui réalise chaque étape.}
 Il s'agit toujours d'un pipeline \textbf{ELT} : les étapes \etape{1} à \etape{3} extraient et chargent
 sans rien transformer, et toutes les transformations (\etape{4} à \etape{8}) ont lieu dans le Lakehouse.
 
-\subsection*{La couche Gold en schéma en étoile}
+\subsection*{La couche Gold en schéma en constellation}
 
-Au TP 1, la couche Gold était une table large, \cmd{gold.commandes}. Elle est remplacée ici par un
-\textbf{schéma en étoile} (figure~\ref{fig:etoile}) :
+Au TP 1, la couche Gold était une table large, \cmd{gold.commandes}. Elle est remplacée ici par une
+\textbf{modélisation dimensionnelle} (figure~\ref{fig:constellation}) :
 
 \begin{itemize}[leftmargin=*,itemsep=1pt]
 \item une table de \textbf{faits} enregistre des événements mesurables (une vente, un avis, une
@@ -312,9 +312,12 @@ Au TP 1, la couche Gold était une table large, \cmd{gold.commandes}. Elle est r
   qui, quoi). Chaque fait la désigne par une \textbf{clé}.
 \end{itemize}
 
-Les trois faits partagent les dimensions \cmd{dim\_date} et \cmd{dim\_client} : on parle de schéma en
-\emph{constellation}. Une même question (\og par état du client \fg{}, \og par mois \fg{}) se pose
-ainsi de la même façon aux ventes, aux avis et aux livraisons.
+Une table de faits entourée de ses dimensions forme un \textbf{schéma en étoile}. Ici, il y a
+\emph{trois} tables de faits, qui partagent les dimensions \cmd{dim\_date} et \cmd{dim\_client} (des
+\emph{dimensions conformes}) : trois étoiles reliées entre elles forment un \textbf{schéma en
+constellation} (\emph{fact constellation}, ou \emph{galaxy schema}). Une même question (\og par état
+du client \fg{}, \og par mois \fg{}) se pose ainsi de la même façon aux ventes, aux avis et aux
+livraisons. Le projet dbt s'appelle \cmd{dbt\_etoile} car chaque fait y est modélisé en étoile.
 
 \begin{figure}[H]
 \centering
@@ -343,10 +346,10 @@ ainsi de la même façon aux ventes, aux avis et aux livraisons.
 \draw[lien] (dd.north) -- (fa.south);
 \draw[lien] (dd.north) -- (fl.south);
 \end{tikzpicture}
-\caption{Le schéma en étoile de la couche Gold : trois tables de faits (en jaune) reliées aux
+\caption{Le schéma en constellation de la couche Gold : trois tables de faits (en jaune) reliées aux
 dimensions (en bleu) par leurs clés (soulignées). Chaque fait garde aussi le numéro de commande
 (\texttt{order\_id}), qui permet de rapprocher deux faits, avec prudence, car leurs grains sont différents.}
-\label{fig:etoile}
+\label{fig:constellation}
 \end{figure}
 
 \begin{center}
@@ -360,7 +363,7 @@ Bronze & Copie des sources, JSON compris, avec \cmd{\_source} et \cmd{\_ingere\_
   On ne découpe pas, on ne corrige pas : un message tronqué est gardé tel quel. \\
 Silver & Données typées, dédoublonnées, dépliées, texte normalisé &
   Le schéma est écrit, jamais deviné. Une ligne invalide va en quarantaine. \\
-Gold & Schéma en étoile, construit et testé par dbt &
+Gold & Schéma en constellation, construit et testé par dbt &
   Chaque table a un grain clair et passe ses tests avant d'être utilisée. \\
 \bottomrule
 \end{tabularx}
@@ -479,7 +482,7 @@ fois. \cmd{silver.suivi\_colis} compte environ 97\,450 colis, \cmd{silver.suivi\
 \subsection*{Partie 3 -- Gold avec dbt \hfill \nb{03\_gold\_dbt\_etoile}}
 
 Vous complétez le projet dbt (un modèle de dimension, deux modèles de faits et leurs tests), vous
-construisez toute la couche Gold avec \cmd{dbt build}, puis vous interrogez l'étoile en SQL.
+construisez toute la couche Gold avec \cmd{dbt build}, puis vous interrogez ces tables en SQL.
 
 \begin{notion}
 \textbf{dbt (\emph{data build tool}) :} chaque table Gold est décrite par un fichier SQL qui contient
@@ -491,6 +494,33 @@ sont lancés juste après la construction de chaque table : si l'un échoue, les
 dépendent ne sont pas construites. Le projet, versionné comme du code, documente lui-même la couche
 Gold.
 \end{notion}
+
+\needspace{22\baselineskip}
+\paragraph{Le projet \cmd{dbt\_etoile}.} Il se trouve dans \cmd{notebooks/mon\_travail/tp2/dbt\_etoile/}.
+Les fichiers marqués \og à compléter \fg{} contiennent des trous :
+
+\begin{lstlisting}[style=shell]
+dbt_etoile/
+|-- dbt_project.yml       # configuration : tables Iceberg dans lakehouse.gold
+|-- models/
+|   |-- sources.yml       # tables Silver lues par le projet
+|   |-- schema.yml        # colonnes et tests                  <- à compléter
+|   |-- dimensions/
+|   |   |-- dim_date.sql     dim_client.sql     dim_vendeur.sql
+|   |   `-- dim_produit.sql                                    <- à compléter
+|   `-- faits/
+|       |-- fait_ventes.sql
+|       |-- fait_avis.sql                                      <- à compléter
+|       `-- fait_livraisons.sql                                <- à compléter
+|-- tests/                # tests SQL : renvoient les lignes en erreur
+|   |-- fait_ventes_grain_unique.sql
+|   `-- nb_incidents_positif.sql
+`-- target/               # créé par dbt (SQL compilé, documentation)
+\end{lstlisting}
+
+La connexion à Spark est déjà configurée dans l'image (\cmd{profiles.yml}) : \cmd{dbt debug
+-{}-connection} doit répondre \cmd{All checks passed!}. Les commandes se lancent depuis le notebook
+(préfixe \cmd{!}) ou depuis un terminal JupyterLab :
 
 \begin{lstlisting}[style=shell]
 cd notebooks/mon_travail/tp2
@@ -505,6 +535,24 @@ négatifs quand la livraison est en retard, contre environ 10~\% sinon.
 \end{resultat}
 
 \capture{tp2_03_dbt_build}{Résultat attendu de \texttt{dbt build} : 7 modèles et 24 tests, sans erreur (\texttt{PASS=31}).}{fig:dbtbuild}
+\paragraph{Consulter le graphe des dépendances (\emph{lineage}).} dbt génère un site de
+documentation : la description de chaque table et de chaque colonne, le SQL, les tests et le graphe
+des dépendances.
+\begin{enumerate}[leftmargin=*,nosep]
+  \item Lancez la cellule \cmd{!dbt docs generate -{}-static -{}-project-dir dbt\_etoile} du notebook.
+        Elle crée un fichier unique, \cmd{dbt\_etoile/target/static\_index.html}.
+  \item Dans l'explorateur de fichiers de JupyterLab, ouvrez \cmd{dbt\_etoile/target/}, faites un
+        clic droit sur \cmd{static\_index.html} puis \emph{Open in New Browser Tab}.
+  \item Dans la page qui s'ouvre, cliquez sur un modèle (par exemple \cmd{fait\_avis}) dans le menu
+        de gauche, puis sur l'icône bleue \emph{View Lineage Graph}, en bas à droite.
+  \item Le graphe montre les tables Silver (sources, en vert) à gauche et les modèles Gold à droite.
+        Le champ \emph{-{}-select} en bas de la fenêtre filtre le graphe, par exemple
+        \cmd{+fait\_avis} pour ne voir que ce dont \cmd{fait\_avis} dépend.
+\end{enumerate}
+Le graphe s'arrête aux tables Silver : les couches Bronze et Silver sont construites par Spark, pas
+par dbt, qui ne les connaît que comme des \emph{sources} déclarées dans \cmd{sources.yml}. Relancez
+\cmd{dbt docs generate} après chaque modification du projet, puis actualisez la page.
+
 \capture{tp2_03_lineage}{La documentation générée par dbt : le graphe des dépendances (\emph{lineage}) de la couche Gold.}{fig:lineage}
 \capture{tp2_03_resultat}{Résultat attendu de la partie 3 : avis négatifs selon le retard de livraison (question Q1).}{fig:res03}
 
@@ -545,7 +593,10 @@ reste lisible.
 \node[b=lhblue,right=of b] (c) {vecteur TF-IDF\\[2pt] \scriptsize not recommend : 0,52\\ broken : 0,48\\ \dots};
 \node[b=lhblue,right=of c] (d) {régression\\ logistique};
 \node[b=lhgold,right=of d] (e) {probabilité d'un\\ avis négatif :\\ \textbf{0,98}};
-\foreach \x/\y in {a/b,b/c,c/d,d/e} \draw[->,thick] (\x) -- (\y);
+\draw[->,thick] (a) -- (b);
+\draw[->,thick] (b) -- (c);
+\draw[->,thick] (c) -- (d);
+\draw[->,thick] (d) -- (e);
 \end{tikzpicture}}
 \caption{Du commentaire à la prédiction : normalisation (partie 2), vectorisation TF-IDF, puis
 classification. Les valeurs sont données à titre d'illustration.}
@@ -571,7 +622,7 @@ lui-même ce qui ne va pas, la tâche est bien plus facile que la prévision des
 \section{Le tableau de bord}\label{sec:dashboard}
 % =====================================================================
 
-Ouvrez \nb{notebooks/mon\_travail/tp2/dashboard\_tp2.py} dans JupyterLab. Les requêtes sur l'étoile
+Ouvrez \nb{notebooks/mon\_travail/tp2/dashboard\_tp2.py} dans JupyterLab. Les requêtes sur la couche Gold
 et le filtre de période sont fournis. Complétez les cinq éléments demandés :
 
 \begin{enumerate}[leftmargin=*,nosep]
@@ -590,6 +641,16 @@ streamlit run notebooks/mon_travail/tp2/dashboard_tp2.py --server.address 0.0.0.
 \end{lstlisting}
 Ouvrez ensuite \url{http://localhost:8501} dans votre navigateur.
 
+\begin{astuce}
+Inutile de relancer Streamlit à chaque modification. Enregistrez le fichier dans JupyterLab
+(\cmd{Ctrl+S}) : un bandeau \emph{Source file changed} apparaît en haut à droite de la page. Cliquez
+sur \emph{Always rerun} : la page se met alors à jour à chaque enregistrement. De même, chaque
+action dans la page (changer la période, saisir un commentaire) réexécute tout le script de haut en
+bas ; c'est le fonctionnement normal de Streamlit. Les résultats des requêtes sont gardés en cache
+cinq minutes (\cmd{@st.cache\_data}) : pour forcer leur relecture, menu \emph{\(\vdots\)} >
+\emph{Clear cache}, puis \cmd{R}. Pour arrêter le tableau de bord : \cmd{Ctrl+C} dans le terminal.
+\end{astuce}
+
 \capture{tp2_dashboard_haut}{Tableau de bord attendu : les indicateurs, l'évolution mensuelle et l'effet des retards.}{fig:dash1}
 \capture{tp2_dashboard_bas}{Tableau de bord attendu : les transporteurs et le test d'un commentaire par le modèle.}{fig:dash2}
 
@@ -605,7 +666,7 @@ Il ne recopie pas le code : il explique vos choix et vos résultats.
         quand les données ne sont pas structurées.
   \item \textbf{Ingestion et qualité} : le piège du CSV multi-lignes, le choix de garder le JSON brut,
         la clé des avis, les règles de quarantaine et le bilan Bronze / Silver.
-  \item \textbf{Schéma en étoile} : le grain de chaque fait, le rôle des dimensions, une capture du
+  \item \textbf{Schéma en constellation} : le grain de chaque fait, le rôle des dimensions, une capture du
         \emph{lineage} dbt, les tests que vous avez écrits et ce qu'ils protègent.
   \item \textbf{Réponses à la direction} : les résultats des requêtes SQL, interprétés.
   \item \textbf{Analyse du texte} : la méthode, les métriques, les termes qui pèsent le plus, l'effet

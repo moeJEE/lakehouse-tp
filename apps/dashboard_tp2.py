@@ -69,7 +69,7 @@ periode = mensuel[(mensuel["mois"] >= debut) & (mensuel["mois"] <= fin)]
 st.sidebar.caption("Les mois de 2016 sont incomplets : ils sont exclus par défaut.")
 
 st.title("💬 Olist — Satisfaction des clients")
-st.caption(f"Période : {debut} → {fin} · Source : schéma en étoile de la couche Gold")
+st.caption(f"Période : {debut} → {fin} · Source : schéma en constellation de la couche Gold")
 
 # ---------- 1. Indicateurs clés ----------
 # À COMPLÉTER : quatre indicateurs côte à côte (st.columns(4) puis .metric(...)) sur la période :
