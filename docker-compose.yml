@@ -231,6 +231,9 @@ services:
       POSTGRES_DB: marquez
       POSTGRES_USER: ${PG_USER}
       POSTGRES_PASSWORD: ${PG_PASSWORD}
+      MARQUEZ_CONFIG: /opt/marquez/marquez.yml   # sinon : utilisateur « marquez » imposé
+    volumes:
+      - ./conf/marquez/marquez.yml:/opt/marquez/marquez.yml:ro
     mem_limit: 1g
     depends_on:
       init-marquez-db:

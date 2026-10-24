@@ -1,0 +1,35 @@
+# Configuration de Marquez pour le cours (TP 3, partie 5).
+# La configuration par défaut de l'image impose l'utilisateur « marquez » et un moteur de recherche
+# OpenSearch : celle-ci utilise le PostgreSQL du cours (base « marquez », créée par init-marquez-db).
+server:
+  applicationConnectors:
+  - type: http
+    port: ${MARQUEZ_PORT:-5000}
+    httpCompliance: RFC7230_LEGACY
+  adminConnectors:
+  - type: http
+    port: ${MARQUEZ_ADMIN_PORT:-5001}
+
+db:
+  driverClass: org.postgresql.Driver
+  url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
+  user: ${POSTGRES_USER}
+  password: ${POSTGRES_PASSWORD}
+
+migrateOnStartup: true
+
+graphql:
+  enabled: true
+
+logging:
+  level: WARN
+  appenders:
+    - type: console
+
+search:
+  enabled: false            # pas de moteur de recherche OpenSearch dans le cours
+  scheme: http
+  host: localhost
+  port: 9200
+  username: admin
+  password: admin
