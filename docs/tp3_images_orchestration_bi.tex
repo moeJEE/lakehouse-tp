@@ -164,7 +164,7 @@ Photos des produits & JPEG & Une photo par produit, 256 pixels au plus, rangées
 Fiches produits & JSON & Une fiche par ligne : titre, type de produit, marque, couleur, vendeur
   (\cmd{data/catalogue/produits.jsonl}) & 2\,906 fiches \\
 Modèle de vision & ONNX & Le réseau MobileNet, pré-entraîné (\cmd{data/modeles/}) & 3,7 Mo \\
-Tables des TP 1 et 2 & Iceberg & Commandes, avis, livraisons, schéma en étoile & -- \\
+Tables des TP 1 et 2 & Iceberg & Commandes, avis, livraisons, schéma en constellation & -- \\
 \bottomrule
 \end{tabularx}
 \end{center}
@@ -206,7 +206,7 @@ l'\textbf{observabilité} de toute la plateforme.
 \node[col=darkgray] (land) at (4.3,0) {\textbf{Landing}\\ \texttt{s3://landing/}\\[3pt] fichiers déposés\\ tels quels};
 \node[col=lhbronze] (br) at (8.6,0) {\textbf{Bronze}\\[3pt] copie fidèle\\ \texttt{photos} : octets\\ et empreinte \texttt{sha256}};
 \node[col=lhsilver] (si) at (12.9,0) {\textbf{Silver}\\[3pt] contrôlé, dédoublonné\\ \texttt{photos}\\ + quarantaine};
-\node[col=lhgold] (go) at (17.2,0) {\textbf{Gold}\\[3pt] étoile (dbt)\\ \texttt{photos\_vecteurs}\\ \texttt{photos\_controle}};
+\node[col=lhgold] (go) at (17.2,0) {\textbf{Gold}\\[3pt] constellation (dbt)\\ \texttt{photos\_vecteurs}\\ \texttt{photos\_controle}};
 
 \draw[->,thick] (src) -- node[num]{1} (land);
 \draw[->,thick] (land) -- node[num]{2} (br);
@@ -246,7 +246,7 @@ l'\textbf{observabilité} de toute la plateforme.
   trop petites ou en double partent en quarantaine.
 \item[\etape{4}] \textbf{Gold :} le réseau MobileNet calcule le vecteur de chaque photo ; un
   classifieur reconnaît le type de produit et signale les fiches incohérentes. dbt reconstruit
-  l'étoile du TP 2.
+  la constellation du TP 2.
 \item[\etape{5}] \textbf{Orchestration :} Airflow enchaîne ces étapes chaque jour, attend les
   nouvelles photos, relance une étape en cas d'erreur passagère, arrête tout si un contrôle
   échoue, et compacte les tables chaque semaine.
