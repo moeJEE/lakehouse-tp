@@ -4,6 +4,8 @@ notebooks/mon_travail/*
 
 # Configuration locale (copiée depuis .env.example)
 .env
+.env.*
+!.env.example
 
 # Jupyter / Python
 .ipynb_checkpoints/
@@ -41,3 +43,7 @@ dbt_packages/
 metastore_db/
 derby.log
 spark-warehouse/
+
+# Fichiers créés par JupyterLab (corbeille, notebooks sans nom)
+.Trash-*/
+Untitled*.ipynb
