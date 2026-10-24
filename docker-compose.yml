@@ -134,14 +134,15 @@ services:
       AIRFLOW__CORE__PARALLELISM: "1"          # une tâche Spark à la fois : la mémoire est limitée
       AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_ALL_ADMINS: "true"   # pas de mot de passe en local
       AIRFLOW__DAG_PROCESSOR__REFRESH_INTERVAL: "30"
-      # Supervision (profil observabilite) : métriques StatsD et lineage OpenLineage.
+      # Supervision (profil observabilite) : métriques StatsD.
       # Si ces services ne tournent pas, Airflow fonctionne normalement.
       AIRFLOW__METRICS__STATSD_ON: "true"
       AIRFLOW__METRICS__STATSD_HOST: statsd-exporter
       AIRFLOW__METRICS__STATSD_PORT: "9125"
       AIRFLOW__METRICS__STATSD_PREFIX: airflow
-      AIRFLOW__OPENLINEAGE__NAMESPACE: lakehouse
-      AIRFLOW__OPENLINEAGE__TRANSPORT: '{"type": "http", "url": "http://marquez:5000", "endpoint": "api/v1/lineage"}'
+      # Le lineage vient des jobs Spark (conf/spark-airflow/spark-defaults.conf) ; le module
+      # OpenLineage d'Airflow est coupé : sans Marquez, il retarderait chaque tâche.
+      AIRFLOW__OPENLINEAGE__DISABLED: "true"
     volumes:
       - ./conf/dbt:/opt/dbt-profiles:ro
       - ./notebooks:/home/etudiant/work/notebooks

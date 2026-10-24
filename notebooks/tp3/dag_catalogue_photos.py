@@ -13,11 +13,17 @@ DBT = "/home/etudiant/work/notebooks/mon_travail/tp2/dbt_etoile"
 
 
 def photos_en_attente():
-    """Vrai s'il existe dans la zone d'atterrissage des photos que Bronze n'a pas encore ingérées."""
-    import sys
-    sys.path.insert(0, f"{TP3}/pipeline")
-    from commun import photos_non_ingerees
-    return len(photos_non_ingerees()) > 0
+    """Vrai s'il existe dans la zone d'atterrissage des photos que Bronze n'a pas encore ingérées.
+
+    Airflow a son propre environnement Python, sans les bibliothèques du cours (boto3, numpy...) :
+    comme les autres tâches, la vérification est donc faite par le Python du cours.
+    """
+    import subprocess
+    nombre = subprocess.run(
+        ["/usr/local/bin/python", "-c", "from commun import photos_non_ingerees; print(len(photos_non_ingerees()))"],
+        cwd=f"{TP3}/pipeline", capture_output=True, text=True, check=True).stdout.strip()
+    print(f"{nombre} photo(s) en attente")
+    return int(nombre) > 0
 
 
 with DAG(
