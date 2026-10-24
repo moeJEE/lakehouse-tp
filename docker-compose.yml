@@ -165,9 +165,9 @@ services:
   statsd-exporter:            # reçoit les métriques d'Airflow (StatsD) et les expose à Prometheus
     image: prom/statsd-exporter:${STATSD_EXPORTER_VERSION}
     profiles: ["observabilite"]
-    command: ["--statsd.mapping-config=/etc/statsd/mapping.yml"]
+    command: ["--statsd.mapping-config=/etc/lakehouse/statsd_mapping.yml"]
     volumes:
-      - ./conf/prometheus/statsd_mapping.yml:/etc/statsd/mapping.yml:ro
+      - ./conf/prometheus:/etc/lakehouse:ro      # dossier (et non fichier) : voir prometheus
     restart: unless-stopped
 
   mesure-conteneurs:          # mesure le processeur et la mémoire de chaque conteneur (API Docker)
@@ -185,8 +185,11 @@ services:
   prometheus:                 # stocke les métriques et les rend interrogeables (PromQL)
     image: prom/prometheus:${PROMETHEUS_VERSION}
     profiles: ["observabilite"]
+    command: ["--config.file=/etc/lakehouse/prometheus.yml", "--storage.tsdb.path=/prometheus"]
     volumes:
-      - ./conf/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      # On monte le dossier, et non le fichier : sous Windows, un « git pull » remplace le fichier,
+      # et un conteneur qui montait l'ancien ne peut plus redémarrer (code 128).
+      - ./conf/prometheus:/etc/lakehouse:ro
       - prometheus-data:/prometheus
     ports:
       - "127.0.0.1:${PORT_PROMETHEUS:-9090}:9090"
@@ -236,7 +239,7 @@ services:
       POSTGRES_PASSWORD: ${PG_PASSWORD}
       MARQUEZ_CONFIG: /opt/marquez/marquez.yml   # sinon : utilisateur « marquez » imposé
     volumes:
-      - ./conf/marquez/marquez.yml:/opt/marquez/marquez.yml:ro
+      - ./conf/marquez:/opt/marquez:ro
     mem_limit: 1g
     depends_on:
       init-marquez-db:
