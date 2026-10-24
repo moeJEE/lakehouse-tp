@@ -51,7 +51,7 @@
   {
    "id": 2,
    "type": "stat",
-   "title": "Tâches en échec (24 h)",
+   "title": "Exécutions de DAG en échec (24 h)",
    "gridPos": {
     "x": 6,
     "y": 0,
@@ -83,7 +83,7 @@
    "targets": [
     {
      "refId": "A",
-     "expr": "sum(increase(airflow_taches_en_echec_total[24h]))"
+     "expr": "(sum(airflow_execution_dag_duree_secondes_count{etat=\"failed\"}) or vector(0)) - (sum(airflow_execution_dag_duree_secondes_count{etat=\"failed\"} offset 24h) or vector(0))"
     }
    ]
   },
@@ -252,7 +252,7 @@
   {
    "id": 8,
    "type": "timeseries",
-   "title": "Tâches terminées, par état",
+   "title": "Exécutions de DAG terminées, par état (cumul)",
    "gridPos": {
     "x": 12,
     "y": 12,
@@ -272,7 +272,7 @@
    "targets": [
     {
      "refId": "A",
-     "expr": "sum by (etat) (increase(airflow_tache_terminee_total[5m]))",
+     "expr": "sum by (etat) (airflow_execution_dag_duree_secondes_count)",
      "legendFormat": "{{etat}}"
     }
    ]

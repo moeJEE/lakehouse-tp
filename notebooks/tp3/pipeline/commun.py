@@ -17,7 +17,8 @@ def s3():
 
 def spark_session(nom):
     from pyspark.sql import SparkSession
-    return SparkSession.builder.appName(nom).getOrCreate()
+    # spark.openlineage.appName : nom du job dans Marquez (sinon « pyspark_shell »)
+    return SparkSession.builder.appName(nom).config("spark.openlineage.appName", nom).getOrCreate()
 
 
 def photos_deposees():

@@ -1,6 +1,7 @@
 # Prometheus interroge (« scrape ») chaque source de métriques toutes les 15 secondes.
 global:
   scrape_interval: 15s
+  scrape_timeout: 14s
 scrape_configs:
   - job_name: conteneurs          # CPU et mémoire de chaque conteneur (scripts/mesurer_conteneurs.py)
     static_configs: [{targets: ["mesure-conteneurs:8080"]}]

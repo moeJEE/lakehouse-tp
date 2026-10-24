@@ -3,6 +3,7 @@ mappings:
   - match: "airflow.dag.*.*.duration"
     name: "airflow_tache_duree_secondes"
     labels: {dag_id: "$1", task_id: "$2"}
+  # (Airflow 2 ; Airflow 3 n'émet plus ti.finish ni ti_failures pour les tâches)
   - match: "airflow.ti.finish.*.*.*"
     name: "airflow_tache_terminee_total"
     labels: {dag_id: "$1", task_id: "$2", etat: "$3"}

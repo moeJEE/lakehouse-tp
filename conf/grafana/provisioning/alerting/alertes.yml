@@ -1,4 +1,6 @@
-# Règle d'alerte fournie (TP 3, partie 5) : au moins une tâche Airflow en échec sur 5 minutes.
+# Règle d'alerte fournie (TP 3, partie 5) : au moins une exécution de DAG en échec sur 5 minutes.
+# Airflow 3 n'émet plus « ti_failures » pour une tâche en échec : on compte les exécutions de DAG
+# en échec (dagrun.duration.failed). « or vector(0) » : le tout premier échec est aussi compté.
 apiVersion: 1
 groups:
   - orgId: 1
@@ -6,8 +8,8 @@ groups:
     folder: Lakehouse
     interval: 1m
     rules:
-      - uid: tache-airflow-en-echec
-        title: Tâche Airflow en échec
+      - uid: tache-airflow-en-echec   # identifiant inchangé : Grafana remplace la règle existante
+        title: Exécution de DAG en échec
         condition: C
         data:
           - refId: A
@@ -15,7 +17,9 @@ groups:
             datasourceUid: prometheus
             model:
               refId: A
-              expr: sum(increase(airflow_taches_en_echec_total[5m]))
+              expr: >-
+                (sum(airflow_execution_dag_duree_secondes_count{etat="failed"}) or vector(0))
+                - (sum(airflow_execution_dag_duree_secondes_count{etat="failed"} offset 5m) or vector(0))
               instant: true
           - refId: B
             datasourceUid: __expr__
@@ -36,6 +40,6 @@ groups:
         execErrState: Error
         for: 0s
         annotations:
-          summary: Au moins une tâche Airflow a échoué dans les 5 dernières minutes.
+          summary: Au moins une exécution de DAG a échoué dans les 5 dernières minutes.
         labels:
           equipe: data
