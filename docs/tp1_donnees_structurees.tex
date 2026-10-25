@@ -89,7 +89,7 @@
 % Un titre en gras introduit le paragraphe ; seul « Attention » est en rouge.
 \newenvironment{resultat}{\par\medskip\noindent\textbf{Résultat attendu :}\ }{\par\medskip}
 \newenvironment{astuce}{\par\medskip\noindent\textbf{Astuce :}\ }{\par\medskip}
-\newenvironment{attention}{\par\medskip\noindent\textbf{\textcolor{lhred}{Attention :}}\ }{\par\medskip}
+\newenvironment{attention}[1][]{\par\medskip\noindent\textbf{\textcolor{lhred}{Attention\if\relax\detokenize{#1}\relax\else{} -- #1\fi{} :}}\ }{\par\medskip}
 
 % ---------- Code ----------
 \lstset{
@@ -114,7 +114,7 @@
 \pdfstringdefDisableCommands{\def\cmd#1{#1}}
 \hypersetup{pdftitle={TP 1 -- Données structurées},pdfauthor={Anouar Riadsolh}}
 
-\newenvironment{notion}{\par\medskip\noindent\textbf{\textcolor{lhblue}{Notion clé :}}\ }{\par\medskip}
+\newenvironment{notion}[1][]{\par\medskip\noindent\textbf{\textcolor{lhblue}{Notion clé\if\relax\detokenize{#1}\relax\else{} -- #1\fi{} :}}\ }{\par\medskip}
 \newcommand{\nb}[1]{\textcolor{lhblue}{\texttt{#1}}}
 
 % =====================================================================
@@ -161,7 +161,7 @@ commerçants de vendre sur les grands sites de e-commerce. La direction vous pos
   \item Peut-on prévoir un retard de livraison dès la commande ?
 \end{enumerate}
 
-Les données sont réparties entre deux systèmes, l'application de vente, qui écrit dans une base
+Les données sont réparties entre deux systèmes : l'application de vente, qui écrit dans une base
 \textbf{PostgreSQL}, et des \textbf{fichiers CSV} exportés par d'autres services (clients, produits,
 vendeurs). Votre mission est de les réunir dans le Lakehouse, de les rendre fiables, puis de répondre
 aux questions.
@@ -193,7 +193,7 @@ category\_translation & CSV & Traduction des catégories en anglais & 71 \\
 \end{center}
 
 \begin{attention}
-Dans Olist, un \cmd{customer\_id} est créé \textbf{à chaque commande}. Pour identifier une même
+dans Olist, un \cmd{customer\_id} est créé \textbf{à chaque commande}. Pour identifier une même
 personne d'une commande à l'autre, il faut utiliser \cmd{customer\_unique\_id}.
 \end{attention}
 
@@ -317,30 +317,30 @@ décrites ci-dessous.
 \subsection*{Le pipeline, étape par étape}
 
 \begin{description}[leftmargin=1.4em,labelindent=0pt,itemsep=3pt,font=\normalfont]
-\item[\etape{1}] \textbf{Ingestion de la base de vente} (\nb{01\_bronze}). Spark lit les tables
+\item[\etape{1}] \textbf{Ingestion de la base de vente} (\nb{01\_bronze}) : Spark lit les tables
   \cmd{orders}, \cmd{order\_items} et \cmd{order\_payments} de PostgreSQL par une connexion JDBC et
   les copie en Bronze. Le lot 1 reflète la base au 1\textsuperscript{er} juillet 2018. Le lot 2
   n'apporte que les lignes nouvelles ou modifiées depuis (colonne \cmd{updated\_at}).
-\item[\etape{2}] \textbf{Dépôt des fichiers} (\nb{01\_bronze}). Les CSV des référentiels (clients, produits, vendeurs,
+\item[\etape{2}] \textbf{Dépôt des fichiers} (\nb{01\_bronze}) : les CSV des référentiels (clients, produits, vendeurs,
   traduction des catégories) sont copiés tels quels dans \cmd{s3://landing/}, un dossier par table et
   par date de dépôt.
-\item[\etape{3}] \textbf{Ingestion des fichiers} (\nb{01\_bronze}). Spark lit ces CSV \emph{en texte},
-  sans deviner les types, et les écrit en Bronze. Chaque table Bronze reçoit deux colonnes techniques,
+\item[\etape{3}] \textbf{Ingestion des fichiers} (\nb{01\_bronze}) : Spark lit ces CSV \emph{en texte},
+  sans deviner les types, et les écrit en Bronze. Chaque table Bronze reçoit deux colonnes techniques :
   \cmd{\_source} (d'où vient la ligne) et \cmd{\_ingere\_le} (quand elle a été chargée).
-\item[\etape{4}] \textbf{Nettoyage} (\nb{02\_silver}). Chaque table Bronze devient une table
+\item[\etape{4}] \textbf{Nettoyage} (\nb{02\_silver}) : chaque table Bronze devient une table
   Silver, avec des colonnes renommées et typées, doublons retirés, catégories traduites, délais de livraison et indicateur de retard
   calculés. Au lot 2, l'instruction \cmd{MERGE} met à jour les commandes existantes et ajoute les
   nouvelles.
-\item[\etape{5}] \textbf{Quarantaine} (\nb{02\_silver}). Les lignes qui violent une règle bloquante (commande
+\item[\etape{5}] \textbf{Quarantaine} (\nb{02\_silver}) : les lignes qui violent une règle bloquante (commande
   \og livrée \fg{} sans date de livraison, paiement de type inconnu) sont isolées dans des tables de
   quarantaine au lieu d'être supprimées.
-\item[\etape{6}] \textbf{Préparation de Gold} (\nb{03\_gold\_sql\_incremental}). Les tables Silver
+\item[\etape{6}] \textbf{Préparation de Gold} (\nb{03\_gold\_sql\_incremental}) : les tables Silver
   sont jointes dans \cmd{gold.commandes}, une ligne par commande, puis agrégées en indicateurs (ventes
   par mois, par catégorie, délais par état).
-\item[\etape{7}] \textbf{Analyse} (\nb{03\_gold\_sql\_incremental}). Des requêtes SQL sur Gold répondent aux questions de la direction.
-\item[\etape{8}] \textbf{Prédiction} (\nb{04\_ml\_retards}). Un modèle scikit-learn apprend à prévoir les retards à partir
+\item[\etape{7}] \textbf{Analyse} (\nb{03\_gold\_sql\_incremental}) : des requêtes SQL sur Gold répondent aux questions de la direction.
+\item[\etape{8}] \textbf{Prédiction} (\nb{04\_ml\_retards}) : un modèle scikit-learn apprend à prévoir les retards à partir
   de \cmd{gold.commandes}, puis écrit ses prédictions dans \cmd{gold.predictions\_retard}.
-\item[\etape{9}] \textbf{Restitution} (\nb{dashboard\_tp1.py}). Le tableau de bord Streamlit affiche les indicateurs Gold et
+\item[\etape{9}] \textbf{Restitution} (\nb{dashboard\_tp1.py}) : le tableau de bord Streamlit affiche les indicateurs Gold et
   les commandes au plus fort risque de retard.
 \end{description}
 
@@ -368,7 +368,7 @@ le nom \cmd{lakehouse.<couche>.<table>}, par exemple \cmd{lakehouse.silver.order
 
 \subsection*{Un pipeline ELT, de l'OLTP à l'OLAP}
 
-\textbf{ELT et non ETL.} Dans un ETL (\emph{Extract, Transform, Load}), les données sont
+\textbf{ELT et non ETL} : dans un ETL (\emph{Extract, Transform, Load}), les données sont
 transformées \emph{avant} d'être chargées, et seule la version propre est conservée. Ce TP suit
 l'approche \textbf{ELT} (\emph{Extract, Load, Transform}), celle des Lakehouse. Les données sont
 d'abord extraites et chargées telles quelles, puis transformées \emph{dans} le Lakehouse, avec Spark.
@@ -388,15 +388,15 @@ T -- Transform & \etape{4} à \etape{8} & Nettoyage et \cmd{MERGE} en Silver, jo
 \end{tabularx}
 \end{center}
 
-Garder la copie brute en Bronze a deux avantages. Si une règle de nettoyage change, on rejoue
-Silver et Gold sans relire les sources. Si un chiffre est faux, on remonte jusqu'à la donnée d'origine.
+Garder la copie brute en Bronze a deux avantages : si une règle de nettoyage change, on rejoue
+Silver et Gold sans relire les sources, et si un chiffre est faux, on remonte jusqu'à la donnée d'origine.
 
-\textbf{De l'OLTP à l'OLAP.} La source PostgreSQL est une base \textbf{OLTP} (\emph{OnLine
+\textbf{De l'OLTP à l'OLAP} : la source PostgreSQL est une base \textbf{OLTP} (\emph{OnLine
 Transaction Processing}), celle d'une application qui enregistre des commandes une par une, avec
 un modèle \emph{normalisé} (7 tables liées par des clés) et des mises à jour fréquentes. La couche
 Gold est \textbf{OLAP} (\emph{OnLine Analytical Processing}). Ses tables sont faites pour lire beaucoup
 de lignes et calculer des indicateurs. Bronze et Silver gardent le modèle normalisé de la source,
-et c'est en Gold que le modèle devient analytique. Le \emph{format}, lui, est analytique dès Bronze.
+et c'est en Gold que le modèle devient analytique. Le \emph{format}, lui, est analytique dès Bronze :
 Parquet range les données par colonne, et une requête ne lit que les colonnes dont elle a besoin.
 
 % =====================================================================
@@ -418,8 +418,8 @@ Gardez sous la main l'\textbf{aide-mémoire PySpark} de la dernière page, qui c
 opérations dont vous aurez besoin.
 
 
-\begin{attention}
-\textbf{Un seul notebook actif à la fois.} Chaque notebook ouvert garde sa propre session Spark,
+\begin{attention}[Un seul notebook actif à la fois]
+chaque notebook ouvert garde sa propre session Spark,
 qui réserve jusqu'à 2 Go de mémoire. Avant d'ouvrir le notebook suivant, arrêtez les précédents
 (panneau \emph{Running Terminals and Kernels} (barre de gauche) > \emph{Shut Down All}).
 Les tables restent dans le Lakehouse.
@@ -435,8 +435,8 @@ Les tables restent dans le Lakehouse.
 Vous chargez la base PostgreSQL dans l'état où elle était le \textbf{1\textsuperscript{er} juillet 2018}
 (lot 1), vous déposez les fichiers CSV dans la zone \cmd{s3://landing/}, puis vous écrivez sept tables Bronze.
 
-\begin{notion}
-\textbf{On lit les fichiers bruts en texte.} Laisser Spark deviner les types (\cmd{inferSchema})
+\begin{notion}[On lit les fichiers bruts en texte]
+laisser Spark deviner les types (\cmd{inferSchema})
 transforme le code postal \cmd{09790} en nombre \cmd{9790}, et le zéro est perdu pour toujours.
 Les types sont fixés plus tard, en Silver, de façon explicite.
 \end{notion}
@@ -454,7 +454,7 @@ Dans la console (\url{http://localhost:9001}), le dossier \cmd{lakehouse/warehou
 un sous-dossier par table, avec ses fichiers de données Parquet (\cmd{data/}) et ses fichiers de
 métadonnées (\cmd{metadata/}).
 
-\capture{01_bronze_s3}{Les 7 tables Bronze vues dans la console du stockage S3 : un dossier par table.}{fig:s3bronze}
+\capture{01_bronze_s3}{Les 7 tables Bronze vues dans la console du stockage S3, avec un dossier par table.}{fig:s3bronze}
 
 
 \subsection*{Partie 2 -- Silver \hfill \nb{02\_silver}}
@@ -462,15 +462,15 @@ métadonnées (\cmd{metadata/}).
 Vous mesurez d'abord les défauts (valeurs nulles, doublons), puis vous écrivez une table Silver par
 source. Un exemple complet est fourni pour \cmd{customers}, et vous traitez les autres sur le même modèle.
 
-\begin{notion}
-\textbf{Une valeur nulle n'est pas forcément une erreur.} Une commande en cours n'a pas encore de date
+\begin{notion}[Une valeur nulle n'est pas forcément une erreur]
+une commande en cours n'a pas encore de date
 de livraison, c'est normal. Une commande \og livrée \fg{} sans date de livraison est une erreur, et
 elle part en \textbf{quarantaine}. Entre les deux, une incohérence sans gravité devient une
 \textbf{alerte}. On garde la ligne et on la signale.
 \end{notion}
 
 \begin{resultat}
-Le bilan final compare Bronze et Silver table par table. Chaque écart s'explique par une règle
+le bilan final compare Bronze et Silver table par table. Chaque écart s'explique par une règle
 (doublons retirés, lignes en quarantaine).
 \end{resultat}
 
@@ -483,9 +483,9 @@ Vous construisez \cmd{gold.commandes} (une ligne par commande) et trois tables d
 puis vous répondez en SQL aux questions de la direction. Vous chargez ensuite le \textbf{lot 2} :
 deux mois et demi de nouvelles commandes et de changements de statut.
 
-\begin{notion}
-\textbf{Le modèle de la couche Gold.} Gold ne suit pas un schéma en étoile, mais un modèle plus
-simple, en deux niveaux (figure~\ref{fig:gold}).
+\begin{notion}[Le modèle de la couche Gold]
+Gold ne suit pas un schéma en étoile, mais un modèle plus
+simple, en deux niveaux (figure~\ref{fig:gold}) :
 \begin{itemize}[leftmargin=*,itemsep=1pt,topsep=2pt]
 \item \cmd{gold.commandes} est une \textbf{table large dénormalisée} (\emph{One Big Table}), avec une
   ligne par commande, où le client, les montants, les paiements et les délais de livraison sont
@@ -535,8 +535,8 @@ de plusieurs tables de faits qui partagent leurs dimensions, sera construit au T
 \label{fig:gold}
 \end{figure}
 
-\begin{notion}
-\textbf{Ingestion incrémentale.} On ne relit que les lignes modifiées depuis la dernière ingestion,
+\begin{notion}[Ingestion incrémentale]
+on ne relit que les lignes modifiées depuis la dernière ingestion,
 grâce à la colonne \cmd{updated\_at} (le \emph{filigrane}). L'instruction \cmd{MERGE INTO} applique
 ces changements en Silver en une seule transaction (mise à jour des commandes existantes,
 insertion des nouvelles). Iceberg garde l'ancienne version de la table, que l'on peut relire
@@ -544,7 +544,7 @@ avec \cmd{VERSION AS OF} (\emph{time travel}).
 \end{notion}
 
 \begin{resultat}
-Après le \cmd{MERGE}, \cmd{silver.orders} contient environ 99\,400 commandes, et le nombre de
+après le \cmd{MERGE}, \cmd{silver.orders} contient environ 99\,400 commandes, et le nombre de
 commandes \cmd{shipped} est divisé par deux environ, car elles ont été livrées entre-temps.
 \end{resultat}
 
@@ -592,14 +592,14 @@ Vous entraînez deux modèles de classification (scikit-learn) qui estiment, au 
 la probabilité d'un retard de livraison, puis vous comparez leurs performances. Les prédictions sont
 écrites dans \cmd{gold.predictions\_retard}, que le tableau de bord affichera.
 
-\begin{notion}
-\textbf{Fuite de données.} Un modèle ne doit utiliser que des informations disponibles au moment de
+\begin{notion}[Fuite de données]
+un modèle ne doit utiliser que des informations disponibles au moment de
 la prédiction. Le notebook vous fait ajouter volontairement le délai réel de livraison, et
 le modèle devient presque parfait\dots{} et totalement inutilisable.
 \end{notion}
 
 \begin{resultat}
-Une AUC ROC modeste, de l'ordre de 0,7, car les causes principales des retards (transporteur, météo,
+une AUC ROC modeste, de l'ordre de 0,7, car les causes principales des retards (transporteur, météo,
 grèves) ne figurent pas dans les données. Avec la fuite de données, l'AUC dépasse 0,95.
 \end{resultat}
 
@@ -620,7 +620,7 @@ grèves) ne figurent pas dans les données. Avec la fuite de données, l'AUC dé
 \node[font=\sffamily\scriptsize,anchor=north] at (13.6,-0.05) {août 2018};
 \draw[->] (0,1.55) -- node[above,font=\sffamily\scriptsize]{temps (date d'achat)} (13.6,1.55);
 \end{tikzpicture}
-\caption{Découpage temporel. Le modèle apprend sur le passé et il est évalué sur des commandes
+\caption{Découpage temporel : le modèle apprend sur le passé et il est évalué sur des commandes
 plus récentes, comme il le serait en production.}
 \label{fig:split}
 \end{figure}
@@ -632,8 +632,8 @@ tables du TP sont au format Iceberg, et Delta Lake, créé par Databricks, est s
 Vous écrivez la même table (\cmd{silver.orders}) dans les deux formats, vous la modifiez, vous
 revenez à sa première version, et vous comparez ce que chaque format range dans le stockage.
 
-\begin{notion}
-\textbf{Format de fichier, format de table.} Parquet est un \emph{format de fichier}. Il range les
+\begin{notion}[Format de fichier, format de table]
+Parquet est un \emph{format de fichier}. Il range les
 données par colonne, mais ne connaît ni versions ni transactions. Iceberg et Delta Lake sont des
 \emph{formats de table}. Au-dessus des mêmes fichiers Parquet, ils ajoutent des métadonnées (schéma,
 liste des fichiers, historique). Iceberg les range dans un dossier \cmd{metadata/} et passe par un
@@ -641,7 +641,7 @@ catalogue, alors que Delta tient un journal de transactions dans \cmd{\_delta\_l
 \end{notion}
 
 \begin{resultat}
-Les deux tables contiennent les mêmes fichiers Parquet, seules leurs métadonnées diffèrent. Après
+les deux tables contiennent les mêmes fichiers Parquet. Seules leurs métadonnées diffèrent. Après
 l'\cmd{UPDATE}, les anciens fichiers restent dans le stockage (\emph{time travel}), et seule la table
 Iceberg apparaît dans le catalogue.
 \end{resultat}
@@ -674,12 +674,12 @@ Chaque enregistrement du fichier met la page à jour.
 \capture{dashboard_bas}{Tableau de bord attendu : top 10 des catégories, taux de retard par état et commandes à risque.}{fig:dash2}
 
 \begin{attention}
-Le tableau de bord démarre sa propre session Spark. Sur une machine de 8 Go, arrêtez d'abord le
+le tableau de bord démarre sa propre session Spark. Sur une machine de 8 Go, arrêtez d'abord le
 noyau des notebooks (\emph{Kernel > Shut Down Kernel}) pour libérer la mémoire.
 \end{attention}
 
 \begin{astuce}
-Pensez à l'utilisateur, avec un titre clair, des unités (R\$, \%, jours), et des mois partiels exclus par
+pensez à l'utilisateur, avec un titre clair, des unités (R\$, \%, jours), et des mois partiels exclus par
 défaut. Un graphique qui fait croire à un effondrement des ventes en fin de période est une erreur
 d'analyse, pas un détail.
 \end{astuce}
