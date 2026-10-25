@@ -120,44 +120,66 @@ Matériel & 8~Go de RAM minimum (16~Go conseillés) et 15~Go d'espace disque lib
 Tout l'environnement tourne dans \textbf{Docker} : vous n'installez ni Java, ni Spark, ni Python à la main.
 Une seule commande démarre les quatre services de base, qui communiquent entre eux sur un réseau
 privé ; les outils utilisés plus tard (Trino, Superset, Airflow, la supervision) se démarrent à la
-demande. La figure~\ref{fig:archi} montre comment les services de base s'articulent ; les flux
-numérotés sont expliqués juste après. La figure~\ref{fig:tp3} présente les outils ajoutés au TP 3.
+demande. La figure~\ref{fig:archi} montre comment tous ces services s'articulent ; les flux numérotés
+sont expliqués juste après.
 
 \begin{figure}[h]
 \centering
 \resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[
-  font=\sffamily\small, >=Stealth, node distance=1cm,
+  font=\sffamily\small, >=Stealth,
   svc/.style={draw=#1,fill=#1!8,rounded corners=4pt,thick,minimum width=3.3cm,minimum height=1.2cm,align=center},
   opt/.style={svc=#1,dashed},
+  lab/.style={font=\sffamily\scriptsize,text=black!70,align=center},
   num/.style={circle,fill=lhblue,text=white,font=\sffamily\bfseries\scriptsize,inner sep=1.4pt}]
 
-% Niveau 1 : les outils
-\node[svc=gray]   (pg)    at (0,0)    {\textbf{PostgreSQL}\\\scriptsize la source};
-\node[svc=lhblue] (jup)   at (4.6,0)  {\textbf{JupyterLab}\\\scriptsize Spark et dbt};
-\node[svc=lhblue] (trino) at (9.2,0)  {\textbf{Trino}\\\scriptsize SQL interactif};
-\node[svc=lhblue] (sup)   at (13.8,0) {\textbf{Superset}\\\scriptsize tableaux de bord};
+% Bande du haut : supervision et observabilité (TP 3)
+\draw[dashed,rounded corners=6pt,draw=black!40,fill=black!2] (-1.9,2.25) rectangle (17.1,6.15);
+\node[anchor=north west,font=\sffamily\footnotesize\bfseries,text=black!60] at (-1.75,6.05)
+  {TP 3 -- supervision et observabilité des données};
+\node[opt=lhsilver] (mq)  at (0,3.25)    {\textbf{Marquez}\\\scriptsize lineage (OpenLineage)};
+\node[opt=gray]     (sd)  at (4.75,3.25) {\textbf{statsd-exporter}\\\scriptsize métriques d'Airflow};
+\node[opt=lhgold]   (pr)  at (9.5,3.25)  {\textbf{Prometheus}\\\scriptsize stocke les métriques};
+\node[opt=gray]     (mc)  at (9.5,5.05)  {\textbf{Mesure des conteneurs}\\\scriptsize mémoire, processeur};
+\node[opt=lhgold]   (gr)  at (15.2,3.25) {\textbf{Grafana}\\\scriptsize tableaux de bord, alerte};
+
+% Niveau 1 : les outils de travail
+\node[svc=gray]   (pg)    at (0,0)     {\textbf{PostgreSQL}\\\scriptsize la source};
+\node[svc=lhblue] (jup)   at (3.8,0)   {\textbf{JupyterLab}\\\scriptsize Spark et dbt, à la main};
+\node[opt=lhblue] (af)    at (7.6,0)   {\textbf{Airflow}\\\scriptsize Spark et dbt, chaque jour};
+\node[opt=lhblue] (trino) at (11.4,0)  {\textbf{Trino}\\\scriptsize SQL interactif};
+\node[opt=lhblue] (sup)   at (15.2,0)  {\textbf{Superset}\\\scriptsize tableaux de bord};
 
 % Niveau 2 : le catalogue
-\node[svc=gray] (cat) at (6.9,-2.3) {\textbf{Catalogue Iceberg}\\\scriptsize l'annuaire des tables};
+\node[svc=gray] (cat) at (7.6,-2.3) {\textbf{Catalogue Iceberg}\\\scriptsize l'annuaire des tables};
 
 % Niveau 3 : le stockage
-\node[svc=lhbronze, minimum width=15.4cm, minimum height=1.5cm] (s3) at (6.9,-4.6)
+\node[svc=lhbronze, minimum width=18.6cm, minimum height=1.5cm] (s3) at (7.6,-4.6)
   {\textbf{Stockage S3 (RustFS)}\\[3pt]
    \texttt{landing} $\rightarrow$
    \colorbox{lhbronze!30}{bronze} $\rightarrow$
    \colorbox{lhsilver!30}{silver} $\rightarrow$
    \colorbox{lhgold!30}{gold}};
 
-% Flux
+% Flux des données
 \draw[->,thick] (pg) -- node[num,above=3pt]{1} (jup);
 \draw[->,thick] ([xshift=-8mm]jup.south) -- node[num,left=3pt]{2} ([xshift=-8mm]jup.south |- s3.north);
-\draw[->,thick] ([xshift=6mm]jup.south) -- node[num,left=4pt]{3} ([xshift=-8mm]cat.north);
-\draw[->,thick] ([xshift=-6mm]trino.south) -- node[num,right=4pt]{4} ([xshift=8mm]cat.north);
+\draw[->,thick] ([xshift=6mm]jup.south) -- node[num,left=4pt]{3} ([xshift=-10mm]cat.north);
+\draw[->,thick,dashed] (af.south) -- node[num,right=3pt]{6} (cat.north);
+\draw[->,thick] ([xshift=-6mm]trino.south) -- node[num,right=4pt]{4} ([xshift=10mm]cat.north);
 \draw[->,thick] ([xshift=8mm]trino.south) -- node[num,right=3pt]{5} ([xshift=8mm]trino.south |- s3.north);
 \draw[->] (sup) -- (trino);
+
+% Supervision et lineage
+\draw[->,dashed] ([xshift=-6mm]af.north) -- node[num,right=2pt,pos=0.45]{7} (sd.south);
+\draw[->,dashed] (sd) -- (pr);
+\draw[->,dashed] (mc) -- (pr);
+\draw[->,dashed] (pr) -- node[lab,above=2pt]{PromQL} (gr);
+\draw[->,dashed] ([xshift=-12mm]af.north) -- node[num,above=2pt,pos=0.55]{8} (mq.south east);
 \end{tikzpicture}}
-\caption{Architecture de l'environnement. Tous les services tournent dans Docker.}
+\caption{Architecture de l'environnement : tous les services tournent dans Docker. En trait plein,
+les services de base (\cmd{docker compose up -d}) ; en pointillés, ceux qui se démarrent à la demande
+(Trino et Superset, Airflow, puis la supervision au TP 3).}
 \label{fig:archi}
 \end{figure}
 
@@ -174,48 +196,20 @@ numérotés sont expliqués juste après. La figure~\ref{fig:tp3} présente les 
 \item[\etape{4}] \textbf{Trino demande au catalogue} où se trouve la table qu'on lui demande d'interroger.
 \item[\etape{5}] \textbf{Trino lit directement les fichiers} dans le stockage S3 : il voit exactement
   les données que Spark vient d'écrire, sans copie. Superset, lui, passe par Trino.
+\item[\etape{6}] \textbf{Au TP 3, Airflow automatise le pipeline} : chaque jour, il lance les mêmes
+  scripts Spark et le même projet dbt que vous dans JupyterLab, qui suivent les étapes \etape{2} et
+  \etape{3}.
+\item[\etape{7}] \textbf{La supervision mesure les services} : Airflow envoie la durée et l'état de
+  ses tâches, un petit service mesure la mémoire et le processeur de chaque conteneur ; Prometheus
+  garde ces métriques, Grafana les affiche et déclenche une alerte en cas d'échec.
+\item[\etape{8}] \textbf{L'observabilité des données suit le lineage} : Airflow et Spark décrivent à
+  Marquez chaque exécution (quel job, quelles tables lues et écrites, quel résultat).
 \end{description}
 
 \textbf{Et dbt ?} Dans les TP 2 et 3, une partie des transformations est écrite sous forme de
 \emph{modèles} dbt : de simples fichiers SQL, testés et documentés. dbt ne stocke rien lui-même :
 il génère les requêtes et les fait exécuter par Spark (ou par Trino). Le trajet reste donc le même,
 à partir de l'étape \etape{2}.
-
-\textbf{Et au TP 3 ?} Le pipeline ne se lance plus à la main : \textbf{Airflow} enchaîne ses étapes
-chaque jour. Deux familles d'outils regardent alors la plateforme tourner
-(figure~\ref{fig:tp3}) : la \textbf{supervision} (Prometheus, Grafana) mesure les services
-(mémoire, processeur, durée et échecs des tâches) ; l'\textbf{observabilité des données} (Marquez)
-enregistre le \emph{lineage} : quel job a lu et écrit quelle table, et avec quel résultat.
-
-\begin{figure}[h]
-\centering
-\resizebox{\textwidth}{!}{%
-\begin{tikzpicture}[
-  font=\sffamily\small, >=Stealth,
-  svc/.style={draw=#1,fill=#1!8,rounded corners=4pt,thick,minimum width=3.2cm,minimum height=1.15cm,align=center},
-  lab/.style={font=\sffamily\scriptsize,text=black!70,align=center}]
-\node[svc=lhblue]   (af)   at (0,0)     {\textbf{Airflow}\\\scriptsize orchestre le pipeline};
-\node[svc=lhblue]   (sp)   at (5.2,0)   {\textbf{Jobs Spark, dbt}\\\scriptsize lancés par Airflow};
-\node[svc=lhbronze] (tab)  at (10.4,0)  {\textbf{Tables Iceberg}\\\scriptsize bronze, silver, gold};
-\node[svc=gray]     (sd)   at (0,-2.6)  {\textbf{statsd-exporter}\\\scriptsize traduit les métriques};
-\node[svc=gray]     (mc)   at (5.2,-2.6){\textbf{Mesure des conteneurs}\\\scriptsize mémoire, processeur};
-\node[svc=lhgold]   (pr)   at (2.6,-5.0){\textbf{Prometheus}\\\scriptsize stocke les métriques};
-\node[svc=lhgold]   (gr)   at (7.8,-5.0){\textbf{Grafana}\\\scriptsize tableaux de bord, alertes};
-\node[svc=lhsilver] (mq)   at (13.6,-2.6){\textbf{Marquez}\\\scriptsize lineage OpenLineage};
-
-\draw[->,thick] (af) -- node[lab,above]{déclenche} (sp);
-\draw[->,thick] (sp) -- node[lab,above]{lit, écrit} (tab);
-\draw[->] (af) -- node[lab,left]{métriques} (sd);
-\draw[->] (sd) -- (pr);
-\draw[->] (mc) -- (pr);
-\draw[->,thick] (pr) -- node[lab,above=3pt]{requêtes PromQL} (gr);
-\draw[->] (sp.south east) -- node[lab,below left=1pt]{événements (tables lues, écrites)} (mq.west);
-\draw[->] (af.north) -- ++(0,0.6) -| node[lab,pos=0.25,above]{événements (tâches et leur état)} (mq.north);
-\end{tikzpicture}}
-\caption{Les outils ajoutés au TP 3. En haut, le pipeline ; à gauche et en bas, la supervision ;
-à droite, l'observabilité des données.}
-\label{fig:tp3}
-\end{figure}
 
 \subsection*{Les composants}
 
