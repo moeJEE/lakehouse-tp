@@ -33,6 +33,9 @@
 \usepackage{xltabular}
 \captionsetup{font=small,labelfont=bf,labelsep=period}
 \graphicspath{{images/}}
+% Logos des logiciels (docs/images/logos/, voir LISEZMOI.md) ; sans le fichier, rien ne s'affiche
+\newcommand{\logo}[2][1.15em]{\IfFileExists{images/logos/#2.png}{\raisebox{-0.22em}{\includegraphics[height=#1]{logos/#2.png}}\hspace{0.3em}}%
+  {\IfFileExists{logos/#2.png}{\raisebox{-0.22em}{\includegraphics[height=#1]{logos/#2.png}}\hspace{0.3em}}{}}}
 
 \setlength{\parskip}{0.5em}
 \setlength{\parindent}{0pt}
@@ -128,7 +131,7 @@ sont expliqués juste après.
 \resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[
   font=\sffamily\small, >=Stealth,
-  svc/.style={draw=#1,fill=#1!8,rounded corners=4pt,thick,minimum width=3.3cm,minimum height=1.2cm,align=center},
+  svc/.style={draw=#1,fill=#1!8,rounded corners=4pt,thick,minimum width=3.3cm,minimum height=1.35cm,align=center},
   opt/.style={svc=#1,dashed},
   lab/.style={font=\sffamily\scriptsize,text=black!70,align=center},
   num/.style={circle,fill=lhblue,text=white,font=\sffamily\bfseries\scriptsize,inner sep=1.4pt}]
@@ -137,21 +140,21 @@ sont expliqués juste après.
 \draw[dashed,rounded corners=6pt,draw=black!40,fill=black!2] (-1.9,2.25) rectangle (17.1,6.15);
 \node[anchor=north west,font=\sffamily\footnotesize\bfseries,text=black!60] at (-1.75,6.05)
   {TP 3 -- supervision et observabilité des données};
-\node[opt=lhsilver] (mq)  at (0,3.25)    {\textbf{Marquez}\\\scriptsize lineage (OpenLineage)};
+\node[opt=lhsilver] (mq)  at (0,3.25)    {\logo{marquez}\textbf{Marquez}\\\scriptsize lineage (OpenLineage)};
 \node[opt=gray]     (sd)  at (4.75,3.25) {\textbf{statsd-exporter}\\\scriptsize métriques d'Airflow};
-\node[opt=lhgold]   (pr)  at (9.5,3.25)  {\textbf{Prometheus}\\\scriptsize stocke les métriques};
+\node[opt=lhgold]   (pr)  at (9.5,3.25)  {\logo{prometheus}\textbf{Prometheus}\\\scriptsize stocke les métriques};
 \node[opt=gray]     (mc)  at (9.5,5.05)  {\textbf{Mesure des conteneurs}\\\scriptsize mémoire, processeur};
-\node[opt=lhgold]   (gr)  at (15.2,3.25) {\textbf{Grafana}\\\scriptsize tableaux de bord, alerte};
+\node[opt=lhgold]   (gr)  at (15.2,3.25) {\logo{grafana}\textbf{Grafana}\\\scriptsize tableaux de bord, alerte};
 
 % Niveau 1 : les outils de travail
-\node[svc=gray]   (pg)    at (0,0)     {\textbf{PostgreSQL}\\\scriptsize la source};
-\node[svc=lhblue] (jup)   at (3.8,0)   {\textbf{JupyterLab}\\\scriptsize Spark et dbt, à la main};
-\node[opt=lhblue] (af)    at (7.6,0)   {\textbf{Airflow}\\\scriptsize Spark et dbt, chaque jour};
-\node[opt=lhblue] (trino) at (11.4,0)  {\textbf{Trino}\\\scriptsize SQL interactif};
-\node[opt=lhblue] (sup)   at (15.2,0)  {\textbf{Superset}\\\scriptsize tableaux de bord};
+\node[svc=gray]   (pg)    at (0,0)     {\logo{postgres}\textbf{PostgreSQL}\\\scriptsize la source};
+\node[svc=lhblue] (jup)   at (3.8,0)   {\logo{jupyter}\textbf{JupyterLab}\\\scriptsize \logo[0.95em]{spark}\logo[0.95em]{dbt}à la main};
+\node[opt=lhblue] (af)    at (7.6,0)   {\logo{airflow}\textbf{Airflow}\\\scriptsize \logo[0.95em]{spark}\logo[0.95em]{dbt}chaque jour};
+\node[opt=lhblue] (trino) at (11.4,0)  {\logo{trino}\textbf{Trino}\\\scriptsize SQL interactif};
+\node[opt=lhblue] (sup)   at (15.2,0)  {\logo{superset}\textbf{Superset}\\\scriptsize tableaux de bord};
 
 % Niveau 2 : le catalogue
-\node[svc=gray] (cat) at (7.6,-2.3) {\textbf{Catalogue Iceberg}\\\scriptsize l'annuaire des tables};
+\node[svc=gray] (cat) at (7.6,-2.3) {\logo{iceberg}\textbf{Catalogue Iceberg}\\\scriptsize l'annuaire des tables};
 
 % Niveau 3 : le stockage
 \node[svc=lhbronze, minimum width=18.6cm, minimum height=1.5cm] (s3) at (7.6,-4.6)
