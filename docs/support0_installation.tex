@@ -83,6 +83,7 @@
 \newenvironment{resultat}{\par\medskip\noindent\textbf{Résultat attendu :}\ }{\par\medskip}
 \newenvironment{astuce}{\par\medskip\noindent\textbf{Astuce :}\ }{\par\medskip}
 \newenvironment{attention}{\par\medskip\noindent\textbf{\textcolor{lhred}{Attention :}}\ }{\par\medskip}
+\newenvironment{notion}{\par\medskip\noindent\textbf{\textcolor{lhblue}{Notion clé :}}\ }{\par\medskip}
 
 % ---------- Code ----------
 \lstset{
@@ -200,10 +201,9 @@ l'encadrent, et le tout repose sur des conteneurs Docker.
 \node[et,font=\sffamily\scriptsize] at (6.35,-8.55) {\logo[2.0em]{iceberg}\\[2pt]Iceberg REST};
 \draw[bloc] (8.75,-7.3) rectangle (15.85,-9.75);
 \node[barre,minimum width=7.1cm,anchor=north west] at (8.75,-7.3) {Stockage ouvert (S3)};
-\node[et,font=\sffamily\scriptsize] at (10.0,-8.55) {\logo[2.0em]{rustfs}\\[2pt]RustFS};
-\node[et,font=\sffamily\scriptsize] at (11.9,-8.55) {\logo[2.0em]{iceberg}\\[2pt]Iceberg};
-\node[et,font=\sffamily\scriptsize] at (13.6,-8.55) {\logo[2.0em]{parquet}\\[2pt]Parquet};
-\node[et,font=\sffamily\scriptsize] at (15.0,-8.55) {\logo[2.0em]{delta}\\[2pt]Delta Lake};
+\node[et,font=\sffamily\scriptsize] at (10.4,-8.55) {\logo[2.0em]{rustfs}\\[2pt]RustFS};
+\node[et,font=\sffamily\scriptsize] at (12.3,-8.55) {\logo[2.0em]{iceberg}\\[2pt]Iceberg};
+\node[et,font=\sffamily\scriptsize] at (14.2,-8.55) {\logo[2.0em]{parquet}\\[2pt]Parquet};
 
 % ===== Usages =====
 \draw[cadre] (17.0,0) rectangle (20.4,-2.95);
@@ -257,6 +257,36 @@ Deux services encadrent la plateforme : \textbf{Airflow} enchaîne automatiqueme
 chaque jour ; les outils d'\textbf{observabilité} la surveillent : Prometheus et Grafana mesurent les
 services (mémoire, processeur, durée et échecs des tâches), Marquez enregistre le \emph{lineage}
 (quel job a lu et écrit quelle table).
+
+\subsection*{Les notions à connaître}
+
+\begin{description}[leftmargin=1.4em,labelindent=0pt,itemsep=4pt,font=\normalfont\bfseries]
+\item[Zone d'atterrissage (\emph{landing}) :] l'entrée du Lakehouse. Les fichiers y sont déposés
+  tels qu'ils arrivent des sources, sans aucune modification : ce ne sont pas encore des tables.
+  On peut ainsi toujours tout retraiter depuis la donnée d'origine.
+\item[Couches bronze, silver, gold :] l'architecture \og en médaillon \fg{}. Bronze garde la donnée
+  brute, sous forme de table ; silver la nettoie et la vérifie ; gold la prépare pour un usage
+  précis (indicateurs, modèle d'IA, tableau de bord).
+\item[Stockage ouvert :] les fichiers sont rangés dans un stockage objet standard, compatible avec
+  Amazon S3 (ici RustFS). Le stockage est \emph{séparé du calcul} : on peut arrêter Spark ou Trino
+  sans rien perdre, et plusieurs moteurs travaillent sur les mêmes fichiers.
+\item[Parquet :] un \emph{format de fichier}. Il range les données par colonne et les compresse :
+  il est rapide à lire pour l'analyse, mais un fichier Parquet ne connaît ni versions ni transactions.
+\item[Iceberg :] un \emph{format de table}. Au-dessus des fichiers Parquet, il ajoute des fichiers
+  de métadonnées : le schéma, la liste des fichiers qui composent la table, l'historique des versions.
+  C'est ce qui permet les transactions, le retour à une version passée (\emph{time travel}) et
+  l'évolution du schéma. Delta Lake, poussé par Databricks, est un format concurrent qui repose lui
+  aussi sur Parquet ; il est installé dans l'environnement, mais les TP utilisent Iceberg.
+\item[Catalogue :] l'annuaire des tables. Il associe un nom (\texttt{lakehouse.silver.orders}) à la
+  version courante de la table : quand Spark écrit une nouvelle version, tous les outils la voient
+  au même instant. \textbf{Iceberg REST} est la façon dont le catalogue est servi ici : un petit
+  serveur web qui suit la norme d'Iceberg, et que tous les moteurs interrogent de la même manière.
+  En entreprise, le catalogue gère aussi les droits d'accès (AWS Glue, Unity Catalog, Polaris).
+\item[Lakehouse ouvert :] l'idée qui réunit les notions précédentes. Formats publics et stockage
+  standard : n'importe quel moteur lit les mêmes tables sans copie, et l'on peut changer d'outil
+  sans migrer les données. C'est la différence avec un entrepôt de données classique, dont le
+  format de stockage appartient à l'éditeur.
+\end{description}
 
 \subsection*{Les composants}
 
@@ -533,7 +563,7 @@ sont des dossiers ; les fichiers sont décalés sous le dossier qui les contient
   Airflow), préparation des données. Réservées à l'enseignant. \\
 \addlinespace
 \dossier[1.2]{docker/} & Recettes de construction des images du cours. \\*
-\fic[2.4]{jupyter/Dockerfile} & Image JupyterLab : Java, Spark, connecteurs Iceberg, Delta et S3,
+\fic[2.4]{jupyter/Dockerfile} & Image JupyterLab : Java, Spark, connecteurs Iceberg, Delta Lake et S3,
   bibliothèques Python et dbt. \\
 \fic[2.4]{jupyter/requirements.txt} & Liste des bibliothèques Python et de leurs versions. \\
 \fic[2.4]{superset/Dockerfile} & Image Superset avec le pilote Trino. \\
