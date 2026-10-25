@@ -22,7 +22,7 @@
 \usepackage{tabularx}
 \usepackage{array}
 \usepackage{tikz}
-\usetikzlibrary{positioning,arrows.meta,babel}
+\usetikzlibrary{positioning,arrows.meta,shapes.geometric,babel}
 \usepackage{listings}
 
 \usepackage[htt]{hyphenat}
@@ -58,6 +58,24 @@
 \definecolor{lhbronze}{HTML}{A16207}
 \definecolor{lhsilver}{HTML}{64748B}
 \definecolor{lhgold}{HTML}{CA8A04}
+\definecolor{lhfonce}{HTML}{17394D}
+\definecolor{lhvert}{HTML}{5FB89D}
+% Logos des logiciels (docs/images/logos/, voir LISEZMOI.md) ; sans le fichier, rien ne s'affiche
+\newcommand{\logo}[2][1.15em]{\IfFileExists{images/logos/#2.png}{\raisebox{-0.22em}{\includegraphics[height=#1]{images/logos/#2.png}}\hspace{0.3em}}%
+  {\IfFileExists{logos/#2.png}{\raisebox{-0.22em}{\includegraphics[height=#1]{logos/#2.png}}\hspace{0.3em}}{}}}
+% Pictogrammes de la figure du pipeline (mêmes dessins que dans le Support 0)
+\tikzset{
+  pics/fichier/.style={code={%
+    \fill[white,draw=lhfonce,line width=0.7pt] (-0.32,-0.42) -- (0.18,-0.42) -- (0.32,-0.28) -- (0.32,0.42) -- (-0.32,0.42) -- cycle;
+    \draw[lhfonce,line width=0.7pt] (0.18,-0.42) -- (0.18,-0.28) -- (0.32,-0.28);
+    \node[font=\sffamily\bfseries\tiny,text=lhfonce] at (0,0.05) {#1};}},
+  pics/table/.style={code={%
+    \node[cylinder,shape border rotate=90,aspect=0.28,draw=#1!75!black,fill=#1!35,
+          minimum width=0.85cm,minimum height=0.95cm,line width=0.6pt] {};}},
+  pastille/.style={circle,fill=lhvert,draw=white,line width=1pt,text=white,
+                   font=\sffamily\bfseries\scriptsize,inner sep=1.6pt},
+}
+
 
 % ---------- Titres, en-têtes ----------
 \titleformat{\section}{\needspace{6\baselineskip}\Large\bfseries\color{lhblue}}{\thesection.}{0.6em}{}
@@ -92,9 +110,10 @@
 
 \newcommand{\cmd}[1]{\texttt{#1}}
 \newcommand{\cocher}{$\square$\ }
-\newcommand{\etape}[1]{\tikz[baseline=(n.base)]\node[circle,fill=lhblue,text=white,
-  font=\sffamily\bfseries\scriptsize,inner sep=1.3pt](n){#1};}
+\newcommand{\etape}[1]{\tikz[baseline=(n.base)]\node[circle,fill=lhvert,text=white,
+  font=\sffamily\bfseries\scriptsize,inner sep=1.4pt](n){#1};}
 \pdfstringdefDisableCommands{\def\cmd#1{#1}}
+\hypersetup{pdftitle={TP 2 -- Texte et JSON},pdfauthor={Anouar Riadsolh}}
 
 \newenvironment{notion}{\par\medskip\noindent\textbf{\textcolor{lhblue}{Notion clé :}}\ }{\par\medskip}
 \newcommand{\nb}[1]{\textcolor{lhblue}{\texttt{#1}}}
@@ -109,11 +128,13 @@
 \begin{tikzpicture}[remember picture,overlay]
   \fill[lhblue] (current page.north west) rectangle ([yshift=-5.2cm]current page.north east);
   \node[anchor=north west,text=white,font=\sffamily] at ([xshift=2.3cm,yshift=-1.3cm]current page.north west)
-    {Module Data Lakehouse -- Cycle ingénieur 4\textsuperscript{e}/5\textsuperscript{e} année};
+    {Module Data Lakehouse};
   \node[anchor=north west,text=white,font=\sffamily\bfseries\fontsize{26}{30}\selectfont] at ([xshift=2.3cm,yshift=-2.2cm]current page.north west)
     {TP 2 -- Texte et JSON};
   \node[anchor=north west,text=white!85!lhblue,font=\sffamily\large] at ([xshift=2.3cm,yshift=-3.6cm]current page.north west)
     {Avis clients, suivi des colis, modélisation dimensionnelle avec dbt et analyse du texte};
+  \node[anchor=north east,text=white!85!lhblue,font=\sffamily] at ([xshift=-2.3cm,yshift=-4.25cm]current page.north east)
+    {Pr.~Anouar Riadsolh};
 \end{tikzpicture}
 \thispagestyle{empty}
 \vspace*{4.2cm}
@@ -124,8 +145,8 @@
 Objectif & Faire entrer dans le Lakehouse du texte libre et des messages JSON, construire une couche
            Gold en schéma en constellation avec dbt, puis repérer automatiquement les clients mécontents. \\
 Durée    & 2 séances de 3 h (+ environ 2 h de travail personnel). \\
-Prérequis & TP 1 terminé : les tables Silver \cmd{orders}, \cmd{order\_items}, \cmd{customers},
-            \cmd{products} et \cmd{sellers} existent. \\
+Prérequis & TP 1 terminé, avec les tables Silver \cmd{orders}, \cmd{order\_items}, \cmd{customers},
+            \cmd{products} et \cmd{sellers}. \\
 À rendre & Un compte rendu, les notebooks exécutés, le projet dbt et le tableau de bord
            (section~\ref{sec:livrables}). \\
 \bottomrule
@@ -136,7 +157,7 @@ Prérequis & TP 1 terminé : les tables Silver \cmd{orders}, \cmd{order\_items},
 % =====================================================================
 
 Le TP 1 a montré qu'Olist livre environ 8~\% de ses commandes en retard. La direction veut
-maintenant comprendre ce que les clients en pensent, et ce qui se passe pendant la livraison :
+maintenant comprendre ce que les clients en pensent, et ce qui se passe pendant la livraison.
 
 \begin{enumerate}[leftmargin=*,nosep]
   \item Les retards et les incidents de livraison font-ils de mauvais avis ?
@@ -146,7 +167,7 @@ maintenant comprendre ce que les clients en pensent, et ce qui se passe pendant 
         service client les traite en priorité ?
 \end{enumerate}
 
-Pour y répondre, il faut deux nouvelles sources, moins bien rangées que les tables du TP 1 : les
+Pour y répondre, il faut deux nouvelles sources, moins bien rangées que les tables du TP 1, les
 \textbf{avis des clients}, avec un commentaire en texte libre, et les \textbf{messages JSON} que les
 transporteurs envoient pour suivre chaque colis.
 
@@ -155,11 +176,11 @@ transporteurs envoient pour suivre chaque colis.
 % =====================================================================
 
 \begin{notion}
-\textbf{Structuré, semi-structuré, non structuré :} Une donnée \emph{structurée} entre dans des
+\textbf{Structuré, semi-structuré, non structuré.} Une donnée \emph{structurée} entre dans des
 colonnes fixes (les tables du TP 1). Une donnée \emph{semi-structurée} porte sa structure avec elle,
 sous forme de champs nommés, mais cette structure peut être imbriquée et varier d'un message à
-l'autre : c'est le cas du JSON. Une donnée \emph{non structurée} n'a pas de structure exploitable
-directement : texte libre, image, son. Un Lakehouse accueille les trois.
+l'autre, comme dans le JSON. Une donnée \emph{non structurée} n'a pas de structure exploitable
+directement (texte libre, image, son). Un Lakehouse accueille les trois.
 \end{notion}
 
 \begin{center}
@@ -171,17 +192,19 @@ directement : texte libre, image, son. Un Lakehouse accueille les trois.
 \midrule
 Avis des clients & CSV & Une note de 1 à 5 et, pour 42~\% des avis, un titre et un commentaire
   saisis librement en portugais et traduits automatiquement en anglais & 100\,000 avis \\
-Suivi des colis & JSON & Un message par colis : le transporteur, les étapes du suivi
+Suivi des colis & JSON & Un message par colis, avec le transporteur, les étapes du suivi
   (prise en charge, transit, livraison) et, depuis 2018, les incidents & $\approx$ 98\,200 messages \\
 Tables Silver du TP 1 & Iceberg & Commandes, articles, clients, produits, vendeurs & -- \\
 \bottomrule
 \end{tabularx}
 \end{center}
 
-Les avis sont les vrais avis Olist. Les clients écrivent en portugais : pour ce TP, les titres et les commentaires ont été traduits automatiquement en anglais par un modèle open source (OPUS-MT), en gardant la mise en forme d'origine (fichier \cmd{data/olist/olist\_order\_reviews\_dataset\_en.csv} ; l'original en portugais est à côté). La traduction est bonne dans l'ensemble, avec quelques maladresses.
+Les avis sont les vrais avis Olist. Les clients écrivent en portugais. Pour ce TP, les titres et les commentaires ont été traduits
+automatiquement en anglais par un modèle open source (OPUS-MT), en gardant la mise en forme d'origine
+(fichier \cmd{data/olist/olist\_order\_reviews\_dataset\_en.csv}, à côté de l'original en portugais). La traduction est bonne dans l'ensemble, avec quelques maladresses.
 Les messages de suivi sont dans le dossier \cmd{data/olist/suivi/}, un fichier par mois. Ils ont
 été produits par le script \cmd{scripts/generer\_suivi.py} à partir des \textbf{vraies dates} de
-remise au transporteur et de livraison des commandes ; les transporteurs, les lieux de transit et
+remise au transporteur et de livraison des commandes. Les transporteurs, les lieux de transit et
 les incidents sont simulés. Voici un message reçu en 2018 :
 
 \begin{lstlisting}[language=json,basicstyle=\ttfamily\footnotesize]
@@ -198,8 +221,8 @@ les incidents sont simulés. Voici un message reçu en 2018 :
 \end{lstlisting}
 
 On y trouve des \textbf{objets imbriqués} (\cmd{transporteur}, \cmd{lieu}) et des \textbf{listes}
-(\cmd{evenements}, \cmd{incidents}). Le flux a aussi les défauts habituels de ce type de source :
-son format a changé en janvier 2018 (les messages de 2017 n'ont ni \cmd{version\_schema}, ni
+(\cmd{evenements}, \cmd{incidents}). Le flux a aussi les défauts habituels de ce type de source.
+Son format a changé en janvier 2018 (les messages de 2017 n'ont ni \cmd{version\_schema}, ni
 \cmd{service}, ni \cmd{incidents}), certains messages sont envoyés deux fois, d'autres arrivent
 tronqués.
 
@@ -207,114 +230,128 @@ tronqués.
 \section{Ce que vous allez construire}
 % =====================================================================
 
-La figure~\ref{fig:pipeline} montre le pipeline du TP 2. Comme au TP 1, il se lit \textbf{de gauche à
-droite} sur la première ligne (ingestion), puis \textbf{de droite à gauche} sur la seconde
-(préparation et usages).
+La figure~\ref{fig:pipeline} montre le pipeline du TP 2. Comme au TP 1, les données partent des
+sources, traversent les couches du Lakehouse, puis servent aux usages. Les numéros renvoient aux étapes
+décrites ci-dessous.
 
 \begin{figure}[H]
 \centering
 \resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[
   font=\sffamily\small, >=Stealth,
-  col/.style={draw=#1,thick,rounded corners=4pt,fill=#1!7,text width=3.75cm,align=left,
-              inner sep=6pt,font=\sffamily\footnotesize},
-  tag/.style={font=\sffamily\scriptsize\bfseries,text=white,fill=lhblue,rounded corners=2pt,inner sep=2.5pt},
-  op/.style={font=\sffamily\scriptsize,text=black!70,align=center},
-  num/.style={circle,fill=lhblue,text=white,font=\sffamily\bfseries\scriptsize,inner sep=1.4pt}]
+  barre/.style={fill=lhfonce,text=white,font=\sffamily\bfseries\small,minimum height=0.6cm,inner sep=0pt},
+  cadre/.style={draw=lhfonce,line width=0.8pt},
+  bloc/.style={draw=lhfonce!60,line width=0.6pt,fill=white},
+  et/.style={font=\sffamily\scriptsize,text=lhfonce,align=center},
+  flux/.style={->,very thick,lhfonce}]
 
-% ---------------- Ligne 1 : ingestion ----------------
-\node[col=gray] (csv) at (0,1.0) {\textbf{Avis des clients}\\ fichier CSV\\ \texttt{data/olist/}};
-\node[col=gray] (gen) at (0,-2.0) {\textbf{Suivi des colis}\\ fichiers JSON\\ \texttt{data/olist/suivi/}};
-\node[col=darkgray] (land) at (5.35,-0.5) {\textbf{Landing}\\ \texttt{s3://landing/olist/}\\[3pt]
-  \texttt{avis/}\\ \texttt{suivi/mois=AAAA-MM/}\\ fichiers non modifiés};
-\node[col=lhbronze] (br) at (10.85,-0.5) {\textbf{Bronze} -- 2 tables\\[3pt]
-  \texttt{avis}\\ \textit{CSV multi-lignes, en texte}\\[3pt]
-  \texttt{suivi\_brut}\\ \textit{un message JSON par ligne,}\\ \textit{gardé comme texte}};
+% ===== Sources =====
+\draw[cadre] (0,0) rectangle (3.2,-10.4);
+\node[barre,minimum width=3.2cm,anchor=north west] at (0,0) {Sources};
+\pic at (1.6,-3.6) {fichier=CSV};             \node[et] at (1.6,-4.45) {Avis des clients\\(CSV)};
+\pic at (1.6,-5.6) {fichier=\{ \}};            \node[et] at (1.6,-6.45) {Suivi des colis\\(JSON)};
 
-\draw[->,thick] (csv.east) -- ++(0.55,0) |- node[num,pos=0.25]{1} ([yshift=4mm]land.west);
-\draw[->,thick] (gen.east) -- ++(0.55,0) |- node[num,pos=0.25]{2} ([yshift=-4mm]land.west);
-\node[op] at (2.9,1.35) {dépôt};
-\node[op] at (2.9,-2.35) {un fichier par mois};
-\draw[->,thick] (land) -- node[num]{3} node[op,above=4pt]{lecture\\en texte} (br);
+% ===== Plateforme Lakehouse =====
+\draw[draw=lhblue,line width=2.4pt] (3.9,0) rectangle (15.9,-10.4);
+\node[fill=lhblue,text=white,font=\sffamily\bfseries,minimum width=12cm,minimum height=0.7cm,anchor=north west]
+  at (3.9,0) {Plateforme Lakehouse};
+\draw[bloc] (4.35,-1.0) rectangle (15.2,-2.3);
+\node[et,font=\sffamily\bfseries\scriptsize,anchor=west] at (4.6,-1.65) {Traitement};
+\node[et,font=\sffamily\scriptsize] at (9.78,-1.65) {\logo[1.6em]{jupyter}JupyterLab\qquad\logo[1.6em]{spark}Spark\qquad\logo[1.6em]{dbt}dbt};
 
-% ---------------- Ligne 2 : préparation et usages ----------------
-\node[col=lhsilver] (si) at (10.85,-6.6) {\textbf{Silver} -- tables propres\\[3pt]
-  \texttt{avis} \textit{+ texte normalisé}\\
-  \texttt{suivi\_colis} \textit{(1 par colis)}\\
-  \texttt{suivi\_evenements}\\[3pt]
-  \textit{+ tables Silver du TP 1}};
-\node[col=gray, below=0.9cm of si] (q) {\textbf{Quarantaine}\\[2pt]
-  \texttt{quarantaine\_avis}\\ \texttt{quarantaine\_suivi}};
-\node[col=lhgold] (go) at (5.35,-6.6) {\textbf{Gold} -- constellation\\[3pt]
-  \texttt{dim\_date}, \texttt{dim\_client},\\ \texttt{dim\_produit}, \texttt{dim\_vendeur}\\[2pt]
-  \texttt{fait\_ventes}, \texttt{fait\_avis},\\ \texttt{fait\_livraisons}\\[2pt]
-  \texttt{avis\_sentiment}};
-\node[col=lhblue,text width=3.4cm] (sql) at (0,-4.7) {\textbf{Requêtes SQL}\\ questions de la direction};
-\node[col=lhblue,text width=3.4cm] (ml)  at (0,-6.6) {\textbf{Analyse du texte}\\ TF-IDF + scikit-learn};
-\node[col=lhblue,text width=3.4cm] (db)  at (0,-8.5) {\textbf{Tableau de bord}\\ Streamlit};
+% Tables par couche
+\pic at (5.3,-4.6)  {table=gray};      \node[et] at (5.3,-5.55)  {\textbf{landing}\\avis, suivi};
+\pic at (8.1,-4.6)  {table=lhbronze};  \node[et] at (8.1,-5.55)  {\textbf{bronze}\\2 tables};
+\pic at (10.9,-4.6) {table=lhsilver};  \node[et] at (10.9,-5.55) {\textbf{silver}\\+ tables du TP 1};
+\pic at (13.7,-4.6) {table=lhgold};    \node[et] at (13.7,-5.55) {\textbf{gold}\\constellation};
+\pic at (10.9,-6.75) {table=gray};     \node[et,anchor=west] at (11.45,-6.75) {\textbf{quarantaine}\\lignes rejetées};
 
-\draw[->,thick] (br.south) -- node[num]{4} node[op,right=6pt,align=left]{schéma JSON explicite,\\
-  \texttt{explode}, dédoublonnage,\\ normalisation du texte} (si.north);
-\draw[->] (si.south) -- node[num]{5} node[op,right=6pt]{lignes rejetées} (q.north);
-\draw[->,thick] (si.west) -- node[num]{6} node[op,above=4pt]{\texttt{dbt}\\\texttt{build}} (go.east);
-\draw[->,thick] (go.west) -- ++(-0.5,0) |- node[num,pos=0.8]{7} (sql.east);
-\draw[<->,thick] (go.west) -- node[num,pos=0.7]{8} (ml.east);
-\draw[->,thick] (go.west) -- ++(-0.5,0) |- node[num,pos=0.8]{9} (db.east);
+% Lakehouse ouvert : catalogue et stockage
+\node[fill=lhblue,text=white,font=\sffamily\bfseries\small,minimum width=10.85cm,minimum height=0.6cm]
+  at (9.78,-7.75) {Lakehouse ouvert};
+\draw[bloc] (4.35,-8.2) rectangle (7.85,-10.05);
+\node[barre,minimum width=3.5cm,anchor=north west] at (4.35,-8.2) {Catalogue};
+\node[et] at (6.1,-9.3) {\logo[1.8em]{iceberg}\\[2pt]Iceberg REST};
+\draw[bloc] (8.2,-8.2) rectangle (15.2,-10.05);
+\node[barre,minimum width=7.0cm,anchor=north west] at (8.2,-8.2) {Stockage ouvert (S3)};
+\node[et] at (9.3,-9.3)  {\logo[1.8em]{rustfs}\\[2pt]RustFS};
+\node[et] at (11.0,-9.3) {\logo[1.8em]{iceberg}\\[2pt]Iceberg};
+\node[et] at (12.6,-9.3) {\logo[1.8em]{parquet}\\[2pt]Parquet};
+\node[et] at (14.2,-9.3) {\logo[1.8em]{delta}\\[2pt]Delta Lake};
 
-% ---------------- Notebooks ----------------
-\node[tag,anchor=south east] at (land.north east) {01\_bronze\_avis\_suivi};
-\node[tag,anchor=south east] at (si.north east)  {02\_silver\_texte\_json};
-\node[tag,anchor=south east] at (go.north east)  {03\_gold\_dbt\_etoile};
-\node[tag,anchor=south east] at (ml.north east)  {04\_nlp\_avis};
-\node[tag,anchor=south east] at (db.north east)  {dashboard\_tp2.py};
+% ===== Usages =====
+\draw[cadre] (16.6,0) rectangle (20.0,-3.2);
+\node at (18.3,-1.2) {\logo[2em]{spark}}; \node[et] at (18.3,-2.15) {Requêtes SQL\\(Spark SQL)};
+\draw[cadre] (16.6,-3.6) rectangle (20.0,-6.8);
+\node at (18.3,-4.8) {\logo[2em]{sklearn}}; \node[et] at (18.3,-5.75) {Analyse\\du texte};
+\draw[cadre] (16.6,-7.2) rectangle (20.0,-10.4);
+\node at (18.3,-8.4) {\logo[2em]{streamlit}}; \node[et] at (18.3,-9.35) {Tableau\\de bord};
+
+% ===== Infrastructure =====
+\node[fill=lhfonce,text=white,minimum width=20cm,minimum height=0.75cm,anchor=north west] at (0,-10.8)
+  {\logo[1.3em]{docker}\textbf{Infrastructure : conteneurs Docker}};
+
+% ===== Flux =====
+\draw[very thick,lhfonce] (3.2,-3.6) -| (4.4,-4.6) node[pastille,pos=0.15]{1};
+\draw[very thick,lhfonce] (3.2,-5.6) -| (4.4,-4.6) node[pastille,pos=0.15]{2};
+\draw[flux] (4.4,-4.6) -- (4.85,-4.6);
+\draw[flux] (5.75,-4.6) -- (7.65,-4.6) node[pastille,midway]{3};
+\draw[flux] (8.55,-4.6) -- (10.45,-4.6) node[pastille,midway]{4};
+\draw[flux] (10.9,-5.95) -- (10.9,-6.2) node[pastille,right=2pt]{5};
+\draw[flux] (11.35,-4.6) -- (13.25,-4.6) node[pastille,midway]{6};
+\node[et,above=5pt] at (12.3,-4.6) {dbt};
+\draw[very thick,lhfonce] (14.15,-4.6) -- (15.55,-4.6);
+\draw[flux] (15.55,-4.6) |- (16.6,-1.6) node[pastille,pos=0.75]{7};
+\draw[<->,very thick,lhfonce] (15.55,-5.2) -- (16.6,-5.2) node[pastille,midway,below=3pt]{8};
+\draw[flux] (15.55,-4.6) |- (16.6,-8.8) node[pastille,pos=0.75]{9};
 \end{tikzpicture}}
-\caption{Pipeline du TP 2. Les numéros renvoient aux étapes décrites ci-dessous ; les étiquettes
-bleues indiquent le notebook qui réalise chaque étape.}
+\caption{Pipeline du TP 2. Tous les services tournent dans des conteneurs Docker.}
 \label{fig:pipeline}
 \end{figure}
 
 \subsection*{Le pipeline, étape par étape}
 
 \begin{description}[leftmargin=1.4em,labelindent=0pt,itemsep=3pt,font=\normalfont]
-\item[\etape{1}] \textbf{Dépôt des avis :} le fichier CSV des avis est copié tel quel dans
+\item[\etape{1}] \textbf{Dépôt des avis} (\nb{01\_bronze\_avis\_suivi}). Le fichier CSV des avis est copié tel quel dans
   \cmd{s3://landing/olist/avis/}.
-\item[\etape{2}] \textbf{Dépôt du suivi :} les messages des transporteurs, un fichier par mois et un
+\item[\etape{2}] \textbf{Dépôt du suivi} (\nb{01\_bronze\_avis\_suivi}). Les messages des transporteurs, un fichier par mois et un
   message JSON par ligne, sont copiés dans la zone d'atterrissage (\cmd{suivi/}).
-\item[\etape{3}] \textbf{Ingestion en Bronze :} Spark lit les avis en texte, en autorisant les
+\item[\etape{3}] \textbf{Ingestion en Bronze} (\nb{01\_bronze\_avis\_suivi}). Spark lit les avis en texte, en autorisant les
   commentaires sur plusieurs lignes, et garde chaque message JSON \emph{comme un texte}, sans le
   découper. Les deux tables reçoivent les colonnes \cmd{\_source} et \cmd{\_ingere\_le}.
-\item[\etape{4}] \textbf{Nettoyage :} les avis sont typés et leur commentaire est normalisé
-  (minuscules, sans accents ni ponctuation) ; les messages JSON sont lus avec un schéma écrit à
-  l'avance, dédoublonnés, puis \og dépliés \fg{} : une ligne par colis, une ligne par étape du suivi.
-\item[\etape{5}] \textbf{Quarantaine :} les avis dont la commande est inconnue et les messages
+\item[\etape{4}] \textbf{Nettoyage} (\nb{02\_silver\_texte\_json}). Les avis sont typés et leur
+  commentaire est normalisé (minuscules, sans accents ni ponctuation). Les messages JSON sont lus avec
+  un schéma écrit à l'avance, dédoublonnés, puis \og dépliés \fg{}, avec une ligne par colis et une
+  ligne par étape du suivi.
+\item[\etape{5}] \textbf{Quarantaine} (\nb{02\_silver\_texte\_json}). Les avis dont la commande est inconnue et les messages
   tronqués sont isolés.
-\item[\etape{6}] \textbf{Modélisation avec dbt :} un projet dbt construit le schéma en constellation à partir
+\item[\etape{6}] \textbf{Modélisation avec dbt} (\nb{03\_gold\_dbt\_etoile}). Un projet dbt construit le schéma en constellation à partir
   des tables Silver des TP 1 et 2, puis vérifie chaque table par des tests de qualité.
-\item[\etape{7}] \textbf{Analyse :} des requêtes SQL sur ce schéma répondent aux questions de la direction.
-\item[\etape{8}] \textbf{Analyse du texte :} un modèle apprend à reconnaître un avis négatif à partir
+\item[\etape{7}] \textbf{Analyse} (\nb{03\_gold\_dbt\_etoile}). Des requêtes SQL sur ce schéma répondent aux questions de la direction.
+\item[\etape{8}] \textbf{Analyse du texte} (\nb{04\_nlp\_avis}). Un modèle apprend à reconnaître un avis négatif à partir
   de son commentaire, puis écrit ses prédictions dans \cmd{gold.avis\_sentiment}.
-\item[\etape{9}] \textbf{Restitution :} le tableau de bord présente la satisfaction des clients et
+\item[\etape{9}] \textbf{Restitution} (\nb{dashboard\_tp2.py}). Le tableau de bord présente la satisfaction des clients et
   permet de tester le modèle sur un nouveau commentaire.
 \end{description}
 
-Il s'agit toujours d'un pipeline \textbf{ELT} : les étapes \etape{1} à \etape{3} extraient et chargent
+Il s'agit toujours d'un pipeline \textbf{ELT}. Les étapes \etape{1} à \etape{3} extraient et chargent
 sans rien transformer, et toutes les transformations (\etape{4} à \etape{8}) ont lieu dans le Lakehouse.
 
 \subsection*{La couche Gold en schéma en constellation}
 
 Au TP 1, la couche Gold était une table large, \cmd{gold.commandes}. Elle est remplacée ici par une
-\textbf{modélisation dimensionnelle} (figure~\ref{fig:constellation}) :
+\textbf{modélisation dimensionnelle} (figure~\ref{fig:constellation}), qui distingue deux sortes de tables.
 
 \begin{itemize}[leftmargin=*,itemsep=1pt]
-\item une table de \textbf{faits} enregistre des événements mesurables (une vente, un avis, une
-  livraison). Son \textbf{grain} dit ce que représente une ligne ;
-\item une table de \textbf{dimensions} décrit le contexte qui sert à filtrer et à regrouper (quand,
+\item Une table de \textbf{faits} enregistre des événements mesurables (une vente, un avis, une
+  livraison). Son \textbf{grain} dit ce que représente une ligne.
+\item Une table de \textbf{dimensions} décrit le contexte qui sert à filtrer et à regrouper (quand,
   qui, quoi). Chaque fait la désigne par une \textbf{clé}.
 \end{itemize}
 
 Une table de faits entourée de ses dimensions forme un \textbf{schéma en étoile}. Ici, il y a
 \emph{trois} tables de faits, qui partagent les dimensions \cmd{dim\_date} et \cmd{dim\_client} (des
-\emph{dimensions conformes}) : trois étoiles reliées entre elles forment un \textbf{schéma en
+\emph{dimensions conformes}). Trois étoiles reliées entre elles forment un \textbf{schéma en
 constellation} (\emph{fact constellation}, ou \emph{galaxy schema}). Une même question (\og par état
 du client \fg{}, \og par mois \fg{}) se pose ainsi de la même façon aux ventes, aux avis et aux
 livraisons. Le projet dbt s'appelle \cmd{dbt\_etoile} car chaque fait y est modélisé en étoile.
@@ -346,7 +383,7 @@ livraisons. Le projet dbt s'appelle \cmd{dbt\_etoile} car chaque fait y est mod�
 \draw[lien] (dd.north) -- (fa.south);
 \draw[lien] (dd.north) -- (fl.south);
 \end{tikzpicture}
-\caption{Le schéma en constellation de la couche Gold : trois tables de faits (en jaune) reliées aux
+\caption{Le schéma en constellation de la couche Gold. Trois tables de faits (en jaune) reliées aux
 dimensions (en bleu) par leurs clés (soulignées). Chaque fait garde aussi le numéro de commande
 (\texttt{order\_id}), qui permet de rapprocher deux faits, avec prudence, car leurs grains sont différents.}
 \label{fig:constellation}
@@ -360,7 +397,7 @@ dimensions (en bleu) par leurs clés (soulignées). Chaque fait garde aussi le n
 \normalfont\textbf{Couche} & \textbf{Rôle} & \textbf{Règle d'or} \\
 \midrule
 Bronze & Copie des sources, JSON compris, avec \cmd{\_source} et \cmd{\_ingere\_le} &
-  On ne découpe pas, on ne corrige pas : un message tronqué est gardé tel quel. \\
+  On ne découpe pas, on ne corrige pas, et un message tronqué est gardé tel quel. \\
 Silver & Données typées, dédoublonnées, dépliées, texte normalisé &
   Le schéma est écrit, jamais deviné. Une ligne invalide va en quarantaine. \\
 Gold & Schéma en constellation, construit et testé par dbt &
@@ -373,7 +410,7 @@ Gold & Schéma en constellation, construit et testé par dbt &
 \section{Déroulé}
 % =====================================================================
 
-\textbf{Avant de commencer, récupérez les énoncés et copiez-les dans votre dossier personnel :} dans
+\textbf{Avant de commencer, récupérez les énoncés et copiez-les dans votre dossier personnel.} Dans
 JupyterLab, ouvrez un terminal (\emph{File > New > Terminal}) et tapez :
 \begin{lstlisting}[style=shell]
 git pull
@@ -382,13 +419,13 @@ cp apps/dashboard_tp2.py notebooks/mon_travail/tp2/
 \end{lstlisting}
 Le dossier \nb{notebooks/mon\_travail/tp2/} contient alors les quatre notebooks, le projet dbt
 \nb{dbt\_etoile/} et le tableau de bord. Travaillez uniquement dans ce dossier, et exécutez les
-notebooks \textbf{dans l'ordre}. Les cellules marquées \cmd{\# À COMPLÉTER} sont à écrire ; dans le
+notebooks \textbf{dans l'ordre}. Les cellules marquées \cmd{\# À COMPLÉTER} sont à écrire. Dans le
 projet dbt, ce sont les fichiers qui portent la mention \cmd{-{}- À COMPLÉTER}.
 
 \begin{attention}
-\textbf{Un seul processus Spark à la fois :} un notebook ouvert, une commande \cmd{dbt} et le tableau
+\textbf{Un seul processus Spark à la fois.} Un notebook ouvert, une commande \cmd{dbt} et le tableau
 de bord démarrent chacun leur propre session Spark. Avant de passer de l'un à l'autre, arrêtez les
-noyaux des notebooks : panneau \emph{Running Terminals and Kernels} > \emph{Shut Down All}.
+noyaux des notebooks (panneau \emph{Running Terminals and Kernels} > \emph{Shut Down All}).
 \end{attention}
 
 L'aide-mémoire de la dernière page rassemble les fonctions Spark et les commandes dbt de ce TP.
@@ -403,14 +440,14 @@ Vous déposez les deux sources dans la zone d'atterrissage, vous mesurez le piè
 ligne dans les commentaires, puis vous écrivez les tables \cmd{bronze.avis} et \cmd{bronze.suivi\_brut}.
 
 \begin{notion}
-\textbf{Un CSV n'a pas toujours un enregistrement par ligne :} quand un client écrit son commentaire
+\textbf{Un CSV n'a pas toujours un enregistrement par ligne.} Quand un client écrit son commentaire
 sur plusieurs lignes, le retour à la ligne se trouve \emph{entre guillemets}, à l'intérieur du champ.
 Une lecture naïve le prend pour une fin d'enregistrement et coupe l'avis en morceaux. L'option
 \cmd{multiLine} de Spark respecte les guillemets.
 \end{notion}
 
 \begin{notion}
-\textbf{Garder le JSON brut :} en Bronze, chaque message est stocké comme un simple texte. Si le
+\textbf{Garder le JSON brut.} En Bronze, chaque message est stocké comme un simple texte. Si le
 transporteur change de format, l'ingestion continue de fonctionner, et un message mal formé n'est
 jamais perdu. Le découpage se fait en Silver.
 \end{notion}
@@ -426,17 +463,17 @@ naïve en trouvait davantage). \cmd{bronze.suivi\_brut} contient environ 98\,200
 \subsection*{Partie 2 -- Silver \hfill \nb{02\_silver\_texte\_json}}
 
 Vous trouvez la bonne clé des avis, vous normalisez leur texte, puis vous découpez les messages JSON
-en deux tables : une ligne par colis, et une ligne par étape du suivi.
+en deux tables, avec une ligne par colis dans la première et une ligne par étape du suivi dans la seconde.
 
 \begin{notion}
-\textbf{Lire le JSON avec un schéma écrit :} \cmd{F.from\_json(colonne, schema)} transforme le texte
-en structure. Le schéma couvre les deux versions du format : un champ absent vaut \cmd{null}. On
+\textbf{Lire le JSON avec un schéma écrit.} \cmd{F.from\_json(colonne, schema)} transforme le texte
+en structure. Le schéma couvre les deux versions du format, et un champ absent vaut \cmd{null}. On
 accède ensuite aux champs imbriqués par un point (\cmd{transporteur.nom}) et aux éléments d'une liste
 par leur position (\cmd{incidents[0]}).
 \end{notion}
 
 \begin{notion}
-\textbf{Déplier une liste :} \cmd{F.explode} crée une ligne par élément d'une liste
+\textbf{Déplier une liste.} \cmd{F.explode} crée une ligne par élément d'une liste
 (figure~\ref{fig:explode}). C'est ainsi qu'un message imbriqué devient une table.
 \end{notion}
 
@@ -458,19 +495,19 @@ par leur position (\cmd{incidents[0]}).
   \end{tabular}};
 \draw[->,thick] (m) -- node[above]{\texttt{F.explode}} (t);
 \end{tikzpicture}
-\caption{\texttt{F.explode} : une liste de quatre événements devient quatre lignes ; les colonnes du
+\caption{\texttt{F.explode}. Une liste de quatre événements devient quatre lignes, et les colonnes du
 message (\texttt{colis\_id}) sont répétées sur chaque ligne.}
 \label{fig:explode}
 \end{figure}
 
 \begin{attention}
 Sur une liste \cmd{null} (un message de 2017, sans \cmd{incidents}), \cmd{F.size} renvoie \cmd{-1},
-et non \cmd{0}. Ce genre de détail fausse une moyenne sans provoquer d'erreur : il faut le traiter
+et non \cmd{0}. Ce genre de détail fausse une moyenne sans provoquer d'erreur. Il faut donc le traiter
 explicitement, et le tester (partie 3).
 \end{attention}
 
 \begin{resultat}
-Le bilan explique chaque écart entre Bronze et Silver : quelques avis orphelins (leur commande est
+Le bilan explique chaque écart entre Bronze et Silver, avec quelques avis orphelins (leur commande est
 en quarantaine depuis le TP 1), environ 200 messages tronqués et environ 600 messages reçus deux
 fois. \cmd{silver.suivi\_colis} compte environ 97\,450 colis, \cmd{silver.suivi\_evenements} environ
 450\,000 étapes.
@@ -485,12 +522,12 @@ Vous complétez le projet dbt (un modèle de dimension, deux modèles de faits e
 construisez toute la couche Gold avec \cmd{dbt build}, puis vous interrogez ces tables en SQL.
 
 \begin{notion}
-\textbf{dbt (\emph{data build tool}) :} chaque table Gold est décrite par un fichier SQL qui contient
-une simple requête \cmd{SELECT} : un \emph{modèle}. dbt en fait une table, dans le bon ordre : il
+\textbf{dbt (\emph{data build tool}).} Chaque table Gold est décrite par un fichier SQL qui contient
+une simple requête \cmd{SELECT}, appelé \emph{modèle}. dbt en fait une table, dans le bon ordre, car il
 déduit les dépendances des expressions \cmd{\{\{ source(...) \}\}} (une table Silver) et
 \cmd{\{\{ ref(...) \}\}} (un autre modèle). Les \textbf{tests} (\cmd{unique}, \cmd{not\_null},
 \cmd{accepted\_values}, \cmd{relationships}, ou une requête SQL qui renvoie les lignes en erreur)
-sont lancés juste après la construction de chaque table : si l'un échoue, les tables qui en
+sont lancés juste après la construction de chaque table. Si l'un échoue, les tables qui en
 dépendent ne sont pas construites. Le projet, versionné comme du code, documente lui-même la couche
 Gold.
 \end{notion}
@@ -518,7 +555,7 @@ dbt_etoile/
 `-- target/               # créé par dbt (SQL compilé, documentation)
 \end{lstlisting}
 
-La connexion à Spark est déjà configurée dans l'image (\cmd{profiles.yml}) : \cmd{dbt debug
+La connexion à Spark est déjà configurée dans l'image (\cmd{profiles.yml}), et \cmd{dbt debug
 -{}-connection} doit répondre \cmd{All checks passed!}. Les commandes se lancent depuis le notebook
 (préfixe \cmd{!}) ou depuis un terminal JupyterLab :
 
@@ -529,14 +566,14 @@ dbt run   --project-dir dbt_etoile --select fait_avis   # un seul modèle
 \end{lstlisting}
 
 \begin{resultat}
-\cmd{dbt build} se termine par \cmd{Completed successfully} et \cmd{PASS=31} : 7 modèles et 24 tests
+\cmd{dbt build} se termine par \cmd{Completed successfully} et \cmd{PASS=31}, soit 7 modèles et 24 tests
 (22 déclarés dans \cmd{schema.yml}, 2 écrits en SQL dans \cmd{tests/}). Environ 55~\% des avis sont
 négatifs quand la livraison est en retard, contre environ 10~\% sinon.
 \end{resultat}
 
 \capture{tp2_03_dbt_build}{Résultat attendu de \texttt{dbt build} : 7 modèles et 24 tests, sans erreur (\texttt{PASS=31}).}{fig:dbtbuild}
 \paragraph{Consulter le graphe des dépendances (\emph{lineage}).} dbt génère un site de
-documentation : la description de chaque table et de chaque colonne, le SQL, les tests et le graphe
+documentation, avec la description de chaque table et de chaque colonne, le SQL, les tests et le graphe
 des dépendances.
 \begin{enumerate}[leftmargin=*,nosep]
   \item Lancez la cellule \cmd{!dbt docs generate -{}-static -{}-project-dir dbt\_etoile} du notebook.
@@ -549,7 +586,7 @@ des dépendances.
         Le champ \emph{-{}-select} en bas de la fenêtre filtre le graphe, par exemple
         \cmd{+fait\_avis} pour ne voir que ce dont \cmd{fait\_avis} dépend.
 \end{enumerate}
-Le graphe s'arrête aux tables Silver : les couches Bronze et Silver sont construites par Spark, pas
+Le graphe s'arrête aux tables Silver, car les couches Bronze et Silver sont construites par Spark, pas
 par dbt, qui ne les connaît que comme des \emph{sources} déclarées dans \cmd{sources.yml}. Relancez
 \cmd{dbt docs generate} après chaque modification du projet, puis actualisez la page.
 
@@ -557,13 +594,13 @@ par dbt, qui ne les connaît que comme des \emph{sources} déclarées dans \cmd{
 \capture{tp2_03_resultat}{Résultat attendu de la partie 3 : avis négatifs selon le retard de livraison (question Q1).}{fig:res03}
 
 \begin{attention}
-Une corrélation n'est pas une cause : les colis qui ont subi un incident reçoivent de moins bonnes
+Une corrélation n'est pas une cause. Les colis qui ont subi un incident reçoivent de moins bonnes
 notes, mais ils sont aussi plus souvent en retard. Le notebook vous fait refaire la comparaison
 \emph{à retard égal} pour démasquer cette \textbf{variable de confusion}.
 \end{attention}
 
 \begin{attention}
-Une jointure entre deux faits de grains différents multiplie les lignes : une commande de trois
+Une jointure entre deux faits de grains différents multiplie les lignes. Une commande de trois
 articles a trois lignes dans \cmd{fait\_ventes}, et son avis est compté trois fois. Le notebook vous
 fait trouver et corriger ce piège.
 \end{attention}
@@ -575,11 +612,11 @@ négatif (note 1 ou 2). Vous l'interprétez, vous étudiez ses erreurs, puis vou
 prédictions dans \cmd{gold.avis\_sentiment}.
 
 \begin{notion}
-\textbf{TF-IDF :} pour qu'un modèle lise du texte, chaque commentaire devient un vecteur : un poids
+\textbf{TF-IDF.} Pour qu'un modèle lise du texte, chaque commentaire devient un vecteur, avec un poids
 par terme du vocabulaire. Ce poids est élevé quand le terme est fréquent \emph{dans ce commentaire}
 et rare \emph{dans l'ensemble des commentaires}. Les termes peuvent être des mots seuls ou des groupes
-de deux mots (\emph{n-grammes}) : \og not recommend \fg{} ne dit pas la même chose que
-\og recommend \fg{}. Une régression logistique apprend ensuite un coefficient par terme : le modèle
+de deux mots (\emph{n-grammes}), car \og not recommend \fg{} ne dit pas la même chose que
+\og recommend \fg{}. Une régression logistique apprend ensuite un coefficient par terme, et le modèle
 reste lisible.
 \end{notion}
 
@@ -598,21 +635,21 @@ reste lisible.
 \draw[->,thick] (c) -- (d);
 \draw[->,thick] (d) -- (e);
 \end{tikzpicture}}
-\caption{Du commentaire à la prédiction : normalisation (partie 2), vectorisation TF-IDF, puis
+\caption{Du commentaire à la prédiction, avec la normalisation (partie 2), vectorisation TF-IDF, puis
 classification. Les valeurs sont données à titre d'illustration.}
 \label{fig:tfidf}
 \end{figure}
 
 \begin{attention}
 Les listes de \emph{mots vides} (articles, pronoms, prépositions\dots) toutes faites contiennent
-souvent la négation : celle de scikit-learn retire \og not \fg{}, \og no \fg{} et \og never \fg{}. Avec
-elle, \og i do not recommend \fg{} devient \og recommend \fg{} et passe pour un avis positif : le
-notebook vous le fait constater.
+souvent la négation. Celle de scikit-learn retire \og not \fg{}, \og no \fg{} et \og never \fg{}. Avec
+elle, \og i do not recommend \fg{} devient \og recommend \fg{} et passe pour un avis positif, ce que le
+notebook vous fait constater.
 \end{attention}
 
 \begin{resultat}
-Une AUC ROC d'environ 0,96 et un rappel d'environ 90~\% sur les avis négatifs : le client écrit
-lui-même ce qui ne va pas, la tâche est bien plus facile que la prévision des retards du TP 1.
+Une AUC ROC d'environ 0,96 et un rappel d'environ 90~\% sur les avis négatifs. Le client écrit
+lui-même ce qui ne va pas, et la tâche est bien plus facile que la prévision des retards du TP 1.
 \end{resultat}
 
 \capture{tp2_04_notebook}{Notebook \texttt{04\_nlp\_avis} : entraînement et évaluation du modèle TF-IDF.}{fig:nb04}
@@ -643,12 +680,12 @@ Ouvrez ensuite \url{http://localhost:8501} dans votre navigateur.
 
 \begin{astuce}
 Inutile de relancer Streamlit à chaque modification. Enregistrez le fichier dans JupyterLab
-(\cmd{Ctrl+S}) : un bandeau \emph{Source file changed} apparaît en haut à droite de la page. Cliquez
-sur \emph{Always rerun} : la page se met alors à jour à chaque enregistrement. De même, chaque
+(\cmd{Ctrl+S}), et un bandeau \emph{Source file changed} apparaît en haut à droite de la page. Cliquez
+sur \emph{Always rerun}, la page se met alors à jour à chaque enregistrement. De même, chaque
 action dans la page (changer la période, saisir un commentaire) réexécute tout le script de haut en
-bas ; c'est le fonctionnement normal de Streamlit. Les résultats des requêtes sont gardés en cache
-cinq minutes (\cmd{@st.cache\_data}) : pour forcer leur relecture, menu \emph{\(\vdots\)} >
-\emph{Clear cache}, puis \cmd{R}. Pour arrêter le tableau de bord : \cmd{Ctrl+C} dans le terminal.
+bas, c'est le fonctionnement normal de Streamlit. Les résultats des requêtes sont gardés en cache
+cinq minutes (\cmd{@st.cache\_data}). Pour forcer leur relecture, ouvrez le menu \emph{\(\vdots\)} >
+\emph{Clear cache}, puis tapez \cmd{R}. Pour arrêter le tableau de bord, faites \cmd{Ctrl+C} dans le terminal.
 \end{astuce}
 
 \capture{tp2_dashboard_haut}{Tableau de bord attendu : les indicateurs, l'évolution mensuelle et l'effet des retards.}{fig:dash1}
@@ -660,7 +697,8 @@ cinq minutes (\cmd{@st.cache\_data}) : pour forcer leur relecture, menu \emph{\(
 
 \subsection*{Le compte rendu}
 
-Il ne recopie pas le code : il explique vos choix et vos résultats.
+Au format PDF, nommé \cmd{NOM\_Prenom\_TP2.pdf}, il ne recopie pas le code mais explique vos choix
+et vos résultats. Il contient :
 \begin{enumerate}[leftmargin=*,itemsep=2pt]
   \item \textbf{Architecture} : le schéma de votre pipeline, et ce qui change par rapport au TP 1
         quand les données ne sont pas structurées.
@@ -674,7 +712,7 @@ Il ne recopie pas le code : il explique vos choix et vos résultats.
   \item \textbf{Tableau de bord} : une capture d'écran et deux ou trois enseignements.
   \item \textbf{Réponses aux questions} des notebooks, rédigées et argumentées.
   \item \textbf{Limites et améliorations} : ce que vous feriez avec plus de temps, ou en production
-        (par exemple : modèles de langue pré-entraînés, traitement des avis mixtes).
+        (par exemple des modèles de langue pré-entraînés, ou le traitement des avis mixtes).
 \end{enumerate}
 
 \clearpage
@@ -682,7 +720,7 @@ Il ne recopie pas le code : il explique vos choix et vos résultats.
 \section*{Annexe -- Aide-mémoire}\label{sec:aidememoire}
 % =====================================================================
 
-Imports : \cmd{from pyspark.sql import functions as F, Window}. Les opérations du TP 1 restent valables.
+Les imports sont \cmd{from pyspark.sql import functions as F, Window}. Les opérations du TP 1 restent valables.
 
 \begin{center}
 \small
