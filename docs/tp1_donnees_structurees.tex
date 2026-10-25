@@ -22,7 +22,7 @@
 \usepackage{tabularx}
 \usepackage{array}
 \usepackage{tikz}
-\usetikzlibrary{positioning,arrows.meta,babel}
+\usetikzlibrary{positioning,arrows.meta,shapes.geometric,babel}
 \usepackage{listings}
 
 \usepackage[htt]{hyphenat}
@@ -58,6 +58,23 @@
 \definecolor{lhbronze}{HTML}{A16207}
 \definecolor{lhsilver}{HTML}{64748B}
 \definecolor{lhgold}{HTML}{CA8A04}
+\definecolor{lhfonce}{HTML}{17394D}
+\definecolor{lhvert}{HTML}{5FB89D}
+% Logos des logiciels (docs/images/logos/, voir LISEZMOI.md) ; sans le fichier, rien ne s'affiche
+\newcommand{\logo}[2][1.15em]{\IfFileExists{images/logos/#2.png}{\raisebox{-0.22em}{\includegraphics[height=#1]{images/logos/#2.png}}\hspace{0.3em}}%
+  {\IfFileExists{logos/#2.png}{\raisebox{-0.22em}{\includegraphics[height=#1]{logos/#2.png}}\hspace{0.3em}}{}}}
+% Pictogrammes de la figure du pipeline (mêmes dessins que dans le Support 0)
+\tikzset{
+  pics/fichier/.style={code={%
+    \fill[white,draw=lhfonce,line width=0.7pt] (-0.32,-0.42) -- (0.18,-0.42) -- (0.32,-0.28) -- (0.32,0.42) -- (-0.32,0.42) -- cycle;
+    \draw[lhfonce,line width=0.7pt] (0.18,-0.42) -- (0.18,-0.28) -- (0.32,-0.28);
+    \node[font=\sffamily\bfseries\tiny,text=lhfonce] at (0,0.05) {#1};}},
+  pics/table/.style={code={%
+    \node[cylinder,shape border rotate=90,aspect=0.28,draw=#1!75!black,fill=#1!35,
+          minimum width=0.85cm,minimum height=0.95cm,line width=0.6pt] {};}},
+  pastille/.style={circle,fill=lhvert,draw=white,line width=1pt,text=white,
+                   font=\sffamily\bfseries\scriptsize,inner sep=1.6pt},
+}
 
 % ---------- Titres, en-têtes ----------
 \titleformat{\section}{\needspace{6\baselineskip}\Large\bfseries\color{lhblue}}{\thesection.}{0.6em}{}
@@ -92,9 +109,10 @@
 
 \newcommand{\cmd}[1]{\texttt{#1}}
 \newcommand{\cocher}{$\square$\ }
-\newcommand{\etape}[1]{\tikz[baseline=(n.base)]\node[circle,fill=lhblue,text=white,
-  font=\sffamily\bfseries\scriptsize,inner sep=1.3pt](n){#1};}
+\newcommand{\etape}[1]{\tikz[baseline=(n.base)]\node[circle,fill=lhvert,text=white,
+  font=\sffamily\bfseries\scriptsize,inner sep=1.4pt](n){#1};}
 \pdfstringdefDisableCommands{\def\cmd#1{#1}}
+\hypersetup{pdftitle={TP 1 -- Données structurées},pdfauthor={Anouar Riadsolh}}
 
 \newenvironment{notion}{\par\medskip\noindent\textbf{\textcolor{lhblue}{Notion clé :}}\ }{\par\medskip}
 \newcommand{\nb}[1]{\textcolor{lhblue}{\texttt{#1}}}
@@ -106,11 +124,13 @@
 \begin{tikzpicture}[remember picture,overlay]
   \fill[lhblue] (current page.north west) rectangle ([yshift=-5.2cm]current page.north east);
   \node[anchor=north west,text=white,font=\sffamily] at ([xshift=2.3cm,yshift=-1.3cm]current page.north west)
-    {Module Data Lakehouse -- Cycle ingénieur 4\textsuperscript{e}/5\textsuperscript{e} année};
+    {Module Data Lakehouse};
   \node[anchor=north west,text=white,font=\sffamily\bfseries\fontsize{26}{30}\selectfont] at ([xshift=2.3cm,yshift=-2.2cm]current page.north west)
     {TP 1 -- Données structurées};
   \node[anchor=north west,text=white!85!lhblue,font=\sffamily\large] at ([xshift=2.3cm,yshift=-3.6cm]current page.north west)
     {De la base de données au tableau de bord, en passant par Bronze, Silver et Gold};
+  \node[anchor=north east,text=white!85!lhblue,font=\sffamily] at ([xshift=-2.3cm,yshift=-4.25cm]current page.north east)
+    {Pr.~Anouar Riadsolh};
 \end{tikzpicture}
 \thispagestyle{empty}
 \vspace*{4.2cm}
@@ -121,7 +141,7 @@
 Objectif & Construire un pipeline Lakehouse complet sur les données réelles d'un site
            de e-commerce, puis en tirer des indicateurs et un tableau de bord. \\
 Durée    & 2 séances de 3 h (+ environ 2 h 30 de travail personnel, dont la partie 5). \\
-Prérequis & Support 0 terminé : \cmd{check\_env.py} affiche \og ENVIRONNEMENT PRÊT \fg{}. \\
+Prérequis & Support 0 terminé, avec \og ENVIRONNEMENT PRÊT \fg{} affiché par \cmd{check\_env.py}. \\
 À rendre & Un compte rendu, les notebooks exécutés et le tableau de bord
            (section~\ref{sec:livrables}). \\
 \bottomrule
@@ -141,9 +161,10 @@ commerçants de vendre sur les grands sites de e-commerce. La direction vous pos
   \item Peut-on prévoir un retard de livraison dès la commande ?
 \end{enumerate}
 
-Les données sont réparties entre deux systèmes : l'application de vente, qui écrit dans une base
+Les données sont réparties entre deux systèmes, l'application de vente, qui écrit dans une base
 \textbf{PostgreSQL}, et des \textbf{fichiers CSV} exportés par d'autres services (clients, produits,
-vendeurs). Votre mission : les réunir dans le Lakehouse, les rendre fiables, puis répondre aux questions.
+vendeurs). Votre mission est de les réunir dans le Lakehouse, de les rendre fiables, puis de répondre
+aux questions.
 
 % =====================================================================
 \section{Les données}
@@ -177,7 +198,7 @@ personne d'une commande à l'autre, il faut utiliser \cmd{customer\_unique\_id}.
 \end{attention}
 
 La figure~\ref{fig:modele} montre comment les tables se relient. La table \cmd{orders} est au
-centre : une commande a plusieurs articles et plusieurs paiements, et chaque article renvoie à un
+centre. Une commande a plusieurs articles et plusieurs paiements, et chaque article renvoie à un
 produit et à un vendeur.
 
 \begin{figure}[H]
@@ -206,7 +227,7 @@ produit et à un vendeur.
 \node[font=\sffamily\scriptsize,text=lhblue,anchor=west] at (-6.9,-3.0) {\rule{8pt}{8pt}\ PostgreSQL};
 \node[font=\sffamily\scriptsize,text=gray,anchor=west]  at (-6.9,-3.5) {\rule{8pt}{8pt}\ fichiers CSV};
 \end{tikzpicture}}
-\caption{Modèle de données Olist. Les colonnes soulignées forment la clé de chaque table ;
+\caption{Modèle de données Olist. Les colonnes soulignées forment la clé de chaque table, et
 \og 1 -- n \fg{} se lit \og une commande, plusieurs articles \fg{}.}
 \label{fig:modele}
 \end{figure}
@@ -215,105 +236,115 @@ produit et à un vendeur.
 \section{Ce que vous allez construire}
 % =====================================================================
 
-La figure~\ref{fig:pipeline} montre le pipeline complet : les tables de chaque couche, les
-transformations entre les couches et le notebook qui réalise chaque étape. Il se lit en deux temps :
-\textbf{de gauche à droite} sur la première ligne (ingestion), puis \textbf{de droite à gauche} sur la
-seconde (préparation et usages).
+La figure~\ref{fig:pipeline} montre le pipeline complet. Les données partent des deux sources,
+traversent les couches du Lakehouse, puis servent aux usages. Les numéros renvoient aux étapes
+décrites ci-dessous.
 
 \begin{figure}[H]
 \centering
+\resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[
   font=\sffamily\small, >=Stealth,
-  col/.style={draw=#1,thick,rounded corners=4pt,fill=#1!7,text width=3.75cm,align=left,
-              inner sep=6pt,font=\sffamily\footnotesize},
-  tag/.style={font=\sffamily\scriptsize\bfseries,text=white,fill=lhblue,rounded corners=2pt,inner sep=2.5pt},
-  op/.style={font=\sffamily\scriptsize,text=black!70,align=center},
-  num/.style={circle,fill=lhblue,text=white,font=\sffamily\bfseries\scriptsize,inner sep=1.4pt}]
+  barre/.style={fill=lhfonce,text=white,font=\sffamily\bfseries\small,minimum height=0.6cm,inner sep=0pt},
+  cadre/.style={draw=lhfonce,line width=0.8pt},
+  bloc/.style={draw=lhfonce!60,line width=0.6pt,fill=white},
+  et/.style={font=\sffamily\scriptsize,text=lhfonce,align=center},
+  flux/.style={->,very thick,lhfonce}]
 
-% ---------------- Ligne 1 : ingestion ----------------
-\node[col=gray] (pg) at (0,1.2) {\textbf{PostgreSQL}\\ schéma \texttt{ventes}\\[3pt]
-  \texttt{orders}\\ \texttt{order\_items}\\ \texttt{order\_payments}};
-\node[col=gray] (csv) at (0,-2.0) {\textbf{Fichiers CSV}\\ dossier \texttt{data/olist/}\\[3pt]
-  \texttt{customers}\\ \texttt{products}\\ \texttt{sellers}\\ \texttt{category\_translation}};
-\node[col=darkgray] (land) at (5.35,-2.0) {\textbf{Landing}\\ \texttt{s3://landing/}\\[3pt]
-  un dossier par table\\ et par date de dépôt\\ fichiers non modifiés};
-\node[col=lhbronze] (br) at (10.85,-0.4) {\textbf{Bronze} -- 7 tables\\[3pt]
-  \texttt{orders}, \texttt{order\_items},\\ \texttt{order\_payments}\\[2pt]
-  \texttt{customers}, \texttt{products},\\ \texttt{sellers},\\ \texttt{category\_translation}\\[4pt]
-  \textit{colonnes ajoutées :}\\ \texttt{\_source}, \texttt{\_ingere\_le}};
+% ===== Sources =====
+\draw[cadre] (0,0) rectangle (3.2,-10.4);
+\node[barre,minimum width=3.2cm,anchor=north west] at (0,0) {Sources};
+\node at (1.6,-2.3) {\logo[2.2em]{postgres}};  \node[et] at (1.6,-3.2) {Base de vente\\(PostgreSQL)};
+\pic at (1.6,-4.6) {fichier=CSV};             \node[et] at (1.6,-5.45) {Fichiers CSV\\(référentiels)};
 
-\draw[->,thick] (pg.east) -- node[num,pos=0.12]{1} node[op,above]{JDBC (lot 1, puis lot 2)} (pg.east -| br.west);
-\draw[->,thick] (csv) -- node[num]{2} node[op,above=4pt]{dépôt} (land);
-\draw[->,thick] (land.east) -- node[num]{3} node[op,above=4pt]{lecture\\en texte} (land.east -| br.west);
+% ===== Plateforme Lakehouse =====
+\draw[draw=lhblue,line width=2.4pt] (3.9,0) rectangle (15.9,-10.4);
+\node[fill=lhblue,text=white,font=\sffamily\bfseries,minimum width=12cm,minimum height=0.7cm,anchor=north west]
+  at (3.9,0) {Plateforme Lakehouse};
+\draw[bloc] (4.35,-1.0) rectangle (15.2,-2.3);
+\node[et,font=\sffamily\bfseries\scriptsize,anchor=west] at (4.6,-1.65) {Traitement};
+\node[et,font=\sffamily\scriptsize] at (9.78,-1.65) {\logo[1.6em]{jupyter}JupyterLab\qquad\logo[1.6em]{spark}Spark (Python et SQL)};
 
-% ---------------- Ligne 2 : préparation et usages ----------------
-\node[col=lhsilver] (si) at (10.85,-7.1) {\textbf{Silver} -- tables propres\\[3pt]
-  \texttt{customers}, \texttt{sellers}\\
-  \texttt{products} \textit{+ catégorie EN}\\
-  \texttt{orders} \textit{+ délais, retard}\\
-  \texttt{order\_items}\\
-  \texttt{order\_payments}};
-\node[col=gray, below=1.0cm of si] (q) {\textbf{Quarantaine}\\[2pt]
-  \texttt{quarantaine\_orders}\\ \texttt{quarantaine\_payments}};
-\node[col=lhgold] (go) at (5.35,-7.1) {\textbf{Gold} -- prêtes à l'usage\\[3pt]
-  \texttt{commandes}\\ \textit{\quad une ligne par commande}\\
-  \texttt{ventes\_mensuelles}\\
-  \texttt{ventes\_categorie}\\
-  \texttt{livraison\_etat}\\
-  \texttt{predictions\_retard}};
-\node[col=lhblue,text width=3.4cm] (sql) at (0,-5.2) {\textbf{Requêtes SQL}\\ questions de la direction};
-\node[col=lhblue,text width=3.4cm] (ml)  at (0,-7.1) {\textbf{Modèle ML}\\ scikit-learn : retards};
-\node[col=lhblue,text width=3.4cm] (db)  at (0,-9.0) {\textbf{Tableau de bord}\\ Streamlit};
+% Tables par couche
+\pic at (5.3,-4.6)  {table=gray};      \node[et] at (5.3,-5.55)  {\textbf{landing}\\fichiers bruts};
+\pic at (8.1,-4.6)  {table=lhbronze};  \node[et] at (8.1,-5.55)  {\textbf{bronze}\\7 tables};
+\pic at (10.9,-4.6) {table=lhsilver};  \node[et] at (10.9,-5.55) {\textbf{silver}\\tables propres};
+\pic at (13.7,-4.6) {table=lhgold};    \node[et] at (13.7,-5.55) {\textbf{gold}\\prêtes à l'usage};
+\pic at (10.9,-6.75) {table=gray};     \node[et,anchor=west] at (11.45,-6.75) {\textbf{quarantaine}\\lignes rejetées};
 
-\draw[->,thick] (br.south) -- node[num]{4} node[op,right=6pt,align=left]{typage, dédoublonnage,\\règles de qualité\\[2pt]\textit{lot 2 : \texttt{MERGE}}} (si.north);
-\draw[->] (si.south) -- node[num]{5} node[op,right=6pt]{lignes rejetées} (q.north);
-\draw[->,thick] (si.west) -- node[num]{6} node[op,above=4pt]{jointures,\\agrégats} (go.east);
-\draw[->,thick] (go.west) -- ++(-0.5,0) |- node[num,pos=0.8]{7} (sql.east);
-\draw[<->,thick] (go.west) -- node[num,pos=0.7]{8} (ml.east);
-\draw[->,thick] (go.west) -- ++(-0.5,0) |- node[num,pos=0.8]{9} (db.east);
+% Lakehouse ouvert : catalogue et stockage
+\node[fill=lhblue,text=white,font=\sffamily\bfseries\small,minimum width=10.85cm,minimum height=0.6cm]
+  at (9.78,-7.75) {Lakehouse ouvert};
+\draw[bloc] (4.35,-8.2) rectangle (7.85,-10.05);
+\node[barre,minimum width=3.5cm,anchor=north west] at (4.35,-8.2) {Catalogue};
+\node[et] at (6.1,-9.3) {\logo[1.8em]{iceberg}\\[2pt]Iceberg REST};
+\draw[bloc] (8.2,-8.2) rectangle (15.2,-10.05);
+\node[barre,minimum width=7.0cm,anchor=north west] at (8.2,-8.2) {Stockage ouvert (S3)};
+\node[et] at (9.3,-9.3)  {\logo[1.8em]{rustfs}\\[2pt]RustFS};
+\node[et] at (11.0,-9.3) {\logo[1.8em]{iceberg}\\[2pt]Iceberg};
+\node[et] at (12.6,-9.3) {\logo[1.8em]{parquet}\\[2pt]Parquet};
+\node[et] at (14.2,-9.3) {\logo[1.8em]{delta}\\[2pt]Delta Lake};
 
-% ---------------- Notebooks ----------------
-\node[tag,anchor=south east] at (pg.north east)  {01\_bronze};
-\node[tag,anchor=south east] at (br.north east)  {01\_bronze};
-\node[tag,anchor=south east] at (si.north east)  {02\_silver};
-\node[tag,anchor=south east] at (go.north east)  {03\_gold\_sql\_incremental};
-\node[tag,anchor=south east] at (ml.north east)  {04\_ml\_retards};
-\node[tag,anchor=south east] at (db.north east)  {dashboard\_tp1.py};
-\end{tikzpicture}
-\caption{Pipeline du TP 1. Les numéros renvoient aux étapes décrites ci-dessous ; les étiquettes
-bleues indiquent le notebook qui réalise chaque étape.}
+% ===== Usages =====
+\draw[cadre] (16.6,0) rectangle (20.0,-3.2);
+\node at (18.3,-1.2) {\logo[2em]{spark}}; \node[et] at (18.3,-2.15) {Requêtes SQL\\(Spark SQL)};
+\draw[cadre] (16.6,-3.6) rectangle (20.0,-6.8);
+\node at (18.3,-4.8) {\logo[2em]{sklearn}}; \node[et] at (18.3,-5.75) {Prédiction\\des retards};
+\draw[cadre] (16.6,-7.2) rectangle (20.0,-10.4);
+\node at (18.3,-8.4) {\logo[2em]{streamlit}}; \node[et] at (18.3,-9.35) {Tableau\\de bord};
+
+% ===== Infrastructure =====
+\node[fill=lhfonce,text=white,minimum width=20cm,minimum height=0.75cm,anchor=north west] at (0,-10.8)
+  {\logo[1.3em]{docker}\textbf{Infrastructure : conteneurs Docker}};
+
+% ===== Flux =====
+\draw[flux] (3.2,-3.0) -| (8.1,-4.05) node[pastille,pos=0.3]{1};
+\node[et,above] at (5.3,-3.0) {JDBC};
+\draw[flux] (3.2,-4.6) -- (4.85,-4.6) node[pastille,midway]{2};
+\draw[flux] (5.75,-4.6) -- (7.65,-4.6) node[pastille,midway]{3};
+\draw[flux] (8.55,-4.6) -- (10.45,-4.6) node[pastille,midway]{4};
+\draw[flux] (10.9,-5.95) -- (10.9,-6.2) node[pastille,right=2pt]{5};
+\draw[flux] (11.35,-4.6) -- (13.25,-4.6) node[pastille,midway]{6};
+\draw[very thick,lhfonce] (14.15,-4.6) -- (15.55,-4.6);
+\draw[flux] (15.55,-4.6) |- (16.6,-1.6) node[pastille,pos=0.75]{7};
+\draw[<->,very thick,lhfonce] (15.55,-5.2) -- (16.6,-5.2) node[pastille,midway,below=3pt]{8};
+\draw[flux] (15.55,-4.6) |- (16.6,-8.8) node[pastille,pos=0.75]{9};
+\end{tikzpicture}}
+\caption{Pipeline du TP 1. Tous les services tournent dans des conteneurs Docker.}
 \label{fig:pipeline}
 \end{figure}
 
 \subsection*{Le pipeline, étape par étape}
 
 \begin{description}[leftmargin=1.4em,labelindent=0pt,itemsep=3pt,font=\normalfont]
-\item[\etape{1}] \textbf{Ingestion de la base de vente :} Spark lit les tables \cmd{orders},
-  \cmd{order\_items} et \cmd{order\_payments} de PostgreSQL par une connexion JDBC et les copie en
-  Bronze. Le lot 1 reflète la base au 1\textsuperscript{er} juillet 2018 ; le lot 2 n'apporte que les
-  lignes nouvelles ou modifiées depuis (colonne \cmd{updated\_at}).
-\item[\etape{2}] \textbf{Dépôt des fichiers :} les CSV des référentiels (clients, produits, vendeurs,
+\item[\etape{1}] \textbf{Ingestion de la base de vente} (\nb{01\_bronze}). Spark lit les tables
+  \cmd{orders}, \cmd{order\_items} et \cmd{order\_payments} de PostgreSQL par une connexion JDBC et
+  les copie en Bronze. Le lot 1 reflète la base au 1\textsuperscript{er} juillet 2018. Le lot 2
+  n'apporte que les lignes nouvelles ou modifiées depuis (colonne \cmd{updated\_at}).
+\item[\etape{2}] \textbf{Dépôt des fichiers} (\nb{01\_bronze}). Les CSV des référentiels (clients, produits, vendeurs,
   traduction des catégories) sont copiés tels quels dans \cmd{s3://landing/}, un dossier par table et
   par date de dépôt.
-\item[\etape{3}] \textbf{Ingestion des fichiers :} Spark lit ces CSV \emph{en texte}, sans deviner les
-  types, et les écrit en Bronze. Chaque table Bronze reçoit deux colonnes techniques :
+\item[\etape{3}] \textbf{Ingestion des fichiers} (\nb{01\_bronze}). Spark lit ces CSV \emph{en texte},
+  sans deviner les types, et les écrit en Bronze. Chaque table Bronze reçoit deux colonnes techniques,
   \cmd{\_source} (d'où vient la ligne) et \cmd{\_ingere\_le} (quand elle a été chargée).
-\item[\etape{4}] \textbf{Nettoyage :} chaque table Bronze devient une table Silver : colonnes renommées
-  et typées, doublons retirés, catégories traduites, délais de livraison et indicateur de retard
+\item[\etape{4}] \textbf{Nettoyage} (\nb{02\_silver}). Chaque table Bronze devient une table
+  Silver, avec des colonnes renommées et typées, doublons retirés, catégories traduites, délais de livraison et indicateur de retard
   calculés. Au lot 2, l'instruction \cmd{MERGE} met à jour les commandes existantes et ajoute les
   nouvelles.
-\item[\etape{5}] \textbf{Quarantaine :} les lignes qui violent une règle bloquante (commande
+\item[\etape{5}] \textbf{Quarantaine} (\nb{02\_silver}). Les lignes qui violent une règle bloquante (commande
   \og livrée \fg{} sans date de livraison, paiement de type inconnu) sont isolées dans des tables de
   quarantaine au lieu d'être supprimées.
-\item[\etape{6}] \textbf{Préparation de Gold :} les tables Silver sont jointes dans
-  \cmd{gold.commandes}, une ligne par commande, puis agrégées en indicateurs : ventes par mois, par
-  catégorie, délais par état.
-\item[\etape{7}] \textbf{Analyse :} des requêtes SQL sur Gold répondent aux questions de la direction.
-\item[\etape{8}] \textbf{Prédiction :} un modèle scikit-learn apprend à prévoir les retards à partir
+\item[\etape{6}] \textbf{Préparation de Gold} (\nb{03\_gold\_sql\_incremental}). Les tables Silver
+  sont jointes dans \cmd{gold.commandes}, une ligne par commande, puis agrégées en indicateurs (ventes
+  par mois, par catégorie, délais par état).
+\item[\etape{7}] \textbf{Analyse} (\nb{03\_gold\_sql\_incremental}). Des requêtes SQL sur Gold répondent aux questions de la direction.
+\item[\etape{8}] \textbf{Prédiction} (\nb{04\_ml\_retards}). Un modèle scikit-learn apprend à prévoir les retards à partir
   de \cmd{gold.commandes}, puis écrit ses prédictions dans \cmd{gold.predictions\_retard}.
-\item[\etape{9}] \textbf{Restitution :} le tableau de bord Streamlit affiche les indicateurs Gold et
+\item[\etape{9}] \textbf{Restitution} (\nb{dashboard\_tp1.py}). Le tableau de bord Streamlit affiche les indicateurs Gold et
   les commandes au plus fort risque de retard.
 \end{description}
+
+La partie 5 (\nb{05\_iceberg\_ou\_delta}) compare ensuite les deux formats de table, Iceberg et Delta Lake.
 
 \begin{center}
 \small
@@ -322,24 +353,24 @@ bleues indiquent le notebook qui réalise chaque étape.}
 \toprule
 \normalfont\textbf{Couche} & \textbf{Rôle} & \textbf{Règle d'or} \\
 \midrule
-Bronze & Copie des sources, avec deux colonnes techniques : \cmd{\_source} et \cmd{\_ingere\_le} &
+Bronze & Copie des sources, avec deux colonnes techniques (\cmd{\_source} et \cmd{\_ingere\_le}) &
   On ne modifie rien. On ajoute, on n'écrase jamais l'historique. \\
 Silver & Données nettoyées, typées, dédoublonnées et contrôlées &
-  Une ligne invalide n'est pas supprimée en silence : elle va en quarantaine. \\
-Gold & Tables prêtes à l'usage : une ligne par commande et des agrégats &
+  Une ligne invalide n'est pas supprimée en silence, elle va en quarantaine. \\
+Gold & Tables prêtes à l'usage (une ligne par commande et des agrégats) &
   Chaque indicateur se recalcule à partir de Silver. \\
 \bottomrule
 \end{tabularx}
 \end{center}
 
 Toutes les tables sont au format \textbf{Apache Iceberg} et enregistrées dans le catalogue sous
-le nom \cmd{lakehouse.<couche>.<table>} : par exemple \cmd{lakehouse.silver.orders}.
+le nom \cmd{lakehouse.<couche>.<table>}, par exemple \cmd{lakehouse.silver.orders}.
 
 \subsection*{Un pipeline ELT, de l'OLTP à l'OLAP}
 
-\textbf{ELT et non ETL :} Dans un ETL (\emph{Extract, Transform, Load}), les données sont
+\textbf{ELT et non ETL.} Dans un ETL (\emph{Extract, Transform, Load}), les données sont
 transformées \emph{avant} d'être chargées, et seule la version propre est conservée. Ce TP suit
-l'approche \textbf{ELT} (\emph{Extract, Load, Transform}), celle des Lakehouse : les données sont
+l'approche \textbf{ELT} (\emph{Extract, Load, Transform}), celle des Lakehouse. Les données sont
 d'abord extraites et chargées telles quelles, puis transformées \emph{dans} le Lakehouse, avec Spark.
 
 \begin{center}
@@ -357,47 +388,48 @@ T -- Transform & \etape{4} à \etape{8} & Nettoyage et \cmd{MERGE} en Silver, jo
 \end{tabularx}
 \end{center}
 
-Garder la copie brute en Bronze a deux avantages : si une règle de nettoyage change, on rejoue
-Silver et Gold sans relire les sources ; si un chiffre est faux, on remonte jusqu'à la donnée d'origine.
+Garder la copie brute en Bronze a deux avantages. Si une règle de nettoyage change, on rejoue
+Silver et Gold sans relire les sources. Si un chiffre est faux, on remonte jusqu'à la donnée d'origine.
 
-\textbf{De l'OLTP à l'OLAP :} La source PostgreSQL est une base \textbf{OLTP} (\emph{OnLine
-Transaction Processing}) : celle d'une application qui enregistre des commandes une par une, avec
+\textbf{De l'OLTP à l'OLAP.} La source PostgreSQL est une base \textbf{OLTP} (\emph{OnLine
+Transaction Processing}), celle d'une application qui enregistre des commandes une par une, avec
 un modèle \emph{normalisé} (7 tables liées par des clés) et des mises à jour fréquentes. La couche
-Gold est \textbf{OLAP} (\emph{OnLine Analytical Processing}) : des tables faites pour lire beaucoup
-de lignes et calculer des indicateurs. Bronze et Silver gardent le modèle normalisé de la source ;
-c'est en Gold que le modèle devient analytique. Le \emph{format}, lui, est analytique dès Bronze :
+Gold est \textbf{OLAP} (\emph{OnLine Analytical Processing}). Ses tables sont faites pour lire beaucoup
+de lignes et calculer des indicateurs. Bronze et Silver gardent le modèle normalisé de la source,
+et c'est en Gold que le modèle devient analytique. Le \emph{format}, lui, est analytique dès Bronze.
 Parquet range les données par colonne, et une requête ne lit que les colonnes dont elle a besoin.
 
 % =====================================================================
 \section{Déroulé}
 % =====================================================================
 
-\textbf{Avant de commencer, copiez les énoncés dans votre dossier personnel :} dans JupyterLab, ouvrez un
+\textbf{Avant de commencer, copiez les énoncés dans votre dossier personnel.} Dans JupyterLab, ouvrez un
 terminal (\emph{File > New > Terminal}) et tapez :
 \begin{lstlisting}[style=shell]
 cp -r notebooks/tp1 apps/dashboard_tp1.py notebooks/mon_travail/
 \end{lstlisting}
-Travaillez \textbf{uniquement} dans \nb{notebooks/mon\_travail/}. Git ignore ce dossier : vos fichiers ne
-seront jamais écrasés, et \cmd{git pull} récupérera sans conflit les mises à jour publiées par l'enseignant.
-Ne faites ni \cmd{git commit} ni \cmd{git push} : le dépôt du cours est en lecture seule.
+Travaillez \textbf{uniquement} dans \nb{notebooks/mon\_travail/}. Git ignore ce dossier, vos fichiers ne
+seront donc jamais écrasés, et \cmd{git pull} récupérera sans conflit les mises à jour publiées par l'enseignant.
+Ne faites ni \cmd{git commit} ni \cmd{git push}, car le dépôt du cours est en lecture seule.
 
-Les notebooks contiennent les consignes détaillées : les cellules marquées \cmd{\# À COMPLÉTER} sont à
+Les notebooks contiennent les consignes détaillées, et les cellules marquées \cmd{\# À COMPLÉTER} sont à
 écrire. Exécutez-les \textbf{dans l'ordre}.
-Gardez sous la main l'\textbf{aide-mémoire PySpark} de la dernière page : il contient toutes les
+Gardez sous la main l'\textbf{aide-mémoire PySpark} de la dernière page, qui contient toutes les
 opérations dont vous aurez besoin.
 
 
 \begin{attention}
-\textbf{Un seul notebook actif à la fois :} chaque notebook ouvert garde sa propre session Spark,
-qui réserve jusqu'à 2 Go de mémoire. Avant d'ouvrir le notebook suivant, arrêtez les précédents :
-panneau \emph{Running Terminals and Kernels} (barre de gauche) > \emph{Shut Down All}.
+\textbf{Un seul notebook actif à la fois.} Chaque notebook ouvert garde sa propre session Spark,
+qui réserve jusqu'à 2 Go de mémoire. Avant d'ouvrir le notebook suivant, arrêtez les précédents
+(panneau \emph{Running Terminals and Kernels} (barre de gauche) > \emph{Shut Down All}).
 Les tables restent dans le Lakehouse.
 \end{attention}
 
 \begin{astuce}
-Avant chaque séance : \cmd{docker compose up -d}, puis \cmd{git pull} pour récupérer les dernières
+Avant chaque séance, lancez \cmd{docker compose up -d}, puis \cmd{git pull} pour récupérer les dernières
 versions. Si \cmd{git pull} refuse de s'exécuter, c'est qu'un fichier du cours a été modifié
-par erreur : \cmd{git restore .} rétablit l'original, sans toucher à \nb{mon\_travail/}. Une erreur \og \texttt{Cellule à compléter : \dots} \fg{} signale simplement une partie que vous
+par erreur. \cmd{git restore .} rétablit alors l'original, sans toucher à \nb{mon\_travail/}.
+Une erreur \og \texttt{Cellule à compléter : \dots} \fg{} signale simplement une partie que vous
 n'avez pas encore écrite.
 \end{astuce}
 
@@ -411,28 +443,28 @@ Vous chargez la base PostgreSQL dans l'état où elle était le \textbf{1\textsu
 (lot 1), vous déposez les fichiers CSV dans la zone \cmd{s3://landing/}, puis vous écrivez sept tables Bronze.
 
 \begin{notion}
-\textbf{On lit les fichiers bruts en texte :} laisser Spark deviner les types (\cmd{inferSchema})
-transforme le code postal \cmd{09790} en nombre \cmd{9790} : le zéro est perdu pour toujours.
+\textbf{On lit les fichiers bruts en texte.} Laisser Spark deviner les types (\cmd{inferSchema})
+transforme le code postal \cmd{09790} en nombre \cmd{9790}, et le zéro est perdu pour toujours.
 Les types sont fixés plus tard, en Silver, de façon explicite.
 \end{notion}
 
 \begin{resultat}
 \cmd{SHOW TABLES IN lakehouse.bronze} liste 7 tables. \cmd{bronze.orders} contient environ
-86\,600 commandes : les autres n'existent pas encore au 1\textsuperscript{er} juillet 2018.
+86\,600 commandes, car les autres n'existent pas encore au 1\textsuperscript{er} juillet 2018.
 \end{resultat}
 
 \capture{01_bronze_notebook}{Notebook \texttt{01\_bronze} : chargement du lot 1 et écriture des tables Bronze.}{fig:nb01}
 \capture{01_bronze_resultat}{Résultat attendu de la partie 1 : les 7 tables Bronze et le nombre de commandes.}{fig:res01}
 
-Une table Iceberg n'est, physiquement, qu'un dossier de fichiers dans le stockage S3 :
-dans la console (\url{http://localhost:9001}), le dossier \cmd{lakehouse/warehouse/bronze/} contient
+Une table Iceberg n'est, physiquement, qu'un dossier de fichiers dans le stockage S3.
+Dans la console (\url{http://localhost:9001}), le dossier \cmd{lakehouse/warehouse/bronze/} contient
 un sous-dossier par table, avec ses fichiers de données Parquet (\cmd{data/}) et ses fichiers de
 métadonnées (\cmd{metadata/}).
 
 \capture{01_bronze_s3}{Les 7 tables Bronze vues dans la console du stockage S3 : un dossier par table.}{fig:s3bronze}
 
 \begin{attention}
-Ne supprimez jamais une table depuis la console S3 : les fichiers disparaissent, mais le catalogue
+Ne supprimez jamais une table depuis la console S3. Les fichiers disparaissent, mais le catalogue
 continue de pointer vers eux et la table devient illisible. On supprime une table avec
 \cmd{DROP TABLE ... PURGE} dans Spark.
 \end{attention}
@@ -440,18 +472,18 @@ continue de pointer vers eux et la table devient illisible. On supprime une tabl
 \subsection*{Partie 2 -- Silver \hfill \nb{02\_silver}}
 
 Vous mesurez d'abord les défauts (valeurs nulles, doublons), puis vous écrivez une table Silver par
-source. Un exemple complet est fourni pour \cmd{customers} ; vous traitez les autres sur le même modèle.
+source. Un exemple complet est fourni pour \cmd{customers}, et vous traitez les autres sur le même modèle.
 
 \begin{notion}
-\textbf{Une valeur nulle n'est pas forcément une erreur :} une commande en cours n'a pas de date de
-livraison : c'est normal. Une commande \og livrée \fg{} sans date de livraison est une erreur :
+\textbf{Une valeur nulle n'est pas forcément une erreur.} Une commande en cours n'a pas encore de date
+de livraison, c'est normal. Une commande \og livrée \fg{} sans date de livraison est une erreur, et
 elle part en \textbf{quarantaine}. Entre les deux, une incohérence sans gravité devient une
-\textbf{alerte} : on la garde et on la signale.
+\textbf{alerte}. On garde la ligne et on la signale.
 \end{notion}
 
 \begin{resultat}
-Le bilan final compare Bronze et Silver table par table. Chaque écart s'explique par une règle :
-doublons retirés, lignes en quarantaine.
+Le bilan final compare Bronze et Silver table par table. Chaque écart s'explique par une règle
+(doublons retirés, lignes en quarantaine).
 \end{resultat}
 
 \capture{02_silver_notebook}{Notebook \texttt{02\_silver} : nettoyage, typage et quarantaine.}{fig:nb02}
@@ -464,22 +496,23 @@ puis vous répondez en SQL aux questions de la direction. Vous chargez ensuite l
 deux mois et demi de nouvelles commandes et de changements de statut.
 
 \begin{notion}
-\textbf{Le modèle de la couche Gold :} Gold ne suit pas un schéma en étoile, mais un modèle plus
+\textbf{Le modèle de la couche Gold.} Gold ne suit pas un schéma en étoile, mais un modèle plus
 simple, en deux niveaux (figure~\ref{fig:gold}).
 \begin{itemize}[leftmargin=*,itemsep=1pt,topsep=2pt]
-\item \cmd{gold.commandes} est une \textbf{table large dénormalisée} (\emph{One Big Table}) : une
+\item \cmd{gold.commandes} est une \textbf{table large dénormalisée} (\emph{One Big Table}), avec une
   ligne par commande, où le client, les montants, les paiements et les délais de livraison sont
   déjà joints. On l'interroge sans aucune jointure.
 \item Les tables d'indicateurs (\cmd{ventes\_mensuelles}, \cmd{ventes\_categorie},
-  \cmd{livraison\_etat}) sont des \textbf{agrégats} calculés à partir d'elle : de petits
+  \cmd{livraison\_etat}) sont des \textbf{agrégats} calculés à partir d'elle. Ce sont de petits
   \emph{data marts}, chacun prêt pour un graphique du tableau de bord.
 \end{itemize}
 Dans un \textbf{schéma en étoile}, on aurait au centre une table de faits (une ligne par article
-vendu, avec les montants) reliée par des clés à des tables de dimensions : clients, produits,
-vendeurs, dates. Ce modèle évite de répéter les informations et sert de nombreuses analyses, mais
+vendu, avec les montants) reliée par des clés à des tables de dimensions (clients, produits,
+vendeurs, dates). Ce modèle évite de répéter les informations et sert de nombreuses analyses, mais
 chaque requête demande des jointures. La table large est plus simple à interroger et c'est le
-format qu'attend le modèle de ML (une ligne par commande, toutes les variables) ; avec un stockage
-en colonnes, sa largeur ne coûte presque rien à la lecture. Le schéma en étoile sera construit au TP~2.
+format qu'attend le modèle de ML (une ligne par commande, toutes les variables). Avec un stockage
+en colonnes, sa largeur ne coûte presque rien à la lecture. Un modèle dimensionnel, une constellation
+de plusieurs tables de faits qui partagent leurs dimensions, sera construit au TP~2.
 \end{notion}
 
 \begin{figure}[H]
@@ -506,22 +539,22 @@ en colonnes, sa largeur ne coûte presque rien à la lecture. Le schéma en éto
 \draw[->,thick,dashed] (oc.east) -- (pr.west);
 \end{tikzpicture}
 \caption{Le modèle de la couche Gold. Les tables Silver sont jointes une seule fois dans
-\texttt{gold.commandes} ; les agrégats et les prédictions sont calculés à partir d'elle
+\texttt{gold.commandes}, et les agrégats et les prédictions sont calculés à partir d'elle
 (\texttt{ventes\_categorie} relit aussi les articles et les produits de Silver, car une commande peut couvrir plusieurs catégories).}
 \label{fig:gold}
 \end{figure}
 
 \begin{notion}
-\textbf{Ingestion incrémentale :} on ne relit que les lignes modifiées depuis la dernière ingestion,
+\textbf{Ingestion incrémentale.} On ne relit que les lignes modifiées depuis la dernière ingestion,
 grâce à la colonne \cmd{updated\_at} (le \emph{filigrane}). L'instruction \cmd{MERGE INTO} applique
-ces changements en Silver en une seule transaction : mise à jour des commandes existantes,
-insertion des nouvelles. Iceberg garde l'ancienne version de la table : on peut la relire
+ces changements en Silver en une seule transaction (mise à jour des commandes existantes,
+insertion des nouvelles). Iceberg garde l'ancienne version de la table, que l'on peut relire
 avec \cmd{VERSION AS OF} (\emph{time travel}).
 \end{notion}
 
 \begin{resultat}
 Après le \cmd{MERGE}, \cmd{silver.orders} contient environ 99\,400 commandes, et le nombre de
-commandes \cmd{shipped} est divisé par deux environ : elles ont été livrées entre-temps.
+commandes \cmd{shipped} est divisé par deux environ, car elles ont été livrées entre-temps.
 \end{resultat}
 
 \capture{03_gold_notebook}{Notebook \texttt{03\_gold\_sql\_incremental} : tables Gold, requêtes SQL et lot 2.}{fig:nb03}
@@ -557,7 +590,7 @@ commandes \cmd{shipped} est divisé par deux environ : elles ont été livrées 
 \node[op,fill=white,inner sep=2pt] at (3.8,-1.0) {filigrane =\\ \texttt{max(updated\_at)}};
 \draw[->,dashed] (s2.west) -- node[op,below=2pt]{\emph{time travel} :\\ \texttt{VERSION AS OF}} (s1.east);
 \end{tikzpicture}
-\caption{Ingestion incrémentale. Au lot 2, on ne relit que les lignes modifiées depuis le lot 1 ;
+\caption{Ingestion incrémentale. Au lot 2, on ne relit que les lignes modifiées depuis le lot 1.
 Iceberg garde l'ancienne version de la table, que l'on peut toujours interroger.}
 \label{fig:incremental}
 \end{figure}
@@ -566,16 +599,16 @@ Iceberg garde l'ancienne version de la table, que l'on peut toujours interroger.
 
 Vous entraînez deux modèles de classification (scikit-learn) qui estiment, au moment de la commande,
 la probabilité d'un retard de livraison, puis vous comparez leurs performances. Les prédictions sont
-écrites dans \cmd{gold.predictions\_retard} : le tableau de bord les affichera.
+écrites dans \cmd{gold.predictions\_retard}, que le tableau de bord affichera.
 
 \begin{notion}
-\textbf{Fuite de données :} un modèle ne doit utiliser que des informations disponibles au moment de
-la prédiction. Le notebook vous fait ajouter volontairement le délai réel de livraison :
+\textbf{Fuite de données.} Un modèle ne doit utiliser que des informations disponibles au moment de
+la prédiction. Le notebook vous fait ajouter volontairement le délai réel de livraison, et
 le modèle devient presque parfait\dots{} et totalement inutilisable.
 \end{notion}
 
 \begin{resultat}
-Une AUC ROC modeste, de l'ordre de 0,7 : les causes principales des retards (transporteur, météo,
+Une AUC ROC modeste, de l'ordre de 0,7, car les causes principales des retards (transporteur, météo,
 grèves) ne figurent pas dans les données. Avec la fuite de données, l'AUC dépasse 0,95.
 \end{resultat}
 
@@ -596,7 +629,7 @@ grèves) ne figurent pas dans les données. Avec la fuite de données, l'AUC dé
 \node[font=\sffamily\scriptsize,anchor=north] at (13.6,-0.05) {août 2018};
 \draw[->] (0,1.55) -- node[above,font=\sffamily\scriptsize]{temps (date d'achat)} (13.6,1.55);
 \end{tikzpicture}
-\caption{Découpage temporel : le modèle apprend sur le passé et il est évalué sur des commandes
+\caption{Découpage temporel. Le modèle apprend sur le passé et il est évalué sur des commandes
 plus récentes, comme il le serait en production.}
 \label{fig:split}
 \end{figure}
@@ -604,20 +637,20 @@ plus récentes, comme il le serait en production.}
 \subsection*{Partie 5 -- Iceberg ou Delta Lake ? \hfill \nb{05\_iceberg\_ou\_delta}}
 
 Partie courte (30 à 45 minutes), à faire en fin de séance 2 ou en travail personnel. Toutes les
-tables du TP sont au format Iceberg ; Delta Lake, créé par Databricks, est son principal concurrent.
+tables du TP sont au format Iceberg, et Delta Lake, créé par Databricks, est son principal concurrent.
 Vous écrivez la même table (\cmd{silver.orders}) dans les deux formats, vous la modifiez, vous
 revenez à sa première version, et vous comparez ce que chaque format range dans le stockage.
 
 \begin{notion}
-\textbf{Format de fichier, format de table :} Parquet est un \emph{format de fichier} : il range les
+\textbf{Format de fichier, format de table.} Parquet est un \emph{format de fichier}. Il range les
 données par colonne, mais ne connaît ni versions ni transactions. Iceberg et Delta Lake sont des
-\emph{formats de table} : au-dessus des mêmes fichiers Parquet, ils ajoutent des métadonnées (schéma,
+\emph{formats de table}. Au-dessus des mêmes fichiers Parquet, ils ajoutent des métadonnées (schéma,
 liste des fichiers, historique). Iceberg les range dans un dossier \cmd{metadata/} et passe par un
-catalogue ; Delta tient un journal de transactions dans \cmd{\_delta\_log/}.
+catalogue, alors que Delta tient un journal de transactions dans \cmd{\_delta\_log/}.
 \end{notion}
 
 \begin{resultat}
-Les deux tables contiennent les mêmes fichiers Parquet ; seules leurs métadonnées diffèrent. Après
+Les deux tables contiennent les mêmes fichiers Parquet, seules leurs métadonnées diffèrent. Après
 l'\cmd{UPDATE}, les anciens fichiers restent dans le stockage (\emph{time travel}), et seule la table
 Iceberg apparaît dans le catalogue.
 \end{resultat}
@@ -643,7 +676,7 @@ Pour le lancer, ouvrez un terminal dans JupyterLab (\emph{File > New > Terminal}
 streamlit run notebooks/mon_travail/dashboard_tp1.py --server.address 0.0.0.0
 \end{lstlisting}
 Puis ouvrez \url{http://localhost:8501} dans votre navigateur. N'utilisez pas l'adresse
-\cmd{http://0.0.0.0:8501} affichée dans le terminal : elle n'est valable qu'à l'intérieur du conteneur.
+\cmd{http://0.0.0.0:8501} affichée dans le terminal, car elle n'est valable qu'à l'intérieur du conteneur.
 Chaque enregistrement du fichier met la page à jour.
 
 \capture{dashboard_haut}{Tableau de bord attendu : les quatre indicateurs et le chiffre d'affaires mensuel.}{fig:dash1}
@@ -655,7 +688,7 @@ noyau des notebooks (\emph{Kernel > Shut Down Kernel}) pour libérer la mémoire
 \end{attention}
 
 \begin{astuce}
-Pensez à l'utilisateur : un titre clair, des unités (R\$, \%, jours), et des mois partiels exclus par
+Pensez à l'utilisateur, avec un titre clair, des unités (R\$, \%, jours), et des mois partiels exclus par
 défaut. Un graphique qui fait croire à un effondrement des ventes en fin de période est une erreur
 d'analyse, pas un détail.
 \end{astuce}
@@ -666,7 +699,8 @@ d'analyse, pas un détail.
 
 \subsection*{Le compte rendu}
 
-Il ne recopie pas le code : il explique vos choix et vos résultats.
+Au format PDF, nommé \cmd{NOM\_Prenom\_TP1.pdf}, il ne recopie pas le code mais explique vos choix
+et vos résultats. Il contient :
 \begin{enumerate}[leftmargin=*,itemsep=2pt]
   \item \textbf{Architecture} : le schéma de votre pipeline et le rôle de chaque couche.
   \item \textbf{Qualité des données} : les défauts trouvés, les règles appliquées en Silver
@@ -689,7 +723,7 @@ Il ne recopie pas le code : il explique vos choix et vos résultats.
 \section*{Annexe -- Aide-mémoire PySpark}\label{sec:aidememoire}
 % =====================================================================
 
-Imports utilisés partout : \cmd{from pyspark.sql import functions as F, Window}.
+Les imports utilisés partout sont \cmd{from pyspark.sql import functions as F, Window}.
 
 \begin{center}
 \small

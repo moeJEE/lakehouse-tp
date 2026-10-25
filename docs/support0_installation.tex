@@ -124,7 +124,7 @@
   \node[anchor=north west,text=white!85!lhblue,font=\sffamily\large] at ([xshift=2.3cm,yshift=-3.6cm]current page.north west)
     {Votre Lakehouse local en une commande};
   \node[anchor=north east,text=white!85!lhblue,font=\sffamily] at ([xshift=-2.3cm,yshift=-4.25cm]current page.north east)
-    {Anouar Riadsolh};
+    {Pr.~Anouar Riadsolh};
 \end{tikzpicture}
 \thispagestyle{empty}
 \vspace*{4.2cm}
@@ -132,7 +132,6 @@
 {\large\bfseries\color{lhblue}En bref}\par\smallskip
 \begin{tabularx}{\linewidth}{@{}>{\bfseries}l X@{}}
 \toprule
-Auteur   & Anouar Riadsolh \\
 Objectif & Installer l'environnement utilisé dans les TP 1, 2 et 3, puis vérifier qu'il fonctionne. \\
 Durée    & Environ 1 h, \textbf{à faire chez vous avant la séance 1}. \\
 Téléchargement & 8 à 10~Go. \\
@@ -145,11 +144,11 @@ Matériel & 8~Go de RAM minimum (16~Go conseillés) et 15~Go d'espace disque lib
 \section{Ce que vous allez installer}
 % =====================================================================
 
-Tout l'environnement tourne dans \textbf{Docker} : vous n'installez ni Java, ni Spark, ni Python à la main.
+Tout l'environnement tourne dans \textbf{Docker}, vous n'installez ni Java, ni Spark, ni Python à la main.
 Comme dans une plateforme Lakehouse d'entreprise, les outils sont organisés en couches
-(figure~\ref{fig:archi}). Les sources sont à gauche, la plateforme au centre (traitement, tables
-par couche, catalogue et stockage ouvert) et les usages à droite. L'orchestration et l'observabilité
-encadrent la plateforme, et l'ensemble repose sur des conteneurs Docker.
+(figure~\ref{fig:archi}). Les données partent des sources, sont traitées et rangées par couche
+dans la plateforme, puis servent aux usages. L'orchestration et l'observabilité encadrent la
+plateforme, et l'ensemble repose sur des conteneurs Docker.
 
 \begin{figure}[h]
 \centering
@@ -659,19 +658,19 @@ vide dans Git.
 JupyterLab        & \url{http://localhost:8888} & jeton : \texttt{lakehouse} \\
 Stockage S3       & \url{http://localhost:9001} & \texttt{lakehouse} / \texttt{lakehouse-secret} \\
 Spark UI          & \url{http://localhost:4040} & visible pendant qu'un notebook Spark tourne \\
-Trino$^*$         & \url{http://localhost:8080} & nom d'utilisateur libre \\
-Superset$^*$      & \url{http://localhost:8088} & \texttt{admin} / \texttt{admin} \\
-Airflow$^{**}$    & \url{http://localhost:8085} & sans mot de passe \\
-Prometheus$^{\dagger}$ & \url{http://localhost:9090} & sans mot de passe \\
-Grafana$^{\dagger}$ & \url{http://localhost:3000} & \texttt{admin} / \texttt{admin} \\
-Marquez$^{\dagger}$ & \url{http://localhost:3001} & sans mot de passe \\
+Trino$^{1}$       & \url{http://localhost:8080} & nom d'utilisateur libre \\
+Superset$^{1}$     & \url{http://localhost:8088} & \texttt{admin} / \texttt{admin} \\
+Airflow$^{2}$    & \url{http://localhost:8085} & sans mot de passe \\
+Prometheus$^{3}$ & \url{http://localhost:9090} & sans mot de passe \\
+Grafana$^{3}$ & \url{http://localhost:3000} & \texttt{admin} / \texttt{admin} \\
+Marquez$^{3}$ & \url{http://localhost:3001} & sans mot de passe \\
 \bottomrule
 \end{tabularx}
 
 \smallskip
-{\footnotesize $^*$ Après \cmd{docker compose -{}-profile full up -d}. \quad
-$^{**}$ Après \cmd{docker compose -{}-profile orchestration up -d} (TP 3). \quad
-$^{\dagger}$ Après \cmd{docker compose -{}-profile observabilite up -d} (TP 3).}
+{\footnotesize $^{1}$ Après \cmd{docker compose -{}-profile full up -d}. \quad
+$^{2}$ Après \cmd{docker compose -{}-profile orchestration up -d} (TP 3). \quad
+$^{3}$ Après \cmd{docker compose -{}-profile observabilite up -d} (TP 3).}
 \end{center}
 
 % =====================================================================
