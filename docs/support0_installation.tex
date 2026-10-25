@@ -121,68 +121,95 @@ Matériel & 8~Go de RAM minimum (16~Go conseillés) et 15~Go d'espace disque lib
 % =====================================================================
 
 Tout l'environnement tourne dans \textbf{Docker} : vous n'installez ni Java, ni Spark, ni Python à la main.
-Une seule commande démarre les quatre services de base, qui communiquent entre eux sur un réseau
-privé ; les outils utilisés plus tard (Trino, Superset, Airflow, la supervision) se démarrent à la
-demande. La figure~\ref{fig:archi} montre comment tous ces services s'articulent ; les flux numérotés
-sont expliqués juste après.
+Comme dans une plateforme Lakehouse d'entreprise, les outils sont organisés en \textbf{couches}
+(figure~\ref{fig:archi}) : les données arrivent des sources, sont traitées puis rangées dans le
+stockage, sous le contrôle d'un catalogue ; elles servent ensuite à la visualisation et à l'IA.
+Un orchestrateur enchaîne les traitements, des outils d'observabilité surveillent l'ensemble, et le
+tout repose sur une infrastructure de conteneurs.
 
 \begin{figure}[h]
 \centering
 \resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[
   font=\sffamily\small, >=Stealth,
-  svc/.style={draw=#1,fill=#1!8,rounded corners=4pt,thick,minimum width=3.3cm,minimum height=1.35cm,align=center},
-  opt/.style={svc=#1,dashed},
-  lab/.style={font=\sffamily\scriptsize,text=black!70,align=center},
+  couche/.style={draw=#1,fill=#1!6,rounded corners=5pt,thick},
+  titre/.style={anchor=north west,font=\sffamily\footnotesize\bfseries,text=#1!80!black,align=left},
+  outil/.style={draw=black!25,fill=white,rounded corners=3pt,minimum height=1.05cm,
+                text width=#1,align=center,inner sep=3pt,execute at begin node={\hyphenpenalty=10000}},
+  outil/.default=3.3cm,
   num/.style={circle,fill=lhblue,text=white,font=\sffamily\bfseries\scriptsize,inner sep=1.4pt}]
 
-% Bande du haut : supervision et observabilité (TP 3)
-\draw[dashed,rounded corners=6pt,draw=black!40,fill=black!2] (-1.9,2.25) rectangle (17.1,6.15);
-\node[anchor=north west,font=\sffamily\footnotesize\bfseries,text=black!60] at (-1.75,6.05)
-  {TP 3 -- supervision et observabilité des données};
-\node[opt=lhsilver] (mq)  at (0,3.25)    {\logo{marquez}\textbf{Marquez}\\\scriptsize lineage (OpenLineage)};
-\node[opt=gray]     (sd)  at (4.75,3.25) {\textbf{statsd-exporter}\\\scriptsize métriques d'Airflow};
-\node[opt=lhgold]   (pr)  at (9.5,3.25)  {\logo{prometheus}\textbf{Prometheus}\\\scriptsize stocke les métriques};
-\node[opt=gray]     (mc)  at (9.5,5.05)  {\textbf{Mesure des conteneurs}\\\scriptsize mémoire, processeur};
-\node[opt=lhgold]   (gr)  at (15.2,3.25) {\logo{grafana}\textbf{Grafana}\\\scriptsize tableaux de bord, alerte};
+% ---------------- Observabilité et supervision ----------------
+\draw[couche=lhgold] (0,0) rectangle (22,-1.9);
+\node[titre=lhgold] at (0.15,-0.15) {Observabilité\\et supervision};
+\node[outil] (pr) at (5.6,-1.0)  {\logo{prometheus}\textbf{Prometheus}\\\scriptsize collecte les métriques};
+\node[outil] (gr) at (9.3,-1.0)  {\logo{grafana}\textbf{Grafana}\\\scriptsize tableaux de bord, alertes};
+\node[outil] (mq) at (13.0,-1.0) {\logo{marquez}\textbf{Marquez}\\\scriptsize lineage (OpenLineage)};
+\node[outil=4.2cm] (ex) at (18.4,-1.0) {\textbf{Collecteurs}\\\scriptsize statsd-exporter, mesure des conteneurs};
 
-% Niveau 1 : les outils de travail
-\node[svc=gray]   (pg)    at (0,0)     {\logo{postgres}\textbf{PostgreSQL}\\\scriptsize la source};
-\node[svc=lhblue] (jup)   at (3.8,0)   {\logo{jupyter}\textbf{JupyterLab}\\\scriptsize \logo[0.95em]{spark}\logo[0.95em]{dbt}à la main};
-\node[opt=lhblue] (af)    at (7.6,0)   {\logo{airflow}\textbf{Airflow}\\\scriptsize \logo[0.95em]{spark}\logo[0.95em]{dbt}chaque jour};
-\node[opt=lhblue] (trino) at (11.4,0)  {\logo{trino}\textbf{Trino}\\\scriptsize SQL interactif};
-\node[opt=lhblue] (sup)   at (15.2,0)  {\logo{superset}\textbf{Superset}\\\scriptsize tableaux de bord};
+% ---------------- Orchestration ----------------
+\draw[couche=lhblue] (0,-2.2) rectangle (22,-3.5);
+\node[titre=lhblue] at (0.15,-2.35) {Orchestration};
+\node[outil=7.6cm,minimum height=0.8cm] (af) at (9.3,-2.85)
+  {\logo{airflow}\textbf{Airflow}\qquad\scriptsize planifie et enchaîne les traitements};
 
-% Niveau 2 : le catalogue
-\node[svc=gray] (cat) at (7.6,-2.3) {\logo{iceberg}\textbf{Catalogue Iceberg}\\\scriptsize l'annuaire des tables};
+% ---------------- Sources ----------------
+\draw[couche=gray] (0,-3.8) rectangle (3.8,-10.2);
+\node[titre=gray] at (0.15,-3.95) {Sources};
+\node[outil=3.1cm] (pg) at (1.9,-5.0) {\logo{postgres}\textbf{PostgreSQL}\\\scriptsize base de l'application};
+\node[outil=3.1cm] (fi) at (1.9,-6.35)  {\textbf{Fichiers}\\\scriptsize CSV, JSON, photos};
 
-% Niveau 3 : le stockage
-\node[svc=lhbronze, minimum width=18.6cm, minimum height=1.5cm] (s3) at (7.6,-4.6)
-  {\textbf{Stockage S3 (RustFS)}\\[3pt]
-   \texttt{landing} $\rightarrow$
-   \colorbox{lhbronze!30}{bronze} $\rightarrow$
-   \colorbox{lhsilver!30}{silver} $\rightarrow$
-   \colorbox{lhgold!30}{gold}};
+% ---------------- Traitement et requêtes ----------------
+\draw[couche=lhblue] (4.2,-3.8) rectangle (14.8,-6.6);
+\node[titre=lhblue] at (4.35,-3.95) {Traitement et requêtes};
+\node[outil=3.0cm] (jup) at (6.0,-5.2)  {\logo{jupyter}\textbf{JupyterLab}\\\scriptsize développement};
+\node[outil=3.4cm] (sp)  at (9.5,-5.2)  {\logo{spark}\textbf{Spark}\ \ \logo[1em]{dbt}\textbf{dbt}\\\scriptsize calcul, modèles SQL};
+\node[outil=3.0cm] (tr)  at (13.0,-5.2) {\logo{trino}\textbf{Trino}\\\scriptsize SQL interactif};
 
-% Flux des données
-\draw[->,thick] (pg) -- node[num,above=3pt]{1} (jup);
-\draw[->,thick] ([xshift=-8mm]jup.south) -- node[num,left=3pt]{2} ([xshift=-8mm]jup.south |- s3.north);
-\draw[->,thick] ([xshift=6mm]jup.south) -- node[num,left=4pt]{3} ([xshift=-10mm]cat.north);
-\draw[->,thick,dashed] (af.south) -- node[num,right=3pt]{6} (cat.north);
-\draw[->,thick] ([xshift=-6mm]trino.south) -- node[num,right=4pt]{4} ([xshift=10mm]cat.north);
-\draw[->,thick] ([xshift=8mm]trino.south) -- node[num,right=3pt]{5} ([xshift=8mm]trino.south |- s3.north);
-\draw[->] (sup) -- (trino);
+% ---------------- Visualisation, IA / ML ----------------
+\draw[couche=lhsilver] (15.2,-3.8) rectangle (22,-5.1);
+\node[titre=lhsilver] at (15.35,-3.9) {Visualisation};
+\node[outil=6.2cm,minimum height=0.65cm] (vi) at (18.6,-4.68)
+  {\logo{superset}\textbf{Superset}\qquad\logo{streamlit}\textbf{Streamlit}};
+\draw[couche=lhsilver] (15.2,-5.3) rectangle (22,-6.6);
+\node[titre=lhsilver] at (15.35,-5.4) {IA / ML};
+\node[outil=6.2cm,minimum height=0.65cm] (ia) at (18.6,-6.18)
+  {\logo{sklearn}\textbf{scikit-learn}\quad\logo{onnx}\textbf{ONNX}\quad\logo[0.95em]{mlflow}};
 
-% Supervision et lineage
-\draw[->,dashed] ([xshift=-6mm]af.north) -- node[num,right=2pt,pos=0.45]{7} (sd.south);
-\draw[->,dashed] (sd) -- (pr);
-\draw[->,dashed] (mc) -- (pr);
-\draw[->,dashed] (pr) -- node[lab,above=2pt]{PromQL} (gr);
-\draw[->,dashed] ([xshift=-12mm]af.north) -- node[num,above=2pt,pos=0.55]{8} (mq.south east);
+% ---------------- Catalogue ----------------
+\draw[couche=gray] (4.2,-6.9) rectangle (22,-8.0);
+\node[titre=gray] at (4.35,-7.05) {Catalogue};
+\node[outil=7.6cm,minimum height=0.75cm] (cat) at (14.6,-7.45)
+  {\logo{iceberg}\textbf{Catalogue Iceberg}\quad\scriptsize l'annuaire des tables};
+
+% ---------------- Stockage ----------------
+\draw[couche=lhbronze] (4.2,-8.3) rectangle (22,-10.2);
+\node[titre=lhbronze] at (4.35,-8.45) {Stockage};
+\node[outil=14.6cm,minimum height=1.25cm] (s3) at (13.6,-9.3)
+  {\textbf{Stockage objet S3 (RustFS)}\qquad\scriptsize tables Iceberg (fichiers Parquet), Delta Lake\\[4pt]
+   \texttt{landing} $\rightarrow$ \colorbox{lhbronze!30}{bronze} $\rightarrow$
+   \colorbox{lhsilver!30}{silver} $\rightarrow$ \colorbox{lhgold!30}{gold}};
+
+% ---------------- Infrastructure ----------------
+\draw[couche=black] (0,-10.5) rectangle (22,-11.7);
+\node[titre=black] at (0.15,-10.65) {Infrastructure};
+\node[align=center] at (12.0,-11.1)
+  {\logo[1.4em]{docker}\textbf{Docker Compose}\qquad\scriptsize un conteneur par service, réseau privé,
+   volumes persistants, limites de processeur et de mémoire};
+
+% ---------------- Flux ----------------
+\draw[->,thick] (pg.east) -- ++(0.55,0) |- node[num,pos=0.75,above=1pt]{1} ([yshift=2mm]jup.west);
+\draw[->,thick] (fi.east) -- ++(0.55,0) |- ([yshift=-2mm]jup.west);
+\draw[->,thick] ([xshift=-6mm]sp.south) -- node[num,left=2pt,pos=0.3]{2} ([xshift=-6mm]sp.south |- s3.north);
+\draw[->,thick] ([xshift=6mm]sp.south) -- node[num,above right=0pt]{3} ([xshift=-3.0cm]cat.north);
+\draw[<-,thick] (tr.south) -- node[num,right=2pt]{4} (tr.south |- cat.north);
+\draw[->,thick] (tr.east) -- node[num,above=2pt]{5} (15.2,0 |- tr.east);
+\draw[->,thick] (sp.north |- af.south) -- node[num,right=2pt]{6} (sp.north);
+\draw[->] ([xshift=-2.4cm]af.north) -- node[num,left=2pt]{7} ([xshift=-2.4cm]af.north |- pr.south);
+\draw[->] ([xshift=3.7cm]af.north) -- ([xshift=3.7cm]af.north |- mq.south);
 \end{tikzpicture}}
-\caption{Architecture de l'environnement : tous les services tournent dans Docker. En trait plein,
-les services de base (\cmd{docker compose up -d}) ; en pointillés, ceux qui se démarrent à la demande
-(Trino et Superset, Airflow, puis la supervision au TP 3).}
+\caption{Architecture de l'environnement, organisée en couches. Tous les services tournent dans des
+conteneurs Docker.}
 \label{fig:archi}
 \end{figure}
 
@@ -191,22 +218,20 @@ les services de base (\cmd{docker compose up -d}) ; en pointillés, ceux qui se 
 \begin{description}[leftmargin=1.4em,labelindent=0pt,itemsep=3pt,font=\normalfont]
 \item[\etape{1}] \textbf{Spark lit les sources} : la base PostgreSQL (connexion JDBC) et les fichiers
   bruts déposés dans le dossier \texttt{landing/} du stockage S3.
-\item[\etape{2}] \textbf{Spark écrit la table} dans \texttt{warehouse/} : des fichiers \emph{Parquet}
-  qui contiennent les données, et des fichiers \emph{JSON} qui les décrivent (schéma, liste des
+\item[\etape{2}] \textbf{Spark écrit la table} dans le stockage : des fichiers \emph{Parquet} qui
+  contiennent les données, et des fichiers \emph{JSON} qui les décrivent (schéma, liste des
   fichiers, numéro de version).
 \item[\etape{3}] \textbf{Spark déclare la nouvelle version au catalogue} : \og la table
   \texttt{lakehouse.bronze.orders}, c'est désormais ce fichier de métadonnées \fg{}.
-\item[\etape{4}] \textbf{Trino demande au catalogue} où se trouve la table qu'on lui demande d'interroger.
-\item[\etape{5}] \textbf{Trino lit directement les fichiers} dans le stockage S3 : il voit exactement
-  les données que Spark vient d'écrire, sans copie. Superset, lui, passe par Trino.
-\item[\etape{6}] \textbf{Au TP 3, Airflow automatise le pipeline} : chaque jour, il lance les mêmes
-  scripts Spark et le même projet dbt que vous dans JupyterLab, qui suivent les étapes \etape{2} et
-  \etape{3}.
-\item[\etape{7}] \textbf{La supervision mesure les services} : Airflow envoie la durée et l'état de
-  ses tâches, un petit service mesure la mémoire et le processeur de chaque conteneur ; Prometheus
-  garde ces métriques, Grafana les affiche et déclenche une alerte en cas d'échec.
-\item[\etape{8}] \textbf{L'observabilité des données suit le lineage} : Airflow et Spark décrivent à
-  Marquez chaque exécution (quel job, quelles tables lues et écrites, quel résultat).
+\item[\etape{4}] \textbf{Trino demande au catalogue} où se trouve une table, puis lit directement ses
+  fichiers : il voit exactement les données que Spark vient d'écrire, sans copie.
+\item[\etape{5}] \textbf{Les usages consomment la couche gold} : Superset interroge Trino ; les
+  tableaux de bord Streamlit et les modèles d'IA (scikit-learn, ONNX) lisent les tables avec Spark.
+\item[\etape{6}] \textbf{Airflow automatise} les traitements : il lance chaque jour les mêmes scripts
+  Spark et le même projet dbt que ceux écrits dans JupyterLab.
+\item[\etape{7}] \textbf{L'observabilité regarde la plateforme tourner} : Prometheus et Grafana
+  mesurent les services (mémoire, processeur, durée et échecs des tâches) ; Marquez enregistre le
+  \emph{lineage}, c'est-à-dire quel job a lu et écrit quelle table, et avec quel résultat.
 \end{description}
 
 \textbf{Et dbt ?} Dans les TP 2 et 3, une partie des transformations est écrite sous forme de
@@ -238,11 +263,11 @@ Catalogue Iceberg &
   Unity Catalog, AWS Glue & auto \\
 dbt &
   L'outil qui organise les transformations SQL en \emph{modèles} versionnés, testés et documentés
-  (TP 2 et 3). Il est installé dans le conteneur JupyterLab et s'exécute avec Spark, ou avec Trino. &
+ . Il est installé dans le conteneur JupyterLab et s'exécute avec Spark, ou avec Trino. &
   dbt Core, dbt Cloud & auto \\
 PostgreSQL &
   Une base de données classique qui joue le rôle d'application métier : c'est une
-  \emph{source} que l'on ingère dans le Lakehouse (TP 1). &
+  \emph{source} que l'on ingère dans le Lakehouse. &
   Base d'un ERP ou d'un site e-commerce & auto \\
 Trino &
   Un second moteur SQL, rapide pour les requêtes interactives, qui lit les mêmes tables
@@ -253,18 +278,23 @@ Superset &
   Power BI, Tableau & \texttt{-{}-profile} \\
 Airflow &
   L'orchestrateur : il enchaîne automatiquement les étapes du pipeline, chaque jour, et
-  surveille leur exécution (TP 3). &
+  surveille leur exécution. &
   Airflow géré (AWS, Google Cloud) & \texttt{-{}-profile} \\
 Prometheus, Grafana &
-  La supervision (TP 3) : Prometheus collecte et garde les métriques, Grafana les affiche
+  La supervision : Prometheus collecte et garde les métriques, Grafana les affiche
   (tableau de bord fourni) et déclenche une alerte en cas d'échec. &
   Datadog, CloudWatch & \texttt{-{}-profile} \\
 statsd-exporter, mesure des conteneurs &
   Deux petits services qui fournissent les métriques à Prometheus : celles d'Airflow (durée et
   état des tâches), et la mémoire et le processeur de chaque conteneur (lus auprès de Docker). &
   Agents de supervision & \texttt{-{}-profile} \\
+scikit-learn, ONNX Runtime, MLflow &
+  L'IA et l'apprentissage automatique : entraîner des modèles sur les tables gold, utiliser un
+  réseau de neurones pré-entraîné (format ONNX), garder la trace des expériences. Installés dans
+  le conteneur JupyterLab. &
+  Databricks ML, SageMaker & auto \\
 Marquez &
-  L'observabilité des données (TP 3) : le lineage (quelle table est produite par quel job, à
+  L'observabilité des données : le lineage (quelle table est produite par quel job, à
   partir de quoi) et l'historique des exécutions, reçus au format standard OpenLineage. &
   DataHub, Unity Catalog & \texttt{-{}-profile} \\
 \bottomrule
@@ -272,7 +302,7 @@ Marquez &
 
 \smallskip
 {\footnotesize \textbf{auto} : démarre avec \cmd{docker compose up -d}. \quad
-\textbf{-{}-profile} : utilisés au TP 3, démarrés avec \cmd{docker compose -{}-profile full up -d}
+\textbf{-{}-profile} : démarrés à la demande avec \cmd{docker compose -{}-profile full up -d}
 (Trino, Superset), \cmd{-{}-profile orchestration} (Airflow) ou \cmd{-{}-profile observabilite}.}
 \end{center}
 

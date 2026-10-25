@@ -17,3 +17,8 @@ changement de format (SVG vers PNG). Provenance (dépôts officiels des projets)
 | spark.png | apache/spark, `core/src/main/resources/org/apache/spark/ui/static/spark-logo.svg` |
 | superset.png | apache/superset, `docs/static/img/superset-logo-icon-only.png` |
 | trino.png | trinodb/trino, `core/trino-web-ui/src/main/resources/webapp/src/assets/trino.svg` |
+| docker.png | docker-library/docs, `docker/logo.png` (symbole seul) |
+| mlflow.png | mlflow/mlflow, `assets/logo.svg` |
+| sklearn.png | scikit-learn/scikit-learn, `doc/logos/scikit-learn-logo-notext.png` |
+| onnx.png | onnx/onnx, `docs/docsgen/source/onnx-favicon.png` |
+| streamlit.png | streamlit/streamlit, `frontend/lib/src/assets/img/streamlit-logo/streamlit-mark-color.svg` |
