@@ -425,13 +425,6 @@ qui réserve jusqu'à 2 Go de mémoire. Avant d'ouvrir le notebook suivant, arr�
 Les tables restent dans le Lakehouse.
 \end{attention}
 
-\begin{astuce}
-Avant chaque séance, lancez \cmd{docker compose up -d}, puis \cmd{git pull} pour récupérer les dernières
-versions. Si \cmd{git pull} refuse de s'exécuter, c'est qu'un fichier du cours a été modifié
-par erreur. \cmd{git restore .} rétablit alors l'original, sans toucher à \nb{mon\_travail/}.
-Une erreur \og \texttt{Cellule à compléter : \dots} \fg{} signale simplement une partie que vous
-n'avez pas encore écrite.
-\end{astuce}
 
 % =====================================================================
 \section{Partie par partie}
@@ -463,11 +456,6 @@ métadonnées (\cmd{metadata/}).
 
 \capture{01_bronze_s3}{Les 7 tables Bronze vues dans la console du stockage S3 : un dossier par table.}{fig:s3bronze}
 
-\begin{attention}
-Ne supprimez jamais une table depuis la console S3. Les fichiers disparaissent, mais le catalogue
-continue de pointer vers eux et la table devient illisible. On supprime une table avec
-\cmd{DROP TABLE ... PURGE} dans Spark.
-\end{attention}
 
 \subsection*{Partie 2 -- Silver \hfill \nb{02\_silver}}
 
@@ -525,18 +513,21 @@ de plusieurs tables de faits qui partagent leurs dimensions, sera construit au T
 \node[lab] at (0,2.4) {Silver (modèle normalisé)};
 \node[lab] at (5.2,2.4) {Gold -- table large};
 \node[lab] at (10.2,2.4) {Gold -- agrégats};
-\foreach \n/\i/\y in {orders/a/1.6, order\_items/b/0.8, payments/c/0, customers/d/-0.8, products/e/-1.6}
+\foreach \n/\i/\y in {orders/a/1.6, payments/b/0.8, customers/c/0, order\_items/d/-0.8, products/e/-1.6}
   \node[tb=lhsilver,text width=2.6cm] (s\i) at (0,\y) {\texttt{\n}};
 \node[tb=lhgold,text width=3.4cm,minimum height=2.4cm] (oc) at (5.2,0)
   {\texttt{\textbf{gold.commandes}}\\[2pt] une ligne par commande\\ client, montants,\\ paiement, délais, retard};
-\node[tb=lhgold,text width=3.4cm] (vm) at (10.2,1.6) {\texttt{ventes\_mensuelles}\\ une ligne par mois};
-\node[tb=lhgold,text width=3.4cm] (vc) at (10.2,0.4) {\texttt{ventes\_categorie}\\ une ligne par catégorie};
+\node[tb=lhgold,text width=3.4cm] (pr) at (10.2,1.6) {\texttt{predictions\_retard}\\ calculée par le modèle de ML};
+\node[tb=lhgold,text width=3.4cm] (vm) at (10.2,0.4) {\texttt{ventes\_mensuelles}\\ une ligne par mois};
 \node[tb=lhgold,text width=3.4cm] (le) at (10.2,-0.8) {\texttt{livraison\_etat}\\ une ligne par état};
-\node[tb=lhgold,text width=3.4cm] (pr) at (10.2,-2.0) {\texttt{predictions\_retard}\\ calculée par le modèle de ML};
+\node[tb=lhgold,text width=3.4cm] (vc) at (10.2,-2.0) {\texttt{ventes\_categorie}\\ une ligne par catégorie};
 \foreach \i in {a,b,c,d} \draw[->,thick,black!60] (s\i.east) -- (oc.west);
-\draw[->,thick,black!60] (se.east) -- (7.75,-1.6) |- ([yshift=-6pt]vc.west);
-\foreach \t in {vm,vc,le} \draw[->,thick] (oc.east) -- (\t.west);
-\draw[->,thick,dashed] (oc.east) -- (pr.west);
+% ventes_categorie : grain article (order_items + products), et non commande
+\draw[thick,black!60] (sd.east) -- (1.75,-0.8) -- (1.75,-2.75);
+\draw[thick,black!60] (se.east) -- (1.75,-1.6);
+\draw[->,thick,black!60] (1.75,-2.75) -- (8.0,-2.75) |- ([yshift=-5pt]vc.west);
+\foreach \t in {pr,vm,le} \draw[->,thick] (oc.east) -- (\t.west);
+\draw[->,thick] (oc.east) -- ([yshift=5pt]vc.west);
 \end{tikzpicture}
 \caption{Le modèle de la couche Gold. Les tables Silver sont jointes une seule fois dans
 \texttt{gold.commandes}, et les agrégats et les prédictions sont calculés à partir d'elle
