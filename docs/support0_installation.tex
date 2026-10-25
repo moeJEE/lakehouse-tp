@@ -201,9 +201,10 @@ l'encadrent, et le tout repose sur des conteneurs Docker.
 \node[et,font=\sffamily\scriptsize] at (6.35,-8.55) {\logo[2.0em]{iceberg}\\[2pt]Iceberg REST};
 \draw[bloc] (8.75,-7.3) rectangle (15.85,-9.75);
 \node[barre,minimum width=7.1cm,anchor=north west] at (8.75,-7.3) {Stockage ouvert (S3)};
-\node[et,font=\sffamily\scriptsize] at (10.4,-8.55) {\logo[2.0em]{rustfs}\\[2pt]RustFS};
-\node[et,font=\sffamily\scriptsize] at (12.3,-8.55) {\logo[2.0em]{iceberg}\\[2pt]Iceberg};
-\node[et,font=\sffamily\scriptsize] at (14.2,-8.55) {\logo[2.0em]{parquet}\\[2pt]Parquet};
+\node[et,font=\sffamily\scriptsize] at (10.0,-8.55) {\logo[2.0em]{rustfs}\\[2pt]RustFS};
+\node[et,font=\sffamily\scriptsize] at (11.9,-8.55) {\logo[2.0em]{iceberg}\\[2pt]Iceberg};
+\node[et,font=\sffamily\scriptsize] at (13.6,-8.55) {\logo[2.0em]{parquet}\\[2pt]Parquet};
+\node[et,font=\sffamily\scriptsize] at (15.0,-8.55) {\logo[2.0em]{delta}\\[2pt]Delta Lake};
 
 % ===== Usages =====
 \draw[cadre] (17.0,0) rectangle (20.4,-2.95);
@@ -242,9 +243,9 @@ l'encadrent, et le tout repose sur des conteneurs Docker.
   transforme les données ; dbt organise les transformations SQL en modèles testés et documentés.
 \item[\pastilletexte{3}] \textbf{Les tables par couche} : chaque étape produit des tables
   \emph{bronze} (données brutes), \emph{silver} (nettoyées) puis \emph{gold} (prêtes à l'usage).
-  Spark écrit leurs fichiers \emph{Parquet} dans le stockage objet (RustFS, compatible S3) et
-  déclare chaque nouvelle version au \textbf{catalogue Iceberg} : l'annuaire qui dit où se trouve
-  chaque table.
+  Spark écrit leurs fichiers \emph{Parquet} dans le stockage objet (RustFS, compatible S3), au
+  format de table Iceberg (ou Delta Lake), et déclare chaque nouvelle version au
+  \textbf{catalogue Iceberg} : l'annuaire qui dit où se trouve chaque table.
 \item[\pastilletexte{4}] \textbf{Les requêtes SQL} : Trino demande au catalogue où se trouve une
   table, puis lit directement ses fichiers, sans copie.
 \item[\pastilletexte{5}] \textbf{Les tableaux de bord} : Superset interroge Trino ; Streamlit lit
@@ -275,8 +276,10 @@ services (mémoire, processeur, durée et échecs des tâches), Marquez enregist
 \item[Iceberg :] un \emph{format de table}. Au-dessus des fichiers Parquet, il ajoute des fichiers
   de métadonnées : le schéma, la liste des fichiers qui composent la table, l'historique des versions.
   C'est ce qui permet les transactions, le retour à une version passée (\emph{time travel}) et
-  l'évolution du schéma. Delta Lake, poussé par Databricks, est un format concurrent qui repose lui
-  aussi sur Parquet ; il est installé dans l'environnement, mais les TP utilisent Iceberg.
+  l'évolution du schéma. \textbf{Delta Lake}, créé par Databricks, est son principal concurrent : il
+  repose lui aussi sur Parquet, mais tient ses métadonnées dans un journal de transactions. Les
+  tables du cours sont en Iceberg ; un exercice écrit la même table dans les deux formats pour les
+  comparer.
 \item[Catalogue :] l'annuaire des tables. Il associe un nom (\texttt{lakehouse.silver.orders}) à la
   version courante de la table : quand Spark écrit une nouvelle version, tous les outils la voient
   au même instant. \textbf{Iceberg REST} est la façon dont le catalogue est servi ici : un petit

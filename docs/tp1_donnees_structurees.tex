@@ -120,7 +120,7 @@
 \toprule
 Objectif & Construire un pipeline Lakehouse complet sur les données réelles d'un site
            de e-commerce, puis en tirer des indicateurs et un tableau de bord. \\
-Durée    & 2 séances de 3 h (+ environ 2 h de travail personnel). \\
+Durée    & 2 séances de 3 h (+ environ 2 h 30 de travail personnel, dont la partie 5). \\
 Prérequis & Support 0 terminé : \cmd{check\_env.py} affiche \og ENVIRONNEMENT PRÊT \fg{}. \\
 À rendre & Un compte rendu, les notebooks exécutés et le tableau de bord
            (section~\ref{sec:livrables}). \\
@@ -601,6 +601,27 @@ plus récentes, comme il le serait en production.}
 \label{fig:split}
 \end{figure}
 
+\subsection*{Partie 5 -- Iceberg ou Delta Lake ? \hfill \nb{05\_iceberg\_ou\_delta}}
+
+Partie courte (30 à 45 minutes), à faire en fin de séance 2 ou en travail personnel. Toutes les
+tables du TP sont au format Iceberg ; Delta Lake, créé par Databricks, est son principal concurrent.
+Vous écrivez la même table (\cmd{silver.orders}) dans les deux formats, vous la modifiez, vous
+revenez à sa première version, et vous comparez ce que chaque format range dans le stockage.
+
+\begin{notion}
+\textbf{Format de fichier, format de table :} Parquet est un \emph{format de fichier} : il range les
+données par colonne, mais ne connaît ni versions ni transactions. Iceberg et Delta Lake sont des
+\emph{formats de table} : au-dessus des mêmes fichiers Parquet, ils ajoutent des métadonnées (schéma,
+liste des fichiers, historique). Iceberg les range dans un dossier \cmd{metadata/} et passe par un
+catalogue ; Delta tient un journal de transactions dans \cmd{\_delta\_log/}.
+\end{notion}
+
+\begin{resultat}
+Les deux tables contiennent les mêmes fichiers Parquet ; seules leurs métadonnées diffèrent. Après
+l'\cmd{UPDATE}, les anciens fichiers restent dans le stockage (\emph{time travel}), et seule la table
+Iceberg apparaît dans le catalogue.
+\end{resultat}
+
 
 % =====================================================================
 \section{Le tableau de bord}\label{sec:dashboard}
@@ -655,6 +676,8 @@ Il ne recopie pas le code : il explique vos choix et vos résultats.
   \item \textbf{Réponses à la direction} : les résultats des requêtes SQL, interprétés.
   \item \textbf{Modèle de prédiction} : les variables choisies, les métriques, la comparaison des deux
         modèles et la démonstration de la fuite de données.
+  \item \textbf{Iceberg ou Delta Lake} : ce que les deux formats ont en commun, ce qui les distingue,
+        et lequel vous choisiriez pour ce Lakehouse, en justifiant.
   \item \textbf{Tableau de bord} : une capture d'écran et deux ou trois enseignements.
   \item \textbf{Réponses aux questions} des notebooks, rédigées et argumentées.
   \item \textbf{Limites et améliorations} : ce que vous feriez avec plus de temps, ou en production.
