@@ -191,7 +191,7 @@ directement (texte libre, image, son). Un Lakehouse accueille les trois.
 \textbf{Source} & \textbf{Format} & \textbf{Contenu} & \textbf{Volume} \\
 \midrule
 Avis des clients & CSV & Une note de 1 à 5 et, pour 42~\% des avis, un titre et un commentaire
-  saisis librement en portugais et traduits automatiquement en anglais & 100\,000 avis \\
+  saisis librement & 100\,000 avis \\
 Suivi des colis & JSON & Un message par colis, avec le transporteur, les étapes du suivi
   (prise en charge, transit, livraison) et, depuis 2018, les incidents & $\approx$ 98\,200 messages \\
 Tables Silver du TP 1 & Iceberg & Commandes, articles, clients, produits, vendeurs & -- \\
@@ -199,9 +199,7 @@ Tables Silver du TP 1 & Iceberg & Commandes, articles, clients, produits, vendeu
 \end{tabularx}
 \end{center}
 
-Les avis sont les vrais avis Olist. Les clients écrivent en portugais. Pour ce TP, les titres et les commentaires ont été traduits
-automatiquement en anglais par un modèle open source (OPUS-MT), en gardant la mise en forme d'origine
-(fichier \cmd{data/olist/olist\_order\_reviews\_dataset\_en.csv}, à côté de l'original en portugais). La traduction est bonne dans l'ensemble, avec quelques maladresses.
+Les avis sont les vrais avis Olist (fichier \cmd{data/olist/olist\_order\_reviews\_dataset\_en.csv}).
 Les messages de suivi sont dans le dossier \cmd{data/olist/suivi/}, un fichier par mois. Ils ont
 été produits par le script \cmd{scripts/generer\_suivi.py} à partir des \textbf{vraies dates} de
 remise au transporteur et de livraison des commandes. Les transporteurs, les lieux de transit et
@@ -594,15 +592,15 @@ par dbt, qui ne les connaît que comme des \emph{sources} déclarées dans \cmd{
 \capture{tp2_03_resultat}{Résultat attendu de la partie 3 : avis négatifs selon le retard de livraison (question Q1).}{fig:res03}
 
 \begin{attention}
-Une corrélation n'est pas une cause. Les colis qui ont subi un incident reçoivent de moins bonnes
-notes, mais ils sont aussi plus souvent en retard. Le notebook vous fait refaire la comparaison
-\emph{à retard égal} pour démasquer cette \textbf{variable de confusion}.
-\end{attention}
-
-\begin{attention}
-Une jointure entre deux faits de grains différents multiplie les lignes. Une commande de trois
-articles a trois lignes dans \cmd{fait\_ventes}, et son avis est compté trois fois. Le notebook vous
-fait trouver et corriger ce piège.
+Deux pièges attendent l'analyse :
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item \textbf{Une corrélation n'est pas une cause.} Les colis qui ont subi un incident reçoivent de
+  moins bonnes notes, mais ils sont aussi plus souvent en retard. Le notebook vous fait refaire la
+  comparaison \emph{à retard égal} pour démasquer cette \textbf{variable de confusion}.
+\item \textbf{Une jointure entre deux faits de grains différents multiplie les lignes.} Une commande
+  de trois articles a trois lignes dans \cmd{fait\_ventes}, et son avis est compté trois fois. Le
+  notebook vous fait trouver et corriger ce piège.
+\end{itemize}
 \end{attention}
 
 \subsection*{Partie 4 -- Analyse du texte \hfill \nb{04\_nlp\_avis}}
