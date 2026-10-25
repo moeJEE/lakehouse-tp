@@ -122,6 +122,27 @@ def test_trino():
         RESULTATS.append(("--", "8. Trino (profil sql/full non démarré ?)", type(err).__name__))
 
 
+def test_optionnel(nom, profil, url, verifier=lambda r: r.ok):
+    """Outils du TP 3 : affichés [--] (sans échec) si leur profil n'est pas démarré."""
+    try:
+        r = requests.get(url, timeout=10)
+        if verifier(r):
+            RESULTATS.append(("OK", nom, "répond"))
+            return
+        RESULTATS.append(("KO", nom, f"réponse inattendue : HTTP {r.status_code}"))
+    except requests.ConnectionError:
+        RESULTATS.append(("--", f"{nom} (profil {profil} non démarré ?)", ""))
+
+
+def test_outils_tp3():
+    test_optionnel("9. Airflow", "orchestration", "http://airflow:8080/api/v2/monitor/health")
+    test_optionnel("10. Prometheus", "observabilite", "http://prometheus:9090/-/ready")
+    test_optionnel("11. Mesure des conteneurs", "observabilite", "http://mesure-conteneurs:8080/metrics",
+                   lambda r: r.ok and "lakehouse-" in r.text)
+    test_optionnel("12. Grafana", "observabilite", "http://grafana:3000/api/health")
+    test_optionnel("13. Marquez (lineage)", "observabilite", "http://marquez:5000/api/v1/namespaces")
+
+
 if __name__ == "__main__":
     test_s3()
     test_catalogue()
@@ -133,6 +154,7 @@ if __name__ == "__main__":
     test_dbt()
     test_trino()
     spark.stop()
+    test_outils_tp3()
 
     print("\n" + "=" * 72)
     for statut, nom, detail in RESULTATS:

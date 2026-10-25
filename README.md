@@ -14,6 +14,7 @@ Il sert aux TP 1, 2 et 3 du module.
 | Airflow *(profil `orchestration`)* | Orchestration du pipeline (TP 3) | http://localhost:8085 |
 | Grafana, Prometheus *(profil `observabilite`)* | Supervision : métriques, tableaux de bord, alertes (TP 3) | http://localhost:3000, http://localhost:9090 |
 | Marquez *(profil `observabilite`)* | Observabilité des données : lineage OpenLineage (TP 3) | http://localhost:3001 |
+| statsd-exporter, mesure des conteneurs *(profil `observabilite`)* | Métriques d'Airflow et des conteneurs pour Prometheus (TP 3) | — |
 
 ## Démarrage rapide
 
@@ -26,7 +27,8 @@ docker compose up -d
 docker compose exec jupyter python /opt/lakehouse/scripts/check_env.py
 ```
 
-Le test doit se terminer par **ENVIRONNEMENT PRÊT**.
+Le test doit se terminer par **ENVIRONNEMENT PRÊT**. Les lignes 8 à 13 (Trino, outils du TP 3) restent
+en `[--]` tant que leurs profils ne sont pas démarrés.
 
 Le guide complet est dans [`docs/support0_installation.tex`](docs/support0_installation.tex).
 
@@ -61,9 +63,15 @@ Si `git pull` refuse de s'exécuter, un fichier du cours a été modifié par er
 | Démarrer | `docker compose up -d` |
 | Démarrer avec Trino et Superset | `docker compose --profile full up -d` |
 | Démarrer Airflow (TP 3) | `docker compose --profile orchestration up -d` |
-| Voir l'état | `docker compose ps` |
+| Démarrer la supervision (TP 3) | `docker compose --profile observabilite up -d` puis `docker compose --profile orchestration restart airflow` |
+| Arrêter un groupe d'outils | `docker compose --profile full stop` |
+| Voir l'état | `docker compose --profile full --profile orchestration --profile observabilite ps -a` |
 | Voir les erreurs d'un service | `docker compose logs --tail 50 jupyter` |
-| Arrêter (données conservées) | `docker compose --profile full down` |
+| Appliquer une mise à jour du cours | `git pull` puis `docker compose up -d` |
+| Arrêter (données conservées) | `docker compose --profile full --profile orchestration --profile observabilite down` |
+
+Pour économiser la mémoire, on ne démarre que les outils de la partie en cours : le tableau
+« Quels services pour quelle partie » du Support 0 les récapitule.
 
 > ⚠️ N'utilisez jamais `docker compose down -v` : cette option efface toutes les données du Lakehouse.
 
@@ -72,13 +80,14 @@ Si `git pull` refuse de s'exécuter, un fichier du cours a été modifié par er
 ```
 docker-compose.yml     services de l'environnement
 .env.example           versions, identifiants locaux, ports, limites mémoire
-conf/                  configuration Spark, Trino et dbt (profiles.yml)
-docker/                images JupyterLab et Superset
-scripts/               création des buckets et test de l'environnement
-notebooks/tp1/        énoncés du TP 1 (à copier, ne pas modifier)
+conf/                  configuration Spark, Trino, dbt, Prometheus, Grafana, Marquez
+docker/                images JupyterLab, Superset et Airflow
+scripts/               initialisation, test de l'environnement, dépôt des photos, mesure des conteneurs
+notebooks/tp1..tp3/    énoncés des TP (à copier, ne pas modifier)
 notebooks/mon_travail/ votre travail (ignoré par Git)
 apps/                  squelettes des applications
-data/olist/            jeux de données des TP (Olist)
+data/olist/            jeux de données des TP 1 et 2 (Olist)
+data/catalogue/        photos et fiches produits du TP 3 ; data/modeles/ : modèle ONNX
 docs/                  supports du module
 ```
 

@@ -107,7 +107,7 @@
 \toprule
 Objectif & Installer l'environnement utilisé dans les TP 1, 2 et 3, puis vérifier qu'il fonctionne. \\
 Durée    & Environ 1 h, \textbf{à faire chez vous avant la séance 1}. \\
-Téléchargement & 6 à 8~Go : prévoyez une bonne connexion. \\
+Téléchargement & 8 à 10~Go, outils du TP 3 compris : prévoyez une bonne connexion. \\
 À rendre & Un court compte rendu (section~\ref{sec:cr}). \\
 Matériel & 8~Go de RAM minimum (16~Go conseillés) et 15~Go d'espace disque libre. \\
 \bottomrule
@@ -118,8 +118,10 @@ Matériel & 8~Go de RAM minimum (16~Go conseillés) et 15~Go d'espace disque lib
 % =====================================================================
 
 Tout l'environnement tourne dans \textbf{Docker} : vous n'installez ni Java, ni Spark, ni Python à la main.
-Une seule commande démarre sept services, qui communiquent entre eux sur un réseau privé.
-La figure~\ref{fig:archi} montre comment ils s'articulent ; les flux numérotés sont expliqués juste après.
+Une seule commande démarre les quatre services de base, qui communiquent entre eux sur un réseau
+privé ; les outils utilisés plus tard (Trino, Superset, Airflow, la supervision) se démarrent à la
+demande. La figure~\ref{fig:archi} montre comment les services de base s'articulent ; les flux
+numérotés sont expliqués juste après. La figure~\ref{fig:tp3} présente les outils ajoutés au TP 3.
 
 \begin{figure}[h]
 \centering
@@ -179,6 +181,42 @@ La figure~\ref{fig:archi} montre comment ils s'articulent ; les flux numérotés
 il génère les requêtes et les fait exécuter par Spark (ou par Trino). Le trajet reste donc le même,
 à partir de l'étape \etape{2}.
 
+\textbf{Et au TP 3 ?} Le pipeline ne se lance plus à la main : \textbf{Airflow} enchaîne ses étapes
+chaque jour. Deux familles d'outils regardent alors la plateforme tourner
+(figure~\ref{fig:tp3}) : la \textbf{supervision} (Prometheus, Grafana) mesure les services
+(mémoire, processeur, durée et échecs des tâches) ; l'\textbf{observabilité des données} (Marquez)
+enregistre le \emph{lineage} : quel job a lu et écrit quelle table, et avec quel résultat.
+
+\begin{figure}[h]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  font=\sffamily\small, >=Stealth,
+  svc/.style={draw=#1,fill=#1!8,rounded corners=4pt,thick,minimum width=3.2cm,minimum height=1.15cm,align=center},
+  lab/.style={font=\sffamily\scriptsize,text=black!70,align=center}]
+\node[svc=lhblue]   (af)   at (0,0)     {\textbf{Airflow}\\\scriptsize orchestre le pipeline};
+\node[svc=lhblue]   (sp)   at (5.2,0)   {\textbf{Jobs Spark, dbt}\\\scriptsize lancés par Airflow};
+\node[svc=lhbronze] (tab)  at (10.4,0)  {\textbf{Tables Iceberg}\\\scriptsize bronze, silver, gold};
+\node[svc=gray]     (sd)   at (0,-2.6)  {\textbf{statsd-exporter}\\\scriptsize traduit les métriques};
+\node[svc=gray]     (mc)   at (5.2,-2.6){\textbf{Mesure des conteneurs}\\\scriptsize mémoire, processeur};
+\node[svc=lhgold]   (pr)   at (2.6,-5.0){\textbf{Prometheus}\\\scriptsize stocke les métriques};
+\node[svc=lhgold]   (gr)   at (7.8,-5.0){\textbf{Grafana}\\\scriptsize tableaux de bord, alertes};
+\node[svc=lhsilver] (mq)   at (13.6,-2.6){\textbf{Marquez}\\\scriptsize lineage OpenLineage};
+
+\draw[->,thick] (af) -- node[lab,above]{déclenche} (sp);
+\draw[->,thick] (sp) -- node[lab,above]{lit, écrit} (tab);
+\draw[->] (af) -- node[lab,left]{métriques} (sd);
+\draw[->] (sd) -- (pr);
+\draw[->] (mc) -- (pr);
+\draw[->,thick] (pr) -- node[lab,above=3pt]{requêtes PromQL} (gr);
+\draw[->] (sp.south east) -- node[lab,below left=1pt]{événements (tables lues, écrites)} (mq.west);
+\draw[->] (af.north) -- ++(0,0.6) -| node[lab,pos=0.25,above]{événements (tâches et leur état)} (mq.north);
+\end{tikzpicture}}
+\caption{Les outils ajoutés au TP 3. En haut, le pipeline ; à gauche et en bas, la supervision ;
+à droite, l'observabilité des données.}
+\label{fig:tp3}
+\end{figure}
+
 \subsection*{Les composants}
 
 \begin{center}
@@ -221,11 +259,16 @@ Airflow &
   surveille leur exécution (TP 3). &
   Airflow géré (AWS, Google Cloud) & \texttt{-{}-profile} \\
 Prometheus, Grafana &
-  La supervision : métriques des conteneurs et des tâches, tableaux de bord, alertes (TP 3). &
+  La supervision (TP 3) : Prometheus collecte et garde les métriques, Grafana les affiche
+  (tableau de bord fourni) et déclenche une alerte en cas d'échec. &
   Datadog, CloudWatch & \texttt{-{}-profile} \\
+statsd-exporter, mesure des conteneurs &
+  Deux petits services qui fournissent les métriques à Prometheus : celles d'Airflow (durée et
+  état des tâches), et la mémoire et le processeur de chaque conteneur (lus auprès de Docker). &
+  Agents de supervision & \texttt{-{}-profile} \\
 Marquez &
-  L'observabilité des données : le lineage (quelle table est produite par quel job, à partir de
-  quoi), reçu au format OpenLineage (TP 3). &
+  L'observabilité des données (TP 3) : le lineage (quelle table est produite par quel job, à
+  partir de quoi) et l'historique des exécutions, reçus au format standard OpenLineage. &
   DataHub, Unity Catalog & \texttt{-{}-profile} \\
 \bottomrule
 \end{tabularx}
@@ -247,14 +290,16 @@ Marquez &
 \midrule
 Données et métadonnées des tables (bronze, silver, gold) & volume Docker \texttt{rustfs-data} \\
 Annuaire des tables (catalogue) & volume Docker \texttt{iceberg-catalog} \\
-Base source PostgreSQL & volume Docker \texttt{pg-data} \\
+Base source PostgreSQL, et bases internes d'Airflow et de Marquez & volume Docker \texttt{pg-data} \\
+Tableaux de bord Superset & volume Docker \texttt{superset-home} \\
+Métriques (Prometheus) et réglages de Grafana & volumes \texttt{prometheus-data}, \texttt{grafana-data} \\
 Vos notebooks et votre code & dossier \texttt{notebooks/mon\_travail/}, sur votre disque \\
 \bottomrule
 \end{tabularx}
 \end{center}
 
 Arrêter ou redémarrer les services ne fait rien perdre. Seule la commande
-\mbox{\cmd{docker compose down -v}} efface les trois volumes, donc toutes les tables.
+\mbox{\cmd{docker compose down -v}} efface ces volumes, donc toutes les tables.
 
 \textbf{L'idée à retenir :} Les données sont stockées \emph{une seule fois} dans le stockage S3.
 Le catalogue sait où se trouve chaque table. Plusieurs outils (Spark, Trino, Superset) lisent
@@ -333,6 +378,8 @@ Le dépôt est en \textbf{lecture seule} pour vous : vous récupérez le code, v
 cp .env.example .env
 \end{lstlisting}
 \textbf{Machine de 8 Go uniquement :} ouvrez \cmd{.env} et remplacez \cmd{JUPYTER\_MEM\_LIMIT=4g} par \cmd{3g}.
+Au TP 3, ne faites jamais tourner en même temps Trino et Superset d'un côté, Airflow et la
+supervision de l'autre (section~\ref{sec:services}).
 
 \subsection*{Étape 3 -- Télécharger les images (le plus long)}
 \begin{lstlisting}[style=shell]
@@ -371,6 +418,11 @@ docker compose exec jupyter python /opt/lakehouse/scripts/check_env.py
 [OK] 6. DuckDB lit les fichiers sur S3
 [OK] 7. dbt (adaptateurs spark et trino)
 [--] 8. Trino (profil sql/full non démarré ?)
+[--] 9. Airflow (profil orchestration non démarré ?)
+[--] 10. Prometheus (profil observabilite non démarré ?)
+[--] 11. Mesure des conteneurs (profil observabilite non démarré ?)
+[--] 12. Grafana (profil observabilite non démarré ?)
+[--] 13. Marquez (lineage) (profil observabilite non démarré ?)
 ENVIRONNEMENT PRÊT
 \end{lstlisting}
 \textbf{Faites une capture d'écran de ce résultat :} elle figurera dans votre compte rendu.
@@ -380,8 +432,23 @@ qu'ils fonctionnent, en les lançant puis en refaisant le test :
 \begin{lstlisting}[style=shell]
 docker compose --profile full up -d
 \end{lstlisting}
-La ligne 8 passe alors en \texttt{[OK]}. Il suffit de le faire une fois : ils redémarreront ensuite
-seuls avec Docker.
+La ligne 8 passe alors en \texttt{[OK]}. Arrêtez-les ensuite :
+\cmd{docker compose -{}-profile full stop trino superset}.
+\end{resultat}
+
+\subsection*{Étape 7 -- Vérifier les outils du TP 3 (conseillé)}
+Les lignes 9 à 13 concernent les outils du TP 3. Vérifiez une fois qu'ils démarrent sur votre
+machine, puis arrêtez-les :
+\begin{lstlisting}[style=shell]
+docker compose --profile orchestration --profile observabilite up -d
+docker compose exec jupyter python /opt/lakehouse/scripts/check_env.py
+docker compose --profile orchestration --profile observabilite stop
+\end{lstlisting}
+
+\begin{resultat}
+Attendez une à deux minutes avant le test : Airflow et Marquez préparent leur base au premier
+démarrage. Les lignes 9 à 13 passent alors en \texttt{[OK]}, et seule la ligne 8 reste en
+\texttt{[--]}.
 \end{resultat}
 
 % =====================================================================
@@ -410,7 +477,7 @@ sont des dossiers ; les fichiers sont décalés sous le dossier qui les contient
 \dossier{lakehouse-tp/} & Racine du dépôt. \\
 \fic{README.md} & Page d'accueil du dépôt sur GitHub : démarrage rapide et règles. \\
 \fic{docker-compose.yml} & Description de tous les services (stockage, catalogue, PostgreSQL,
-  JupyterLab, Trino, Superset) : images, ports, volumes et profils. \\
+  JupyterLab, Trino, Superset, Airflow, supervision, Marquez) : images, ports, volumes et profils. \\
 \fic{.env.example} & Modèle de configuration : versions des images, identifiants locaux, ports,
   limites de mémoire. Copié en \cmd{.env} à l'étape~2. \\
 \fic{.gitignore} & Liste des fichiers que Git ignore, dont \cmd{.env} et \cmd{notebooks/mon\_travail/}. \\
@@ -430,14 +497,19 @@ sont des dossiers ; les fichiers sont décalés sous le dossier qui les contient
 \fic[2.4]{airflow/} & Image Airflow, construite sur l'image JupyterLab (TP 3). \\
 \addlinespace
 \dossier[1.2]{conf/} & Fichiers de configuration lus par les services au démarrage. \\*
-\fic[2.4]{spark/spark-defaults.conf} & Réglages de Spark : catalogue \texttt{lakehouse},
-  accès au stockage S3, extensions Iceberg et Delta. \\
+\fic[2.4]{spark/} & Réglages de Spark dans JupyterLab : catalogue \texttt{lakehouse}, accès au
+  stockage S3, extensions Iceberg et Delta (\texttt{spark-defaults.conf}), niveau des messages
+  affichés (\texttt{log4j2.properties}). \\
 \fic[2.4]{trino/catalog/} & Catalogues SQL visibles dans Trino : \\*
 \fic[3.6]{lakehouse.properties} & connexion au même catalogue Iceberg que Spark ; \\
 \fic[3.6]{postgres.properties} & la base PostgreSQL du TP 1 (fédération, TP 3) ; \\
 \fic[3.6]{tpch.properties} & jeu de données de démonstration intégré à Trino. \\
 \fic[2.4]{spark-airflow/} & Réglages de Spark pour les tâches Airflow, avec l'envoi du lineage (TP 3). \\
-\fic[2.4]{prometheus/}, \texttt{grafana/} & Supervision : sources de métriques, tableau de bord Grafana (TP 3). \\
+\fic[2.4]{prometheus/} & Sources de métriques collectées (\texttt{prometheus.yml}) et traduction des
+  métriques d'Airflow (\texttt{statsd\_mapping.yml}) (TP 3). \\
+\fic[2.4]{grafana/} & Tableau de bord \og Lakehouse -- supervision \fg{}, source de données et
+  alerte \og Exécution de DAG en échec \fg{}, chargés au démarrage de Grafana (TP 3). \\
+\fic[2.4]{marquez/marquez.yml} & Configuration de Marquez : sa base dans le PostgreSQL du cours (TP 3). \\
 \fic[2.4]{dbt/profiles.yml} & Connexions de dbt : cible \texttt{spark} et cible \texttt{trino} (TP 2 et 3). \\
 \addlinespace
 \dossier[1.2]{scripts/} & Scripts Python exécutés dans le conteneur JupyterLab. \\*
@@ -446,6 +518,9 @@ sont des dossiers ; les fichiers sont décalés sous le dossier qui les contient
 \fic[2.4]{check\_env.py} & Test automatique de l'environnement (étape~6). \\
 \fic[2.4]{load\_postgres.py} & Charge les données Olist dans PostgreSQL, en deux lots (TP 1). \\
 \fic[2.4]{deposer\_photos.py} & Dépose un lot de photos dans la zone d'atterrissage (TP 3). \\
+\fic[2.4]{mesurer\_conteneurs.py} & Service de mesure de la mémoire et du processeur des conteneurs,
+  pour Prometheus (TP 3). \\
+\fic[2.4]{init\_bases.py} & Crée dans PostgreSQL la base de Marquez (TP 3, automatique). \\
 \fic[2.4]{generer\_suivi.py}, \dots & Scripts de préparation des données, réservés à l'enseignant. \\
 \addlinespace
 \dossier[1.2]{data/olist/} & Jeu de données Olist (commerce en ligne brésilien). \\*
@@ -491,6 +566,7 @@ Spark UI          & \url{http://localhost:4040} & visible pendant qu'un notebook
 Trino$^*$         & \url{http://localhost:8080} & nom d'utilisateur libre \\
 Superset$^*$      & \url{http://localhost:8088} & \texttt{admin} / \texttt{admin} \\
 Airflow$^{**}$    & \url{http://localhost:8085} & sans mot de passe \\
+Prometheus$^{\dagger}$ & \url{http://localhost:9090} & sans mot de passe \\
 Grafana$^{\dagger}$ & \url{http://localhost:3000} & \texttt{admin} / \texttt{admin} \\
 Marquez$^{\dagger}$ & \url{http://localhost:3001} & sans mot de passe \\
 \bottomrule
@@ -552,6 +628,38 @@ Un Lakehouse garde l'historique des données ; vous l'exploiterez dans le TP 1.
 \end{resultat}
 
 % =====================================================================
+\section{Quels services pour quelle partie}\label{sec:services}
+% =====================================================================
+
+Chaque outil consomme de la mémoire : on ne démarre que ceux dont la partie a besoin. Les supports
+des TP rappellent ces commandes au bon moment.
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{@{}l X l l@{}}
+\toprule
+\textbf{Partie} & \textbf{Services utilisés} & \textbf{Profils à démarrer} & \textbf{Profils à arrêter} \\
+\midrule
+TP 1, TP 2               & base                                        & --                                  & -- \\
+TP 3, partie 1           & base                                        & --                                  & -- \\
+TP 3, parties 2 et 3     & base + Airflow                              & \cmd{orchestration}                 & -- \\
+TP 3, partie 4           & base + Trino + Superset                     & \cmd{full}                          & \cmd{orchestration} \\
+TP 3, partie 5           & base + Airflow + supervision et Marquez     & \cmd{observabilite}, \cmd{orchestration} & \cmd{full} \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Pour démarrer ou arrêter un profil :
+\begin{lstlisting}[style=shell]
+docker compose --profile orchestration up -d      # démarrer (ici : Airflow)
+docker compose --profile full stop                # arrêter (ici : Trino et Superset)
+\end{lstlisting}
+En partie 5, redémarrez Airflow \emph{après} avoir lancé la supervision
+(\cmd{docker compose -{}-profile orchestration restart airflow}) : il ne cherche le service de
+métriques qu'à son démarrage.
+
+% =====================================================================
 \section{Commandes utiles au quotidien}
 % =====================================================================
 
@@ -564,9 +672,12 @@ Un Lakehouse garde l'historique des données ; vous l'exploiterez dans le TP 1.
 Démarrer                           & docker compose up -d \\
 Démarrer avec Trino et Superset    & docker compose -{}-profile full up -d \\
 Démarrer Airflow (TP 3)            & docker compose -{}-profile orchestration up -d \\
-Voir l'état des services           & docker compose ps \\
+Démarrer la supervision (TP 3)     & docker compose -{}-profile observabilite up -d \\
+Arrêter un groupe d'outils         & docker compose -{}-profile observabilite stop \\
+Voir l'état des services           & docker compose -{}-profile full -{}-profile orchestration -{}-profile observabilite ps -a \\
 Voir les erreurs d'un service      & docker compose logs -{}-tail 50 jupyter \\
-Arrêter (en gardant mes données)   & docker compose -{}-profile full -{}-profile orchestration down \\
+Récupérer les mises à jour du cours & git pull \quad \textrm{puis} \quad docker compose up -d \\
+Arrêter (en gardant mes données)   & docker compose -{}-profile full -{}-profile orchestration -{}-profile observabilite down \\
 \bottomrule
 \end{tabularx}
 \end{center}
@@ -577,6 +688,41 @@ données du Lakehouse. Vos notebooks, eux, restent dans le dossier \texttt{noteb
 \end{attention}
 
 % =====================================================================
+\section{En cas de problème}
+% =====================================================================
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{5.2cm} X@{}}
+\toprule
+\textbf{Ce que vous voyez} & \textbf{Ce qu'il faut faire} \\
+\midrule
+Un service est à l'état \texttt{Restarting} ou \texttt{Exited} &
+  Lire ses messages : \cmd{docker compose logs -{}-tail 50 <service>}. La cause est presque
+  toujours dans les dernières lignes. \\
+\texttt{Exited (137)} &
+  Le service a manqué de mémoire : arrêtez les outils dont la partie n'a pas besoin
+  (section~\ref{sec:services}), puis relancez-le. \\
+\texttt{port is already allocated} &
+  Un autre logiciel utilise ce port : changez la ligne \cmd{PORT\_...} correspondante dans
+  \cmd{.env}, puis \cmd{docker compose up -d}. \\
+\texttt{Failed to resolve 'trino'} (ou un autre nom de service) dans un notebook &
+  Ce service n'est pas démarré : lancez son profil (section~\ref{sec:services}). \\
+Grafana n'affiche aucune métrique d'Airflow &
+  Airflow a démarré avant la supervision : \cmd{docker compose -{}-profile orchestration restart airflow}. \\
+\texttt{git pull} refuse de s'exécuter &
+  Un fichier du cours a été modifié par erreur : \cmd{git restore .} le rétablit, sans toucher à
+  \cmd{notebooks/mon\_travail/}. \\
+Un dossier supprimé par erreur dans JupyterLab &
+  JupyterLab le déplace dans la corbeille \cmd{notebooks/.Trash-1000/} : remettez-le en place
+  depuis le terminal Ubuntu avec \cmd{mv}. Un fichier du cours se récupère aussi avec
+  \cmd{git restore}. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+% =====================================================================
 \section{Avant la séance 1}
 % =====================================================================
 
@@ -584,6 +730,7 @@ données du Lakehouse. Vos notebooks, eux, restent dans le dossier \texttt{noteb
 \item Docker fonctionne (\cmd{hello-world} affiche son message)
 \item Le test de l'étape 6 affiche \og ENVIRONNEMENT PRÊT \fg{}
 \item Avec le profil \cmd{full}, la ligne 8 du test (Trino) passe en \texttt{[OK]}
+\item Conseillé : avec les profils \cmd{orchestration} et \cmd{observabilite}, les lignes 9 à 13 passent en \texttt{[OK]}
 \item JupyterLab s'ouvre et le premier test fonctionne
 \item Le compte rendu est déposé sur l'espace de cours (section~\ref{sec:cr})
 \end{itemize}
