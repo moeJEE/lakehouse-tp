@@ -401,7 +401,8 @@ que les fichiers utiles.
 \begin{resultat}
 Après 90 petites écritures, la table de démonstration compte plus de 90 fichiers ; le compactage
 les ramène à un seul. La table partitionnée compte un fichier par vendeur : pour le vendeur 03, la
-requête n'en lit qu'un, contre tous les fichiers de la table non partitionnée.
+requête n'en lit qu'un, contre tous les fichiers de la table non partitionnée. Déclenché depuis le notebook,
+le DAG \cmd{maintenance\_iceberg} compacte à son tour les tables du TP 3 : leur nombre de fichiers diminue.
 \end{resultat}
 
 \capture{tp3_03_fichiers}{Partie 3 : le nombre de fichiers avant et après le compactage.}{fig:res03}
@@ -428,8 +429,9 @@ celles mises en quarantaine au TP 1.
 Tout est déjà configuré, et vous ne programmez rien : vous utilisez les outils comme une équipe
 d'exploitation. Le notebook rejoue le pipeline photo dans Airflow, cette fois sous surveillance ; vous
 lisez pendant ce temps le tableau de bord Grafana. Il lance ensuite une panne simulée : vous regardez
-l'alerte fournie se déclencher. Enfin, vous suivez dans Marquez le lineage de
-\cmd{gold.photos\_controle}, construit à partir de ces exécutions.
+l'alerte fournie se déclencher. Enfin, vous suivez dans Marquez le lineage, construit à partir de ces exécutions :
+complet pour la couche Gold de dbt, il s'interrompt là où les scripts photo font sortir les données de
+Spark, ce qui montre les limites d'un lineage automatique.
 
 \begin{attention}
 Démarrez la supervision \emph{avant} Airflow, ou redémarrez Airflow après elle

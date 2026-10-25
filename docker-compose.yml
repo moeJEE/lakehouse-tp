@@ -142,9 +142,11 @@ services:
       AIRFLOW__METRICS__STATSD_HOST: statsd-exporter
       AIRFLOW__METRICS__STATSD_PORT: "9125"
       AIRFLOW__METRICS__STATSD_PREFIX: airflow
-      # Le lineage vient des jobs Spark (conf/spark-airflow/spark-defaults.conf) ; le module
-      # OpenLineage d'Airflow est coupé : sans Marquez, il retarderait chaque tâche.
-      AIRFLOW__OPENLINEAGE__DISABLED: "true"
+      # Lineage : Airflow déclare chaque tâche (état réussi / en échec) ; les jobs Spark déclarent
+      # en plus leurs tables (conf/spark-airflow/spark-defaults.conf). Sans Marquez (parties 2 à 4),
+      # l'envoi échoue tout de suite, sans relance : les tâches ne sont pas ralenties.
+      AIRFLOW__OPENLINEAGE__NAMESPACE: lakehouse
+      AIRFLOW__OPENLINEAGE__TRANSPORT: '{"type": "http", "url": "http://marquez:5000", "endpoint": "api/v1/lineage", "timeout": 2, "retry": {"total": 0, "connect": 0, "read": 0}}'
     volumes:
       - ./conf/dbt:/opt/dbt-profiles:ro
       - ./notebooks:/home/etudiant/work/notebooks
