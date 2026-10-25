@@ -31,6 +31,7 @@
 \usepackage{graphicx}
 \usepackage{caption}
 \usepackage{xltabular}
+\usepackage{float}
 \captionsetup{font=small,labelfont=bf,labelsep=period}
 \graphicspath{{images/}}
 % Logos des logiciels (docs/images/logos/, voir LISEZMOI.md) ; sans le fichier, rien ne s'affiche
@@ -106,6 +107,7 @@
 \newcommand{\etape}[1]{\tikz[baseline=(n.base)]\node[circle,fill=lhblue,text=white,
   font=\sffamily\bfseries\scriptsize,inner sep=1.3pt](n){#1};}
 \pdfstringdefDisableCommands{\def\cmd#1{#1}}
+\hypersetup{pdftitle={Support 0 -- Installation},pdfauthor={Anouar Riadsolh}}
 
 % =====================================================================
 \newcommand{\pastilletexte}[1]{\tikz[baseline=(n.base)]\node[circle,fill=lhvert,text=white,font=\sffamily\bfseries\scriptsize,inner sep=1.4pt](n){#1};}
@@ -116,11 +118,13 @@
 \begin{tikzpicture}[remember picture,overlay]
   \fill[lhblue] (current page.north west) rectangle ([yshift=-5.2cm]current page.north east);
   \node[anchor=north west,text=white,font=\sffamily] at ([xshift=2.3cm,yshift=-1.3cm]current page.north west)
-    {Module Data Lakehouse -- Cycle ingénieur 4\textsuperscript{e}/5\textsuperscript{e} année};
+    {Module Data Lakehouse};
   \node[anchor=north west,text=white,font=\sffamily\bfseries\fontsize{26}{30}\selectfont] at ([xshift=2.3cm,yshift=-2.2cm]current page.north west)
     {Support 0 -- Installation};
   \node[anchor=north west,text=white!85!lhblue,font=\sffamily\large] at ([xshift=2.3cm,yshift=-3.6cm]current page.north west)
     {Votre Lakehouse local en une commande};
+  \node[anchor=north east,text=white!85!lhblue,font=\sffamily] at ([xshift=-2.3cm,yshift=-4.25cm]current page.north east)
+    {Anouar Riadsolh};
 \end{tikzpicture}
 \thispagestyle{empty}
 \vspace*{4.2cm}
@@ -128,9 +132,10 @@
 {\large\bfseries\color{lhblue}En bref}\par\smallskip
 \begin{tabularx}{\linewidth}{@{}>{\bfseries}l X@{}}
 \toprule
+Auteur   & Anouar Riadsolh \\
 Objectif & Installer l'environnement utilisé dans les TP 1, 2 et 3, puis vérifier qu'il fonctionne. \\
 Durée    & Environ 1 h, \textbf{à faire chez vous avant la séance 1}. \\
-Téléchargement & 8 à 10~Go, outils du TP 3 compris : prévoyez une bonne connexion. \\
+Téléchargement & 8 à 10~Go. \\
 À rendre & Un court compte rendu (section~\ref{sec:cr}). \\
 Matériel & 8~Go de RAM minimum (16~Go conseillés) et 15~Go d'espace disque libre. \\
 \bottomrule
@@ -142,9 +147,9 @@ Matériel & 8~Go de RAM minimum (16~Go conseillés) et 15~Go d'espace disque lib
 
 Tout l'environnement tourne dans \textbf{Docker} : vous n'installez ni Java, ni Spark, ni Python à la main.
 Comme dans une plateforme Lakehouse d'entreprise, les outils sont organisés en couches
-(figure~\ref{fig:archi}) : les sources à gauche, la plateforme au centre (traitement, tables par
-couche, catalogue et stockage ouvert), les usages à droite ; l'orchestration et l'observabilité
-l'encadrent, et le tout repose sur des conteneurs Docker.
+(figure~\ref{fig:archi}). Les sources sont à gauche, la plateforme au centre (traitement, tables
+par couche, catalogue et stockage ouvert) et les usages à droite. L'orchestration et l'observabilité
+encadrent la plateforme, et l'ensemble repose sur des conteneurs Docker.
 
 \begin{figure}[h]
 \centering
@@ -240,85 +245,93 @@ l'encadrent, et le tout repose sur des conteneurs Docker.
   l'application métier, et des fichiers bruts (CSV, messages JSON, photos) déposés dans la zone
   \texttt{landing} du stockage.
 \item[\pastilletexte{2}] \textbf{Le traitement} : depuis JupyterLab, Spark lit les sources et
-  transforme les données ; dbt organise les transformations SQL en modèles testés et documentés.
+  transforme les données. L'outil dbt organise les transformations SQL en modèles testés et documentés.
 \item[\pastilletexte{3}] \textbf{Les tables par couche} : chaque étape produit des tables
   \emph{bronze} (données brutes), \emph{silver} (nettoyées) puis \emph{gold} (prêtes à l'usage).
   Spark écrit leurs fichiers \emph{Parquet} dans le stockage objet (RustFS, compatible S3), au
-  format de table Iceberg (ou Delta Lake), et déclare chaque nouvelle version au
-  \textbf{catalogue Iceberg} : l'annuaire qui dit où se trouve chaque table.
+  format de table Iceberg (ou Delta Lake). Il déclare ensuite chaque nouvelle version au
+  \textbf{catalogue Iceberg}, l'annuaire qui indique où se trouve chaque table.
 \item[\pastilletexte{4}] \textbf{Les requêtes SQL} : Trino demande au catalogue où se trouve une
   table, puis lit directement ses fichiers, sans copie.
-\item[\pastilletexte{5}] \textbf{Les tableaux de bord} : Superset interroge Trino ; Streamlit lit
+\item[\pastilletexte{5}] \textbf{Les tableaux de bord} : Superset interroge Trino, et Streamlit lit
   les tables gold avec Spark.
-\item[\pastilletexte{6}] \textbf{L'IA} : des modèles scikit-learn apprennent sur les tables gold ;
+\item[\pastilletexte{6}] \textbf{L'IA} : des modèles scikit-learn apprennent sur les tables gold, et
   un réseau de neurones pré-entraîné (MobileNet, exécuté avec ONNX Runtime) décrit les photos.
 \end{description}
 
-Deux services encadrent la plateforme : \textbf{Airflow} enchaîne automatiquement les traitements,
-chaque jour ; les outils d'\textbf{observabilité} la surveillent : Prometheus et Grafana mesurent les
-services (mémoire, processeur, durée et échecs des tâches), Marquez enregistre le \emph{lineage}
-(quel job a lu et écrit quelle table).
+Deux services encadrent la plateforme. \textbf{Airflow} enchaîne automatiquement les traitements,
+chaque jour. Les outils d'\textbf{observabilité} la surveillent : Prometheus et Grafana mesurent les
+services (mémoire, processeur, durée et échecs des tâches), et Marquez enregistre le \emph{lineage},
+c'est-à-dire quel job a lu et écrit quelle table.
 
 \subsection*{Les notions à connaître}
 
 \begin{description}[leftmargin=1.4em,labelindent=0pt,itemsep=4pt,font=\normalfont\bfseries]
 \item[Zone d'atterrissage (\emph{landing}) :] l'entrée du Lakehouse. Les fichiers y sont déposés
-  tels qu'ils arrivent des sources, sans aucune modification : ce ne sont pas encore des tables.
-  On peut ainsi toujours tout retraiter depuis la donnée d'origine.
+  tels qu'ils arrivent des sources, sans aucune modification, et ne sont pas encore des tables.
+  On peut ainsi toujours tout retraiter à partir de la donnée d'origine.
 \item[Couches bronze, silver, gold :] l'architecture \og en médaillon \fg{}. Bronze garde la donnée
-  brute, sous forme de table ; silver la nettoie et la vérifie ; gold la prépare pour un usage
+  brute sous forme de table, silver la nettoie et la vérifie, et gold la prépare pour un usage
   précis (indicateurs, modèle d'IA, tableau de bord).
 \item[Stockage ouvert :] les fichiers sont rangés dans un stockage objet standard, compatible avec
-  Amazon S3 (ici RustFS). Le stockage est \emph{séparé du calcul} : on peut arrêter Spark ou Trino
-  sans rien perdre, et plusieurs moteurs travaillent sur les mêmes fichiers.
-\item[Parquet :] un \emph{format de fichier}. Il range les données par colonne et les compresse :
-  il est rapide à lire pour l'analyse, mais un fichier Parquet ne connaît ni versions ni transactions.
+  Amazon S3 (ici RustFS). Le stockage est \emph{séparé du calcul}. On peut donc arrêter Spark ou
+  Trino sans rien perdre, et plusieurs moteurs travaillent sur les mêmes fichiers.
+\item[Parquet :] un \emph{format de fichier}. Il range les données par colonne et les compresse, ce qui
+  le rend rapide à lire pour l'analyse. En revanche, un fichier Parquet ne connaît ni versions ni
+  transactions.
 \item[Iceberg :] un \emph{format de table}. Au-dessus des fichiers Parquet, il ajoute des fichiers
-  de métadonnées : le schéma, la liste des fichiers qui composent la table, l'historique des versions.
-  C'est ce qui permet les transactions, le retour à une version passée (\emph{time travel}) et
-  l'évolution du schéma. \textbf{Delta Lake}, créé par Databricks, est son principal concurrent : il
-  repose lui aussi sur Parquet, mais tient ses métadonnées dans un journal de transactions. Les
-  tables du cours sont en Iceberg ; un exercice écrit la même table dans les deux formats pour les
+  de métadonnées qui décrivent le schéma, la liste des fichiers de la table et l'historique des
+  versions. C'est ce qui permet les transactions, le retour à une version passée (\emph{time travel})
+  et l'évolution du schéma. \textbf{Delta Lake}, créé par Databricks, est son principal concurrent.
+  Il repose lui aussi sur Parquet, mais tient ses métadonnées dans un journal de transactions. Les
+  tables du cours sont en Iceberg, et un exercice écrit la même table dans les deux formats pour les
   comparer.
 \item[Catalogue :] l'annuaire des tables. Il associe un nom (\texttt{lakehouse.silver.orders}) à la
-  version courante de la table : quand Spark écrit une nouvelle version, tous les outils la voient
-  au même instant. \textbf{Iceberg REST} est la façon dont le catalogue est servi ici : un petit
-  serveur web qui suit la norme d'Iceberg, et que tous les moteurs interrogent de la même manière.
+  version courante de la table. Quand Spark écrit une nouvelle version, tous les outils la voient
+  donc au même instant. \textbf{Iceberg REST} est la façon dont le catalogue est servi ici, sous la
+  forme d'un petit serveur web qui suit la norme d'Iceberg et que tous les moteurs interrogent de la
+  même manière.
   En entreprise, le catalogue gère aussi les droits d'accès (AWS Glue, Unity Catalog, Polaris).
-\item[Lakehouse ouvert :] l'idée qui réunit les notions précédentes. Formats publics et stockage
-  standard : n'importe quel moteur lit les mêmes tables sans copie, et l'on peut changer d'outil
-  sans migrer les données. C'est la différence avec un entrepôt de données classique, dont le
+\item[Lakehouse ouvert :] l'idée qui réunit les notions précédentes. Avec des formats publics et
+  un stockage standard, n'importe quel moteur lit les mêmes tables sans copie, et l'on peut changer
+  d'outil sans migrer les données. C'est la différence avec un entrepôt de données classique, dont le
   format de stockage appartient à l'éditeur.
 \end{description}
 
 \subsection*{Les composants}
 
-\begin{center}
-\small
+{\small
 \renewcommand{\arraystretch}{1.3}
-\begin{tabularx}{\textwidth}{@{}>{\bfseries\raggedright\arraybackslash}p{2.9cm}
+\begin{xltabular}{\textwidth}{@{}>{\bfseries\raggedright\arraybackslash}p{2.9cm}
   >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}p{3.2cm} c@{}}
 \toprule
 \normalfont\textbf{Composant} & \textbf{Rôle} & \textbf{Équivalent en entreprise} & \textbf{Démarrage} \\
 \midrule
+\endfirsthead
+\toprule
+\normalfont\textbf{Composant} & \textbf{Rôle} & \textbf{Équivalent en entreprise} & \textbf{Démarrage} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
 JupyterLab + Spark &
-  Votre poste de travail : vous y écrivez le code (Python, SQL) qui lit, transforme et écrit
-  les données. Spark est le moteur de calcul ; DuckDB et Streamlit y sont aussi installés. &
+  Votre poste de travail, où vous écrivez le code (Python, SQL) qui lit, transforme et écrit
+  les données. Spark est le moteur de calcul. DuckDB et Streamlit y sont aussi installés. &
   Databricks, notebooks d'AWS EMR & auto \\
 Stockage S3 (RustFS) &
-  Le disque du Lakehouse : il garde tous les fichiers (bruts dans \texttt{landing},
-  puis les tables bronze, silver et gold). &
+  Le disque du Lakehouse. Il garde tous les fichiers, bruts dans \texttt{landing}, puis
+  les tables bronze, silver et gold. &
   Amazon S3, Azure Data Lake & auto \\
 Catalogue Iceberg &
-  L'annuaire des tables : il associe un nom (\texttt{lakehouse.silver.commandes}) aux fichiers
+  L'annuaire des tables. Il associe un nom (\texttt{lakehouse.silver.orders}) aux fichiers
   correspondants, pour que tous les outils voient la même version des données. &
   Unity Catalog, AWS Glue & auto \\
 dbt &
-  L'outil qui organise les transformations SQL en \emph{modèles} versionnés, testés et documentés
- . Il est installé dans le conteneur JupyterLab et s'exécute avec Spark, ou avec Trino. &
+  L'outil qui organise les transformations SQL en \emph{modèles} versionnés, testés et
+  documentés. Il est installé dans le conteneur JupyterLab et s'exécute avec Spark ou avec Trino. &
   dbt Core, dbt Cloud & auto \\
 PostgreSQL &
-  Une base de données classique qui joue le rôle d'application métier : c'est une
+  Une base de données classique qui joue le rôle d'application métier. C'est une
   \emph{source} que l'on ingère dans le Lakehouse. &
   Base d'un ERP ou d'un site e-commerce & auto \\
 Trino &
@@ -326,36 +339,39 @@ Trino &
   que Spark. &
   Amazon Athena, Starburst & \texttt{-{}-profile} \\
 Superset &
-  L'outil de tableaux de bord : graphiques et indicateurs construits sur la couche gold. &
+  L'outil de tableaux de bord, avec des graphiques et des indicateurs construits sur la couche gold. &
   Power BI, Tableau & \texttt{-{}-profile} \\
 Airflow &
-  L'orchestrateur : il enchaîne automatiquement les étapes du pipeline, chaque jour, et
+  L'orchestrateur. Il enchaîne automatiquement les étapes du pipeline, chaque jour, et
   surveille leur exécution. &
   Airflow géré (AWS, Google Cloud) & \texttt{-{}-profile} \\
 Prometheus, Grafana &
-  La supervision : Prometheus collecte et garde les métriques, Grafana les affiche
+  La supervision. Prometheus collecte et garde les métriques, Grafana les affiche
   (tableau de bord fourni) et déclenche une alerte en cas d'échec. &
   Datadog, CloudWatch & \texttt{-{}-profile} \\
 statsd-exporter, mesure des conteneurs &
-  Deux petits services qui fournissent les métriques à Prometheus : celles d'Airflow (durée et
-  état des tâches), et la mémoire et le processeur de chaque conteneur (lus auprès de Docker). &
+  Deux petits services qui fournissent des métriques à Prometheus. Le premier traduit celles
+  d'Airflow (durée et état des tâches), le second mesure la mémoire et le processeur de chaque
+  conteneur, à partir de Docker. &
   Agents de supervision & \texttt{-{}-profile} \\
 scikit-learn, ONNX Runtime &
-  L'IA et l'apprentissage automatique : entraîner des modèles sur les tables gold, utiliser un
-  réseau de neurones pré-entraîné (format ONNX). Installés dans le conteneur JupyterLab. &
+  L'IA et l'apprentissage automatique. On entraîne des modèles sur les tables gold et l'on
+  utilise un réseau de neurones pré-entraîné (format ONNX). Ces bibliothèques sont installées dans
+  le conteneur JupyterLab. &
   Databricks ML, SageMaker & auto \\
 Marquez &
-  L'observabilité des données : le lineage (quelle table est produite par quel job, à
-  partir de quoi) et l'historique des exécutions, reçus au format standard OpenLineage. &
+  L'observabilité des données. Marquez reçoit, au format standard OpenLineage, le lineage
+  (quelle table est produite par quel job, à partir de quoi) et l'historique des exécutions. &
   DataHub, Unity Catalog & \texttt{-{}-profile} \\
-\bottomrule
-\end{tabularx}
+\end{xltabular}
 
 \smallskip
 {\footnotesize \textbf{auto} : démarre avec \cmd{docker compose up -d}. \quad
-\textbf{-{}-profile} : démarrés à la demande avec \cmd{docker compose -{}-profile full up -d}
-(Trino, Superset), \cmd{-{}-profile orchestration} (Airflow) ou \cmd{-{}-profile observabilite}.}
-\end{center}
+\textbf{-{}-profile} : démarre à la demande, avec \cmd{docker compose -{}-profile full up -d}
+(Trino, Superset), \cmd{-{}-profile orchestration} (Airflow) ou \cmd{-{}-profile observabilite}
+(supervision et Marquez).}
+}
+
 
 \subsection*{Ce qui est conservé, et où}
 
@@ -379,9 +395,9 @@ Vos notebooks et votre code & dossier \texttt{notebooks/mon\_travail/}, sur votr
 Arrêter ou redémarrer les services ne fait rien perdre. Seule la commande
 \mbox{\cmd{docker compose down -v}} efface ces volumes, donc toutes les tables.
 
-\textbf{L'idée à retenir :} Les données sont stockées \emph{une seule fois} dans le stockage S3.
-Le catalogue sait où se trouve chaque table. Plusieurs outils (Spark, Trino, Superset) lisent
-\emph{les mêmes tables} sans les copier : c'est le principe du Lakehouse.
+\textbf{L'idée à retenir :} les données sont stockées \emph{une seule fois} dans le stockage S3,
+et le catalogue sait où se trouve chaque table. Plusieurs outils (Spark, Trino, Superset) lisent donc
+\emph{les mêmes tables} sans les copier. C'est le principe du Lakehouse.
 
 % =====================================================================
 \section{Installer Docker}
@@ -399,21 +415,22 @@ Linux   & \cmd{curl -fsSL https://get.docker.com | sh} \newline
 \bottomrule
 \end{tabularx}
 
-\textbf{Mémoire :} Dans Docker Desktop, menu \emph{Settings > Resources}, donnez à Docker
+\textbf{Mémoire :} dans Docker Desktop, menu \emph{Settings > Resources}, donnez à Docker
 \textbf{6~Go} (machine de 8~Go) ou \textbf{10~Go} (machine de 16~Go).
 
-\textbf{Intégration WSL (Windows uniquement) :} Dans \emph{Settings > Resources > WSL integration},
+\textbf{Intégration WSL (Windows uniquement) :} dans \emph{Settings > Resources > WSL integration},
 cochez \emph{Enable integration with my default WSL distro} et activez \textbf{Ubuntu}
 (figure~\ref{fig:wsl}). Sans ce réglage, la commande \cmd{docker} n'existe pas dans le terminal Ubuntu.
 
-\begin{figure}[h]
+\begin{figure}[H]
 \centering
 \includegraphics[width=0.78\textwidth]{docker_wsl_integration.png}
 \caption{Docker Desktop : activer l'intégration WSL pour la distribution Ubuntu.}
 \label{fig:wsl}
 \end{figure}
 
-\textbf{Vérification :} Ouvrez un terminal (sous Windows : \cmd{wsl -d Ubuntu}), puis tapez :
+\needspace{6\baselineskip}
+\textbf{Vérification :} ouvrez un terminal (sous Windows, \cmd{wsl -d Ubuntu}), puis tapez :
 \begin{lstlisting}[style=shell]
 docker --version
 docker compose version
@@ -424,7 +441,7 @@ docker run --rm hello-world
 Les deux versions s'affichent, puis le message \texttt{Hello from Docker!} (figure~\ref{fig:verif}).
 \end{resultat}
 
-\begin{figure}[h]
+\begin{figure}[H]
 \centering
 \includegraphics[width=0.85\textwidth]{docker_verification.png}
 \caption{Vérification de l'installation de Docker depuis le terminal Ubuntu (WSL).}
@@ -435,7 +452,7 @@ Les deux versions s'affichent, puis le message \texttt{Hello from Docker!} (figu
 \section{Installer l'environnement du cours}
 % =====================================================================
 
-Toutes les commandes s'exécutent dans un terminal (sous Windows : le terminal \textbf{Ubuntu} installé avec WSL).
+Toutes les commandes s'exécutent dans un terminal (sous Windows, le terminal \textbf{Ubuntu} installé avec WSL).
 
 \subsection*{Étape 1 -- Récupérer le dossier du cours}
 \begin{lstlisting}[style=shell]
@@ -477,10 +494,11 @@ docker compose ps
 
 \begin{resultat}
 Après environ une minute, \texttt{rustfs}, \texttt{iceberg-rest}, \texttt{postgres} et \texttt{jupyter}
-sont à l'état \texttt{running}. Le service \texttt{init-buckets} est à l'état \texttt{exited (0)} :
-c'est normal, il a préparé le stockage puis s'est arrêté.
+sont à l'état \texttt{running}. Le service \texttt{init-buckets} est à l'état \texttt{exited (0)}.
+C'est normal, il a préparé le stockage puis s'est arrêté.
 \end{resultat}
 
+\needspace{22\baselineskip}
 \subsection*{Étape 6 -- Lancer le test automatique}
 \begin{lstlisting}[style=shell]
 docker compose exec jupyter python /opt/lakehouse/scripts/check_env.py
@@ -503,14 +521,14 @@ docker compose exec jupyter python /opt/lakehouse/scripts/check_env.py
 [--] 13. Marquez (lineage) (profil observabilite non démarré ?)
 ENVIRONNEMENT PRÊT
 \end{lstlisting}
-\textbf{Faites une capture d'écran de ce résultat :} elle figurera dans votre compte rendu.
+\textbf{Faites une capture d'écran de ce résultat}, elle figurera dans votre compte rendu.
 La ligne 8 en \texttt{[--]} est normale : pour économiser la mémoire, Trino et Superset
-\textbf{ne démarrent pas automatiquement}. Vous en aurez besoin au TP 3 : vérifiez dès maintenant
-qu'ils fonctionnent, en les lançant puis en refaisant le test :
+\textbf{ne démarrent pas automatiquement}. Vous en aurez besoin au TP 3. Vérifiez donc dès
+maintenant qu'ils fonctionnent, en les lançant puis en refaisant le test :
 \begin{lstlisting}[style=shell]
 docker compose --profile full up -d
 \end{lstlisting}
-La ligne 8 passe alors en \texttt{[OK]}. Arrêtez-les ensuite :
+La ligne 8 passe alors en \texttt{[OK]}. Arrêtez-les ensuite avec
 \cmd{docker compose -{}-profile full stop trino superset}.
 \end{resultat}
 
@@ -524,8 +542,8 @@ docker compose --profile orchestration --profile observabilite stop
 \end{lstlisting}
 
 \begin{resultat}
-Attendez une à deux minutes avant le test : Airflow et Marquez préparent leur base au premier
-démarrage. Les lignes 9 à 13 passent alors en \texttt{[OK]}, et seule la ligne 8 reste en
+Attendez une à deux minutes avant le test, le temps qu'Airflow et Marquez préparent leur base au
+premier démarrage. Les lignes 9 à 13 passent alors en \texttt{[OK]}, et seule la ligne 8 reste en
 \texttt{[--]}.
 \end{resultat}
 
@@ -534,7 +552,7 @@ démarrage. Les lignes 9 à 13 passent alors en \texttt{[OK]}, et seule la ligne
 % =====================================================================
 
 Le dossier \cmd{lakehouse-tp} récupéré à l'étape~1 est organisé comme suit. Les noms en gras
-sont des dossiers ; les fichiers sont décalés sous le dossier qui les contient.
+sont des dossiers, et les fichiers sont décalés sous le dossier qui les contient.
 
 \newcommand{\dossier}[2][0]{\hspace*{#1em}\textbf{\texttt{#2}}}
 \newcommand{\fic}[2][1.2]{\hspace*{#1em}\texttt{#2}}
@@ -553,21 +571,21 @@ sont des dossiers ; les fichiers sont décalés sous le dossier qui les contient
 \bottomrule
 \endfoot
 \dossier{lakehouse-tp/} & Racine du dépôt. \\
-\fic{README.md} & Page d'accueil du dépôt sur GitHub : démarrage rapide et règles. \\
+\fic{README.md} & Page d'accueil du dépôt sur GitHub, avec le démarrage rapide et les règles. \\
 \fic{docker-compose.yml} & Description de tous les services (stockage, catalogue, PostgreSQL,
-  JupyterLab, Trino, Superset, Airflow, supervision, Marquez) : images, ports, volumes et profils. \\
-\fic{.env.example} & Modèle de configuration : versions des images, identifiants locaux, ports,
-  limites de mémoire. Copié en \cmd{.env} à l'étape~2. \\
+  JupyterLab, Trino, Superset, Airflow, supervision, Marquez), avec leurs images, ports, volumes et profils. \\
+\fic{.env.example} & Modèle de configuration (versions des images, identifiants locaux, ports,
+  limites de mémoire), copié en \cmd{.env} à l'étape~2. \\
 \fic{.gitignore} & Liste des fichiers que Git ignore, dont \cmd{.env} et \cmd{notebooks/mon\_travail/}. \\
 \fic{.gitattributes} & Empêche Git de modifier les fins de ligne des fichiers CSV. \\
 \addlinespace
 \dossier[1.2]{.github/workflows/} & \\*
-\fic[2.4]{*.yml} & Automatisations GitHub Actions : construction des images (JupyterLab, Superset,
-  Airflow), préparation des données. Réservées à l'enseignant. \\
+\fic[2.4]{*.yml} & Automatisations GitHub Actions (construction des images JupyterLab, Superset et
+  Airflow, préparation des données), réservées à l'enseignant. \\
 \addlinespace
 \dossier[1.2]{docker/} & Recettes de construction des images du cours. \\*
-\fic[2.4]{jupyter/Dockerfile} & Image JupyterLab : Java, Spark, connecteurs Iceberg, Delta Lake et S3,
-  bibliothèques Python et dbt. \\
+\fic[2.4]{jupyter/Dockerfile} & Image JupyterLab, avec Java, Spark, les connecteurs Iceberg, Delta Lake
+  et S3, les bibliothèques Python et dbt. \\
 \fic[2.4]{jupyter/requirements.txt} & Liste des bibliothèques Python et de leurs versions. \\
 \fic[2.4]{superset/Dockerfile} & Image Superset avec le pilote Trino. \\
 \fic[2.4]{superset/superset-init.sh} & Initialisation de Superset au premier démarrage
@@ -575,20 +593,20 @@ sont des dossiers ; les fichiers sont décalés sous le dossier qui les contient
 \fic[2.4]{airflow/} & Image Airflow, construite sur l'image JupyterLab (TP 3). \\
 \addlinespace
 \dossier[1.2]{conf/} & Fichiers de configuration lus par les services au démarrage. \\*
-\fic[2.4]{spark/} & Réglages de Spark dans JupyterLab : catalogue \texttt{lakehouse}, accès au
-  stockage S3, extensions Iceberg et Delta (\texttt{spark-defaults.conf}), niveau des messages
-  affichés (\texttt{log4j2.properties}). \\
+\fic[2.4]{spark/} & Réglages de Spark dans JupyterLab. \texttt{spark-defaults.conf} configure le
+  catalogue \texttt{lakehouse}, l'accès au stockage S3 et les extensions Iceberg et Delta, et
+  \texttt{log4j2.properties} règle le niveau des messages affichés. \\
 \fic[2.4]{trino/catalog/} & Catalogues SQL visibles dans Trino : \\*
 \fic[3.6]{lakehouse.properties} & connexion au même catalogue Iceberg que Spark ; \\
 \fic[3.6]{postgres.properties} & la base PostgreSQL du TP 1 (fédération, TP 3) ; \\
 \fic[3.6]{tpch.properties} & jeu de données de démonstration intégré à Trino. \\
 \fic[2.4]{spark-airflow/} & Réglages de Spark pour les tâches Airflow, avec l'envoi du lineage (TP 3). \\
 \fic[2.4]{prometheus/} & Sources de métriques collectées (\texttt{prometheus.yml}) et traduction des
-  métriques d'Airflow (\texttt{statsd\_mapping.yml}) (TP 3). \\
+  métriques d'Airflow (\texttt{statsd\_mapping.yml}), pour le TP 3. \\
 \fic[2.4]{grafana/} & Tableau de bord \og Lakehouse -- supervision \fg{}, source de données et
   alerte \og Exécution de DAG en échec \fg{}, chargés au démarrage de Grafana (TP 3). \\
-\fic[2.4]{marquez/marquez.yml} & Configuration de Marquez : sa base dans le PostgreSQL du cours (TP 3). \\
-\fic[2.4]{dbt/profiles.yml} & Connexions de dbt : cible \texttt{spark} et cible \texttt{trino} (TP 2 et 3). \\
+\fic[2.4]{marquez/marquez.yml} & Configuration de Marquez, dont la base est rangée dans le PostgreSQL du cours (TP 3). \\
+\fic[2.4]{dbt/profiles.yml} & Connexions de dbt, avec une cible \texttt{spark} et une cible \texttt{trino} (TP 2 et 3). \\
 \addlinespace
 \dossier[1.2]{scripts/} & Scripts Python exécutés dans le conteneur JupyterLab. \\*
 \fic[2.4]{init\_buckets.py} & Crée les espaces de stockage \texttt{landing} et \texttt{lakehouse}
@@ -602,8 +620,8 @@ sont des dossiers ; les fichiers sont décalés sous le dossier qui les contient
 \fic[2.4]{generer\_suivi.py}, \dots & Scripts de préparation des données, réservés à l'enseignant. \\
 \addlinespace
 \dossier[1.2]{data/olist/} & Jeu de données Olist (commerce en ligne brésilien). \\*
-\fic[2.4]{*.csv} & Les fichiers de données : commandes, clients, produits, paiements, avis (en
-  portugais et traduits en anglais)\dots \\
+\fic[2.4]{*.csv} & Les fichiers de données (commandes, clients, produits, paiements, avis en
+  portugais et traduits en anglais, etc.). \\
 \fic[2.4]{suivi/} & Messages JSON du suivi des colis (TP 2). \\
 \fic[2.4]{README.md} & Provenance et licence des données (CC BY-NC-SA 4.0). \\
 \addlinespace
@@ -611,21 +629,21 @@ sont des dossiers ; les fichiers sont décalés sous le dossier qui les contient
 \dossier[1.2]{data/modeles/} & Modèle de vision MobileNet, au format ONNX (TP 3). \\
 \addlinespace
 \dossier[1.2]{notebooks/} & \\*
-\fic[2.4]{tp1/}, \texttt{tp2/}, \texttt{tp3/} & Énoncés des TP : notebooks, projet dbt (TP 2), scripts du
-  pipeline et DAG (TP 3). À copier, ne pas modifier. \\
-\fic[2.4]{\textbf{mon\_travail/}} & \textbf{Votre dossier de travail}, ignoré par Git : vous y copiez
+\fic[2.4]{tp1/}, \texttt{tp2/}, \texttt{tp3/} & Énoncés des TP (notebooks, projet dbt du TP 2, scripts
+  du pipeline et DAG du TP 3), à copier sans les modifier. \\
+\fic[2.4]{\textbf{mon\_travail/}} & \textbf{Votre dossier de travail}, ignoré par Git. Vous y copiez
   les énoncés et y écrivez votre code. \\
 \addlinespace
 \dossier[1.2]{apps/} & \\*
-\fic[2.4]{dashboard\_tp1.py}, \dots & Squelettes des tableaux de bord Streamlit des TP 1 et 2. À copier, ne pas modifier. \\
+\fic[2.4]{dashboard\_tp1.py}, \dots & Squelettes des tableaux de bord Streamlit des TP 1 et 2, à copier sans les modifier. \\
 \addlinespace
 \dossier[1.2]{docs/} & Supports du module (sources \LaTeX{}) et leurs images. \\*
 \end{xltabular}
 }
 
-\textbf{À retenir :} Vous ne modifiez que deux choses : le fichier \cmd{.env} (créé à l'étape~2)
-et le contenu de \cmd{notebooks/mon\_travail/}. Tout le reste appartient au cours et est mis à jour
-par \cmd{git pull}. Les fichiers vides \cmd{.gitkeep} servent seulement à faire exister un dossier
+\textbf{À retenir :} vous ne modifiez que deux choses, le fichier \cmd{.env} (créé à l'étape~2)
+et le contenu de \cmd{notebooks/mon\_travail/}. Tout le reste appartient au cours et se met à jour
+avec \cmd{git pull}. Les fichiers vides \cmd{.gitkeep} servent seulement à faire exister un dossier
 vide dans Git.
 
 % =====================================================================
@@ -702,15 +720,15 @@ spark.sql("""
 
 \begin{resultat}
 La cellule 3 affiche \textbf{deux versions} de la table : l'insertion, puis la modification.
-Un Lakehouse garde l'historique des données ; vous l'exploiterez dans le TP 1.
+Un Lakehouse garde l'historique des données, et vous l'exploiterez dans le TP 1.
 \end{resultat}
 
 % =====================================================================
 \section{Quels services pour quelle partie}\label{sec:services}
 % =====================================================================
 
-Chaque outil consomme de la mémoire : on ne démarre que ceux dont la partie a besoin. Les supports
-des TP rappellent ces commandes au bon moment.
+Chaque outil consomme de la mémoire, donc on ne démarre que ceux dont la partie a besoin. Les
+supports des TP rappellent ces commandes au bon moment.
 
 \begin{center}
 \small
@@ -730,11 +748,11 @@ TP 3, partie 5           & base + Airflow + supervision et Marquez     & \cmd{ob
 
 Pour démarrer ou arrêter un profil :
 \begin{lstlisting}[style=shell]
-docker compose --profile orchestration up -d      # démarrer (ici : Airflow)
-docker compose --profile full stop                # arrêter (ici : Trino et Superset)
+docker compose --profile orchestration up -d      # démarrer (ici Airflow)
+docker compose --profile full stop                # arrêter (ici Trino et Superset)
 \end{lstlisting}
 En partie 5, redémarrez Airflow \emph{après} avoir lancé la supervision
-(\cmd{docker compose -{}-profile orchestration restart airflow}) : il ne cherche le service de
+(\cmd{docker compose -{}-profile orchestration restart airflow}), car il ne cherche le service de
 métriques qu'à son démarrage.
 
 % =====================================================================
@@ -761,7 +779,7 @@ Arrêter (en gardant mes données)   & docker compose -{}-profile full -{}-profi
 \end{center}
 
 \begin{attention}
-N'ajoutez \textbf{jamais} l'option \cmd{-v} à \cmd{docker compose down} : elle efface toutes les
+N'ajoutez \textbf{jamais} l'option \cmd{-v} à \cmd{docker compose down}, car elle efface toutes les
 données du Lakehouse. Vos notebooks, eux, restent dans le dossier \texttt{notebooks/mon\_travail/}.
 \end{attention}
 
@@ -777,23 +795,23 @@ données du Lakehouse. Vos notebooks, eux, restent dans le dossier \texttt{noteb
 \textbf{Ce que vous voyez} & \textbf{Ce qu'il faut faire} \\
 \midrule
 Un service est à l'état \texttt{Restarting} ou \texttt{Exited} &
-  Lire ses messages : \cmd{docker compose logs -{}-tail 50 <service>}. La cause est presque
+  Lire ses messages avec \cmd{docker compose logs -{}-tail 50 <service>}. La cause est presque
   toujours dans les dernières lignes. \\
 \texttt{Exited (137)} &
-  Le service a manqué de mémoire : arrêtez les outils dont la partie n'a pas besoin
+  Le service a manqué de mémoire. Arrêtez les outils dont la partie n'a pas besoin
   (section~\ref{sec:services}), puis relancez-le. \\
 \texttt{port is already allocated} &
-  Un autre logiciel utilise ce port : changez la ligne \cmd{PORT\_...} correspondante dans
-  \cmd{.env}, puis \cmd{docker compose up -d}. \\
+  Un autre logiciel utilise ce port. Changez la ligne \cmd{PORT\_...} correspondante dans
+  \cmd{.env}, puis lancez \cmd{docker compose up -d}. \\
 \texttt{Failed to resolve 'trino'} (ou un autre nom de service) dans un notebook &
-  Ce service n'est pas démarré : lancez son profil (section~\ref{sec:services}). \\
+  Ce service n'est pas démarré. Lancez son profil (section~\ref{sec:services}). \\
 Grafana n'affiche aucune métrique d'Airflow &
-  Airflow a démarré avant la supervision : \cmd{docker compose -{}-profile orchestration restart airflow}. \\
+  Airflow a démarré avant la supervision. Redémarrez-le avec \cmd{docker compose -{}-profile orchestration restart airflow}. \\
 \texttt{git pull} refuse de s'exécuter &
-  Un fichier du cours a été modifié par erreur : \cmd{git restore .} le rétablit, sans toucher à
+  Un fichier du cours a été modifié par erreur. La commande \cmd{git restore .} le rétablit, sans toucher à
   \cmd{notebooks/mon\_travail/}. \\
 Un dossier supprimé par erreur dans JupyterLab &
-  JupyterLab le déplace dans la corbeille \cmd{notebooks/.Trash-1000/} : remettez-le en place
+  JupyterLab le déplace dans la corbeille \cmd{notebooks/.Trash-1000/}. Remettez-le en place
   depuis le terminal Ubuntu avec \cmd{mv}. Un fichier du cours se récupère aussi avec
   \cmd{git restore}. \\
 \bottomrule
@@ -817,13 +835,13 @@ Un dossier supprimé par erreur dans JupyterLab &
 \section{Compte rendu}\label{sec:cr}
 % =====================================================================
 
-Une à deux pages, au format PDF, nommé \cmd{NOM\_Prenom\_Support0.pdf}. Il contient :
+Au format PDF, nommé \cmd{NOM\_Prenom\_Support0.pdf}, il contient :
 \begin{enumerate}[leftmargin=*,itemsep=2pt]
   \item la capture d'écran du test de l'étape 6 et celle du premier test dans JupyterLab ;
-  \item votre configuration : système d'exploitation, mémoire vive, profil lancé (base ou \cmd{full}) ;
+  \item votre configuration (système d'exploitation, mémoire vive, profils lancés) ;
   \item les problèmes rencontrés pendant l'installation et la façon dont vous les avez résolus
         (\og aucun \fg{} est une réponse acceptée) ;
-  \item en quelques lignes, avec vos mots : le rôle du stockage S3, du catalogue et de Spark,
+  \item en quelques lignes et avec vos mots, le rôle du stockage S3, du catalogue et de Spark,
         et ce que montre l'historique de la table \cmd{villes}.
 \end{enumerate}
 
