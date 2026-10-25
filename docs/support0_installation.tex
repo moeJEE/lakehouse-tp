@@ -22,7 +22,7 @@
 \usepackage{tabularx}
 \usepackage{array}
 \usepackage{tikz}
-\usetikzlibrary{positioning,arrows.meta,babel}
+\usetikzlibrary{positioning,arrows.meta,shapes.geometric,babel}
 \usepackage{listings}
 
 \usepackage[htt]{hyphenat}
@@ -50,6 +50,24 @@
 \definecolor{lhbronze}{HTML}{A16207}
 \definecolor{lhsilver}{HTML}{64748B}
 \definecolor{lhgold}{HTML}{CA8A04}
+\definecolor{lhfonce}{HTML}{17394D}
+\definecolor{lhvert}{HTML}{5FB89D}
+% Pictogrammes de la figure d'architecture (dessins génériques)
+\tikzset{
+  pics/fichier/.style={code={%
+    \fill[white,draw=lhfonce,line width=0.7pt] (-0.32,-0.42) -- (0.18,-0.42) -- (0.32,-0.28) -- (0.32,0.42) -- (-0.32,0.42) -- cycle;
+    \draw[lhfonce,line width=0.7pt] (0.18,-0.42) -- (0.18,-0.28) -- (0.32,-0.28);
+    \node[font=\sffamily\bfseries\tiny,text=lhfonce] at (0,0.05) {#1};}},
+  pics/photo/.style={code={%
+    \draw[lhfonce,line width=0.7pt,fill=white,rounded corners=1pt] (-0.38,-0.3) rectangle (0.38,0.3);
+    \fill[lhvert] (-0.3,-0.22) -- (-0.08,0.08) -- (0.06,-0.08) -- (0.14,0.02) -- (0.3,-0.22) -- cycle;
+    \fill[lhgold] (0.18,0.16) circle (0.06);}},
+  pics/table/.style={code={%
+    \node[cylinder,shape border rotate=90,aspect=0.28,draw=#1!75!black,fill=#1!35,
+          minimum width=0.85cm,minimum height=0.95cm,line width=0.6pt] {};}},
+  pastille/.style={circle,fill=lhvert,draw=white,line width=1pt,text=white,
+                   font=\sffamily\bfseries\scriptsize,inner sep=1.6pt},
+}
 
 % ---------- Titres, en-têtes ----------
 \titleformat{\section}{\needspace{6\baselineskip}\Large\bfseries\color{lhblue}}{\thesection.}{0.6em}{}
@@ -89,6 +107,7 @@
 \pdfstringdefDisableCommands{\def\cmd#1{#1}}
 
 % =====================================================================
+\newcommand{\pastilletexte}[1]{\tikz[baseline=(n.base)]\node[circle,fill=lhvert,text=white,font=\sffamily\bfseries\scriptsize,inner sep=1.4pt](n){#1};}
 \begin{document}
 % =====================================================================
 
@@ -121,123 +140,123 @@ Matériel & 8~Go de RAM minimum (16~Go conseillés) et 15~Go d'espace disque lib
 % =====================================================================
 
 Tout l'environnement tourne dans \textbf{Docker} : vous n'installez ni Java, ni Spark, ni Python à la main.
-Comme dans une plateforme Lakehouse d'entreprise, les outils sont organisés en \textbf{couches}
-(figure~\ref{fig:archi}) : les données arrivent des sources, sont traitées puis rangées dans le
-stockage, sous le contrôle d'un catalogue ; elles servent ensuite à la visualisation et à l'IA.
-Un orchestrateur enchaîne les traitements, des outils d'observabilité surveillent l'ensemble, et le
-tout repose sur une infrastructure de conteneurs.
+Comme dans une plateforme Lakehouse d'entreprise, les outils sont organisés en couches
+(figure~\ref{fig:archi}) : les sources à gauche, la plateforme au centre (traitement, tables par
+couche, catalogue et stockage ouvert), les usages à droite ; l'orchestration et l'observabilité
+l'encadrent, et le tout repose sur des conteneurs Docker.
 
 \begin{figure}[h]
 \centering
 \resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[
   font=\sffamily\small, >=Stealth,
-  couche/.style={draw=#1,fill=#1!6,rounded corners=5pt,thick},
-  titre/.style={anchor=north west,font=\sffamily\footnotesize\bfseries,text=#1!80!black,align=left},
-  outil/.style={draw=black!25,fill=white,rounded corners=3pt,minimum height=1.05cm,
-                text width=#1,align=center,inner sep=3pt,execute at begin node={\hyphenpenalty=10000}},
-  outil/.default=3.3cm,
-  num/.style={circle,fill=lhblue,text=white,font=\sffamily\bfseries\scriptsize,inner sep=1.4pt}]
+  barre/.style={fill=lhfonce,text=white,font=\sffamily\bfseries\small,minimum height=0.6cm,inner sep=0pt},
+  cadre/.style={draw=lhfonce,line width=0.8pt},
+  bloc/.style={draw=lhfonce!60,line width=0.6pt,fill=white},
+  et/.style={font=\sffamily\scriptsize,text=lhfonce,align=center}]
 
-% ---------------- Observabilité et supervision ----------------
-\draw[couche=lhgold] (0,0) rectangle (22,-1.9);
-\node[titre=lhgold] at (0.15,-0.15) {Observabilité\\et supervision};
-\node[outil] (pr) at (5.6,-1.0)  {\logo{prometheus}\textbf{Prometheus}\\\scriptsize collecte les métriques};
-\node[outil] (gr) at (9.3,-1.0)  {\logo{grafana}\textbf{Grafana}\\\scriptsize tableaux de bord, alertes};
-\node[outil] (mq) at (13.0,-1.0) {\logo{marquez}\textbf{Marquez}\\\scriptsize lineage (OpenLineage)};
-\node[outil=4.2cm] (ex) at (18.4,-1.0) {\textbf{Collecteurs}\\\scriptsize statsd-exporter, mesure des conteneurs};
+% ===== 1. Sources =====
+\draw[cadre] (0,0) rectangle (3.2,-10.2);
+\node[barre,minimum width=3.2cm,anchor=north west] at (0,0) {Sources};
+\node[pastille] at (0,0) {1};
+\node at (1.6,-1.55) {\logo[2.2em]{postgres}};  \node[et] at (1.6,-2.3) {Base de\\données};
+\pic at (1.6,-3.55) {fichier=CSV};             \node[et] at (1.6,-4.25) {Fichiers CSV};
+\pic at (1.6,-5.4) {fichier=\{ \}};            \node[et] at (1.6,-6.1) {Messages JSON};
+\pic at (1.6,-7.2) {photo};                    \node[et] at (1.6,-7.85) {Photos};
 
-% ---------------- Orchestration ----------------
-\draw[couche=lhblue] (0,-2.2) rectangle (22,-3.5);
-\node[titre=lhblue] at (0.15,-2.35) {Orchestration};
-\node[outil=7.6cm,minimum height=0.8cm] (af) at (9.3,-2.85)
-  {\logo{airflow}\textbf{Airflow}\qquad\scriptsize planifie et enchaîne les traitements};
+% ===== Plateforme Lakehouse =====
+\draw[draw=lhblue,line width=2.4pt] (3.9,0) rectangle (16.3,-10.2);
+\node[fill=lhblue,text=white,font=\sffamily\bfseries,minimum width=12.4cm,minimum height=0.7cm,anchor=north west]
+  at (3.9,0) {Plateforme Lakehouse};
+\node[barre,minimum width=5.7cm] (orch) at (7.2,-1.25) {\logo[1.1em]{airflow}Orchestration};
+\node[barre,minimum width=5.9cm] (obs)  at (13.1,-1.25)
+  {\logo[1.1em]{prometheus}\logo[1.1em]{grafana}\logo[1.1em]{marquez}Observabilité};
 
-% ---------------- Sources ----------------
-\draw[couche=gray] (0,-3.8) rectangle (3.8,-10.2);
-\node[titre=gray] at (0.15,-3.95) {Sources};
-\node[outil=3.1cm] (pg) at (1.9,-5.0) {\logo{postgres}\textbf{PostgreSQL}\\\scriptsize base de l'application};
-\node[outil=3.1cm] (fi) at (1.9,-6.35)  {\textbf{Fichiers}\\\scriptsize CSV, JSON, photos};
+% 2. Traitement
+\draw[bloc] (4.35,-2.2) rectangle (7.25,-6.1);
+\node[pastille] at (4.35,-2.2) {2};
+\node[et,font=\sffamily\bfseries\scriptsize] at (5.8,-2.55) {Traitement};
+\node at (5.8,-3.35) {\logo[1.7em]{jupyter}}; \node[et] at (5.8,-3.9) {JupyterLab};
+\node at (5.8,-4.6)  {\logo[1.5em]{spark}\logo[1.5em]{dbt}}; \node[et] at (5.8,-5.15) {Spark, dbt};
 
-% ---------------- Traitement et requêtes ----------------
-\draw[couche=lhblue] (4.2,-3.8) rectangle (14.8,-6.6);
-\node[titre=lhblue] at (4.35,-3.95) {Traitement et requêtes};
-\node[outil=3.0cm] (jup) at (6.0,-5.2)  {\logo{jupyter}\textbf{JupyterLab}\\\scriptsize développement};
-\node[outil=3.4cm] (sp)  at (9.5,-5.2)  {\logo{spark}\textbf{Spark}\ \ \logo[1em]{dbt}\textbf{dbt}\\\scriptsize calcul, modèles SQL};
-\node[outil=3.0cm] (tr)  at (13.0,-5.2) {\logo{trino}\textbf{Trino}\\\scriptsize SQL interactif};
+% 3. Couches de données
+\draw[bloc] (7.85,-2.2) rectangle (15.85,-6.1);
+\node[pastille] at (7.85,-2.2) {3};
+\node[et,font=\sffamily\bfseries\scriptsize] at (11.85,-2.55) {Tables par couche};
+\pic at (8.9,-4.2)  {table=gray};      \node[et] at (8.9,-5.15)  {landing};
+\pic at (10.9,-4.2) {table=lhbronze};  \node[et] at (10.9,-5.15) {bronze};
+\pic at (12.9,-4.2) {table=lhsilver};  \node[et] at (12.9,-5.15) {silver};
+\pic at (14.9,-4.2) {table=lhgold};    \node[et] at (14.9,-5.15) {gold};
+\draw[->,thick,lhfonce] (9.45,-4.2) -- (10.35,-4.2);
+\draw[->,thick,lhfonce] (11.45,-4.2) -- (12.35,-4.2);
+\draw[->,thick,lhfonce] (13.45,-4.2) -- (14.35,-4.2);
+\draw[<->,thick,lhfonce] (7.25,-4.2) -- (7.85,-4.2);
 
-% ---------------- Visualisation, IA / ML ----------------
-\draw[couche=lhsilver] (15.2,-3.8) rectangle (22,-5.1);
-\node[titre=lhsilver] at (15.35,-3.9) {Visualisation};
-\node[outil=6.2cm,minimum height=0.65cm] (vi) at (18.6,-4.68)
-  {\logo{superset}\textbf{Superset}\qquad\logo{streamlit}\textbf{Streamlit}};
-\draw[couche=lhsilver] (15.2,-5.3) rectangle (22,-6.6);
-\node[titre=lhsilver] at (15.35,-5.4) {IA / ML};
-\node[outil=6.2cm,minimum height=0.65cm] (ia) at (18.6,-6.18)
-  {\logo{sklearn}\textbf{scikit-learn}\quad\logo{onnx}\textbf{ONNX}\quad\logo[0.95em]{mlflow}};
+% Socle : catalogue et stockage ouvert
+\node[fill=lhblue,text=white,font=\sffamily\bfseries\small,minimum width=11.5cm,minimum height=0.6cm]
+  at (10.1,-6.85) {Lakehouse ouvert};
+\draw[bloc] (4.35,-7.3) rectangle (8.35,-9.75);
+\node[barre,minimum width=4.0cm,anchor=north west] at (4.35,-7.3) {Catalogue};
+\node[et,font=\sffamily\scriptsize] at (6.35,-8.55) {\logo[2.0em]{iceberg}\\[2pt]Iceberg REST};
+\draw[bloc] (8.75,-7.3) rectangle (15.85,-9.75);
+\node[barre,minimum width=7.1cm,anchor=north west] at (8.75,-7.3) {Stockage ouvert (S3)};
+\node[et,font=\sffamily\scriptsize] at (10.0,-8.55) {\logo[2.0em]{rustfs}\\[2pt]RustFS};
+\node[et,font=\sffamily\scriptsize] at (11.9,-8.55) {\logo[2.0em]{iceberg}\\[2pt]Iceberg};
+\node[et,font=\sffamily\scriptsize] at (13.6,-8.55) {\logo[2.0em]{parquet}\\[2pt]Parquet};
+\node[et,font=\sffamily\scriptsize] at (15.0,-8.55) {\logo[2.0em]{delta}\\[2pt]Delta Lake};
 
-% ---------------- Catalogue ----------------
-\draw[couche=gray] (4.2,-6.9) rectangle (22,-8.0);
-\node[titre=gray] at (4.35,-7.05) {Catalogue};
-\node[outil=7.6cm,minimum height=0.75cm] (cat) at (14.6,-7.45)
-  {\logo{iceberg}\textbf{Catalogue Iceberg}\quad\scriptsize l'annuaire des tables};
+% ===== Usages =====
+\draw[cadre] (17.0,0) rectangle (20.4,-2.95);
+\node[pastille] at (17.0,0) {4};
+\node at (18.7,-1.05) {\logo[2em]{trino}}; \node[et] at (18.7,-1.95) {Requêtes SQL\\(Trino)};
+\draw[cadre] (17.0,-3.6) rectangle (20.4,-6.55);
+\node[pastille] at (17.0,-3.6) {5};
+\node at (18.7,-4.65) {\logo[1.8em]{superset}\logo[1.8em]{streamlit}}; \node[et] at (18.7,-5.55) {Tableaux\\de bord};
+\draw[cadre] (17.0,-7.2) rectangle (20.4,-10.2);
+\node[pastille] at (17.0,-7.2) {6};
+\node at (18.7,-8.25) {\logo[2em]{sklearn}}; \node[et] at (18.7,-9.2) {IA et\\apprentissage};
 
-% ---------------- Stockage ----------------
-\draw[couche=lhbronze] (4.2,-8.3) rectangle (22,-10.2);
-\node[titre=lhbronze] at (4.35,-8.45) {Stockage};
-\node[outil=14.6cm,minimum height=1.25cm] (s3) at (13.6,-9.3)
-  {\textbf{Stockage objet S3 (RustFS)}\qquad\scriptsize tables Iceberg (fichiers Parquet), Delta Lake\\[4pt]
-   \texttt{landing} $\rightarrow$ \colorbox{lhbronze!30}{bronze} $\rightarrow$
-   \colorbox{lhsilver!30}{silver} $\rightarrow$ \colorbox{lhgold!30}{gold}};
+% ===== Infrastructure =====
+\node[fill=lhfonce,text=white,minimum width=20.4cm,minimum height=0.75cm,anchor=north west] at (0,-10.6)
+  {\logo[1.3em]{docker}\textbf{Infrastructure : conteneurs Docker}\quad\footnotesize réseau privé,
+   volumes, processeur et mémoire};
 
-% ---------------- Infrastructure ----------------
-\draw[couche=black] (0,-10.5) rectangle (22,-11.7);
-\node[titre=black] at (0.15,-10.65) {Infrastructure};
-\node[align=center] at (12.0,-11.1)
-  {\logo[1.4em]{docker}\textbf{Docker Compose}\qquad\scriptsize un conteneur par service, réseau privé,
-   volumes persistants, limites de processeur et de mémoire};
-
-% ---------------- Flux ----------------
-\draw[->,thick] (pg.east) -- ++(0.55,0) |- node[num,pos=0.75,above=1pt]{1} ([yshift=2mm]jup.west);
-\draw[->,thick] (fi.east) -- ++(0.55,0) |- ([yshift=-2mm]jup.west);
-\draw[->,thick] ([xshift=-6mm]sp.south) -- node[num,left=2pt,pos=0.3]{2} ([xshift=-6mm]sp.south |- s3.north);
-\draw[->,thick] ([xshift=6mm]sp.south) -- node[num,above right=0pt]{3} ([xshift=-3.0cm]cat.north);
-\draw[<-,thick] (tr.south) -- node[num,right=2pt]{4} (tr.south |- cat.north);
-\draw[->,thick] (tr.east) -- node[num,above=2pt]{5} (15.2,0 |- tr.east);
-\draw[->,thick] (sp.north |- af.south) -- node[num,right=2pt]{6} (sp.north);
-\draw[->] ([xshift=-2.4cm]af.north) -- node[num,left=2pt]{7} ([xshift=-2.4cm]af.north |- pr.south);
-\draw[->] ([xshift=3.7cm]af.north) -- ([xshift=3.7cm]af.north |- mq.south);
+% ===== Flux =====
+\draw[->,very thick,lhfonce] (3.2,-3.55) -- (3.9,-3.55);
+\draw[->,very thick,lhfonce] (3.2,-5.4) -- (3.9,-5.4);
+\draw[->,very thick,lhfonce] (16.3,-1.5) -- (17.0,-1.5);
+\draw[->,very thick,lhfonce] (16.3,-5.1) -- (17.0,-5.1);
+\draw[->,very thick,lhfonce] (16.3,-8.7) -- (17.0,-8.7);
 \end{tikzpicture}}
-\caption{Architecture de l'environnement, organisée en couches. Tous les services tournent dans des
-conteneurs Docker.}
+\caption{Architecture de l'environnement. Tous les services tournent dans des conteneurs Docker.}
 \label{fig:archi}
 \end{figure}
 
 \subsection*{Le trajet d'une donnée}
 
 \begin{description}[leftmargin=1.4em,labelindent=0pt,itemsep=3pt,font=\normalfont]
-\item[\etape{1}] \textbf{Spark lit les sources} : la base PostgreSQL (connexion JDBC) et les fichiers
-  bruts déposés dans le dossier \texttt{landing/} du stockage S3.
-\item[\etape{2}] \textbf{Spark écrit la table} dans le stockage : des fichiers \emph{Parquet} qui
-  contiennent les données, et des fichiers \emph{JSON} qui les décrivent (schéma, liste des
-  fichiers, numéro de version).
-\item[\etape{3}] \textbf{Spark déclare la nouvelle version au catalogue} : \og la table
-  \texttt{lakehouse.bronze.orders}, c'est désormais ce fichier de métadonnées \fg{}.
-\item[\etape{4}] \textbf{Trino demande au catalogue} où se trouve une table, puis lit directement ses
-  fichiers : il voit exactement les données que Spark vient d'écrire, sans copie.
-\item[\etape{5}] \textbf{Les usages consomment la couche gold} : Superset interroge Trino ; les
-  tableaux de bord Streamlit et les modèles d'IA (scikit-learn, ONNX) lisent les tables avec Spark.
-\item[\etape{6}] \textbf{Airflow automatise} les traitements : il lance chaque jour les mêmes scripts
-  Spark et le même projet dbt que ceux écrits dans JupyterLab.
-\item[\etape{7}] \textbf{L'observabilité regarde la plateforme tourner} : Prometheus et Grafana
-  mesurent les services (mémoire, processeur, durée et échecs des tâches) ; Marquez enregistre le
-  \emph{lineage}, c'est-à-dire quel job a lu et écrit quelle table, et avec quel résultat.
+\item[\pastilletexte{1}] \textbf{Les sources} : une base de données PostgreSQL, qui joue le rôle de
+  l'application métier, et des fichiers bruts (CSV, messages JSON, photos) déposés dans la zone
+  \texttt{landing} du stockage.
+\item[\pastilletexte{2}] \textbf{Le traitement} : depuis JupyterLab, Spark lit les sources et
+  transforme les données ; dbt organise les transformations SQL en modèles testés et documentés.
+\item[\pastilletexte{3}] \textbf{Les tables par couche} : chaque étape produit des tables
+  \emph{bronze} (données brutes), \emph{silver} (nettoyées) puis \emph{gold} (prêtes à l'usage).
+  Spark écrit leurs fichiers \emph{Parquet} dans le stockage objet (RustFS, compatible S3) et
+  déclare chaque nouvelle version au \textbf{catalogue Iceberg} : l'annuaire qui dit où se trouve
+  chaque table.
+\item[\pastilletexte{4}] \textbf{Les requêtes SQL} : Trino demande au catalogue où se trouve une
+  table, puis lit directement ses fichiers, sans copie.
+\item[\pastilletexte{5}] \textbf{Les tableaux de bord} : Superset interroge Trino ; Streamlit lit
+  les tables gold avec Spark.
+\item[\pastilletexte{6}] \textbf{L'IA} : des modèles scikit-learn apprennent sur les tables gold ;
+  un réseau de neurones pré-entraîné (MobileNet, exécuté avec ONNX Runtime) décrit les photos.
 \end{description}
 
-\textbf{Et dbt ?} Dans les TP 2 et 3, une partie des transformations est écrite sous forme de
-\emph{modèles} dbt : de simples fichiers SQL, testés et documentés. dbt ne stocke rien lui-même :
-il génère les requêtes et les fait exécuter par Spark (ou par Trino). Le trajet reste donc le même,
-à partir de l'étape \etape{2}.
+Deux services encadrent la plateforme : \textbf{Airflow} enchaîne automatiquement les traitements,
+chaque jour ; les outils d'\textbf{observabilité} la surveillent : Prometheus et Grafana mesurent les
+services (mémoire, processeur, durée et échecs des tâches), Marquez enregistre le \emph{lineage}
+(quel job a lu et écrit quelle table).
 
 \subsection*{Les composants}
 
@@ -288,10 +307,9 @@ statsd-exporter, mesure des conteneurs &
   Deux petits services qui fournissent les métriques à Prometheus : celles d'Airflow (durée et
   état des tâches), et la mémoire et le processeur de chaque conteneur (lus auprès de Docker). &
   Agents de supervision & \texttt{-{}-profile} \\
-scikit-learn, ONNX Runtime, MLflow &
+scikit-learn, ONNX Runtime &
   L'IA et l'apprentissage automatique : entraîner des modèles sur les tables gold, utiliser un
-  réseau de neurones pré-entraîné (format ONNX), garder la trace des expériences. Installés dans
-  le conteneur JupyterLab. &
+  réseau de neurones pré-entraîné (format ONNX). Installés dans le conteneur JupyterLab. &
   Databricks ML, SageMaker & auto \\
 Marquez &
   L'observabilité des données : le lineage (quelle table est produite par quel job, à
