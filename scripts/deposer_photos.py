@@ -18,6 +18,11 @@ lot = parser.parse_args().lot
 
 s3 = boto3.client("s3", endpoint_url=os.environ["S3_ENDPOINT"])
 if lot == 1:
+    # Le lot 1 ouvre le catalogue : on repart d'une zone d'atterrissage vide (photos d'une exécution
+    # précédente, lot 2 compris, et liste des photos déjà ingérées), pour que le TP soit rejouable.
+    for page in s3.get_paginator("list_objects_v2").paginate(Bucket="landing", Prefix="catalogue/"):
+        for o in page.get("Contents", []):
+            s3.delete_object(Bucket="landing", Key=o["Key"])
     s3.upload_file(str(CATALOGUE / "produits.jsonl"), "landing", "catalogue/produits.jsonl")
 n = 0
 for v in LOTS[lot]:

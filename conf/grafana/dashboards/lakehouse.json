@@ -29,7 +29,8 @@
      "color": {
       "mode": "fixed",
       "fixedColor": "green"
-     }
+     },
+     "decimals": 0
     },
     "overrides": []
    },
@@ -44,7 +45,7 @@
    "targets": [
     {
      "refId": "A",
-     "expr": "sum(increase(airflow_taches_reussies_total[24h]))"
+     "expr": "round(sum(increase(airflow_taches_reussies_total[24h])))"
     }
    ]
   },
@@ -66,8 +67,21 @@
     "defaults": {
      "unit": "none",
      "color": {
-      "mode": "fixed",
-      "fixedColor": "red"
+      "mode": "thresholds"
+     },
+     "decimals": 0,
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "red",
+        "value": 1
+       }
+      ]
      }
     },
     "overrides": []
