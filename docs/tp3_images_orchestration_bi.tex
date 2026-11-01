@@ -475,7 +475,6 @@ que les fichiers utiles (figure~\ref{fig:optim}).
 
 \begin{figure}[H]
 \centering
-\resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[font=\sffamily\footnotesize, >=Stealth,
   f/.style={draw=lhfonce,fill=lhsilver!30,minimum width=#1,minimum height=0.32cm,inner sep=0pt},
   lu/.style={draw=lhfonce,fill=lhvert,minimum width=1.5cm,minimum height=0.5cm,inner sep=0pt},
@@ -496,7 +495,7 @@ que les fichiers utiles (figure~\ref{fig:optim}).
 \node[lu,minimum width=0.75cm,minimum height=0.6cm] at (3.2,-0.45) {};
 \node[et] at (2.4,-1.25) {\texttt{WHERE vendeur = '03'} : un seul fichier lu};
 \end{scope}
-\end{tikzpicture}}
+\end{tikzpicture}
 \caption{Les deux optimisations de la partie 3 : le compactage regroupe les petits fichiers, et le
 partitionnement permet à une requête filtrée de ne lire que les fichiers utiles (en vert).}
 \label{fig:optim}
