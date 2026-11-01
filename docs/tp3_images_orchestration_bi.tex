@@ -22,7 +22,7 @@
 \usepackage{tabularx}
 \usepackage{array}
 \usepackage{tikz}
-\usetikzlibrary{positioning,arrows.meta,babel}
+\usetikzlibrary{positioning,arrows.meta,shapes.geometric,babel}
 \usepackage{listings}
 
 \usepackage[htt]{hyphenat}
@@ -58,6 +58,28 @@
 \definecolor{lhbronze}{HTML}{A16207}
 \definecolor{lhsilver}{HTML}{64748B}
 \definecolor{lhgold}{HTML}{CA8A04}
+\definecolor{lhfonce}{HTML}{17394D}
+\definecolor{lhvert}{HTML}{5FB89D}
+% Logos des logiciels (docs/images/logos/, voir LISEZMOI.md) ; sans le fichier, rien ne s'affiche
+\newcommand{\logo}[2][1.15em]{\IfFileExists{images/logos/#2.png}{\raisebox{-0.22em}{\includegraphics[height=#1]{images/logos/#2.png}}\hspace{0.3em}}%
+  {\IfFileExists{logos/#2.png}{\raisebox{-0.22em}{\includegraphics[height=#1]{logos/#2.png}}\hspace{0.3em}}{}}}
+% Pictogrammes de la figure d'architecture (dessins génériques)
+\tikzset{
+  pics/fichier/.style={code={%
+    \fill[white,draw=lhfonce,line width=0.7pt] (-0.32,-0.42) -- (0.18,-0.42) -- (0.32,-0.28) -- (0.32,0.42) -- (-0.32,0.42) -- cycle;
+    \draw[lhfonce,line width=0.7pt] (0.18,-0.42) -- (0.18,-0.28) -- (0.32,-0.28);
+    \node[font=\sffamily\bfseries\tiny,text=lhfonce] at (0,0.05) {#1};}},
+  pics/photo/.style={code={%
+    \draw[lhfonce,line width=0.7pt,fill=white,rounded corners=1pt] (-0.38,-0.3) rectangle (0.38,0.3);
+    \fill[lhvert] (-0.3,-0.22) -- (-0.08,0.08) -- (0.06,-0.08) -- (0.14,0.02) -- (0.3,-0.22) -- cycle;
+    \fill[lhgold] (0.18,0.16) circle (0.06);}},
+  pics/table/.style={code={%
+    \node[cylinder,shape border rotate=90,aspect=0.28,draw=#1!75!black,fill=#1!35,
+          minimum width=0.85cm,minimum height=0.95cm,line width=0.6pt] {};}},
+  pastille/.style={circle,fill=lhvert,draw=white,line width=1pt,text=white,
+                   font=\sffamily\bfseries\scriptsize,inner sep=1.6pt},
+}
+
 
 % ---------- Titres, en-têtes ----------
 \titleformat{\section}{\needspace{6\baselineskip}\Large\bfseries\color{lhblue}}{\thesection.}{0.6em}{}
@@ -72,7 +94,7 @@
 % Un titre en gras introduit le paragraphe ; seul « Attention » est en rouge.
 \newenvironment{resultat}{\par\medskip\noindent\textbf{Résultat attendu :}\ }{\par\medskip}
 \newenvironment{astuce}{\par\medskip\noindent\textbf{Astuce :}\ }{\par\medskip}
-\newenvironment{attention}{\par\medskip\noindent\textbf{\textcolor{lhred}{Attention :}}\ }{\par\medskip}
+\newenvironment{attention}[1][]{\par\medskip\noindent\textbf{\textcolor{lhred}{Attention\if\relax\detokenize{#1}\relax\else{} -- #1\fi{} :}}\ }{\par\medskip}
 
 % ---------- Code ----------
 \lstset{
@@ -92,11 +114,12 @@
 
 \newcommand{\cmd}[1]{\texttt{#1}}
 \newcommand{\cocher}{$\square$\ }
-\newcommand{\etape}[1]{\tikz[baseline=(n.base)]\node[circle,fill=lhblue,text=white,
-  font=\sffamily\bfseries\scriptsize,inner sep=1.3pt](n){#1};}
+\newcommand{\etape}[1]{\tikz[baseline=(n.base)]\node[circle,fill=lhvert,text=white,
+  font=\sffamily\bfseries\scriptsize,inner sep=1.4pt](n){#1};}
 \pdfstringdefDisableCommands{\def\cmd#1{#1}}
+\hypersetup{pdftitle={TP 3 -- Images, orchestration et BI},pdfauthor={Anouar Riadsolh}}
 
-\newenvironment{notion}{\par\medskip\noindent\textbf{\textcolor{lhblue}{Notion clé :}}\ }{\par\medskip}
+\newenvironment{notion}[1][]{\par\medskip\noindent\textbf{\textcolor{lhblue}{Notion clé\if\relax\detokenize{#1}\relax\else{} -- #1\fi{} :}}\ }{\par\medskip}
 \newcommand{\nb}[1]{\textcolor{lhblue}{\texttt{#1}}}
 
 % =====================================================================
@@ -106,11 +129,13 @@
 \begin{tikzpicture}[remember picture,overlay]
   \fill[lhblue] (current page.north west) rectangle ([yshift=-5.2cm]current page.north east);
   \node[anchor=north west,text=white,font=\sffamily] at ([xshift=2.3cm,yshift=-1.3cm]current page.north west)
-    {Module Data Lakehouse -- Cycle ingénieur 4\textsuperscript{e}/5\textsuperscript{e} année};
+    {Module Data Lakehouse};
   \node[anchor=north west,text=white,font=\sffamily\bfseries\fontsize{26}{30}\selectfont] at ([xshift=2.3cm,yshift=-2.2cm]current page.north west)
     {TP 3 -- Images, orchestration et BI};
   \node[anchor=north west,text=white!85!lhblue,font=\sffamily\large] at ([xshift=2.3cm,yshift=-3.6cm]current page.north west)
     {Un pipeline de bout en bout : automatisé, contrôlé, optimisé et exposé};
+  \node[anchor=north east,text=white!85!lhblue,font=\sffamily] at ([xshift=-2.3cm,yshift=-4.25cm]current page.north east)
+    {Pr.~Anouar Riadsolh};
 \end{tikzpicture}
 \thispagestyle{empty}
 \vspace*{4.2cm}
@@ -133,19 +158,19 @@ Prérequis & TP 1 et TP 2 terminés (tables Silver, projet dbt). Images du cours
 \section{Le scénario}
 % =====================================================================
 
-Olist ouvre un \textbf{catalogue photo} : chaque vendeur envoie les photos de ses produits, avec une
+Olist ouvre un \textbf{catalogue photo}. Chaque vendeur envoie les photos de ses produits, avec une
 fiche descriptive. La direction pose trois exigences :
 
 \begin{enumerate}[leftmargin=*,nosep]
-  \item \textbf{Fiabilité :} aucune photo illisible, minuscule ou en double ne doit arriver dans le
+  \item \textbf{Fiabilité} : aucune photo illisible, minuscule ou en double ne doit arriver dans le
         catalogue, et les fiches mal catégorisées doivent être repérées.
-  \item \textbf{Automatisation :} le traitement doit tourner seul, chaque jour, et s'arrêter de
+  \item \textbf{Automatisation} : le traitement doit tourner seul, chaque jour, et s'arrêter de
         lui-même si un lot est douteux.
-  \item \textbf{Accès :} les équipes métier veulent interroger les données en SQL et disposer d'un
+  \item \textbf{Accès} : les équipes métier veulent interroger les données en SQL et disposer d'un
         tableau de bord partagé, sans dépendre de l'équipe data.
 \end{enumerate}
 
-Ce TP termine le module : vous assemblez une architecture complète, de la donnée brute au tableau de
+Ce TP termine le module. Vous assemblez une architecture complète, de la donnée brute au tableau de
 bord, comme en entreprise.
 
 % =====================================================================
@@ -170,14 +195,14 @@ Tables des TP 1 et 2 & Iceberg & Commandes, avis, livraisons, schéma en constel
 \end{center}
 
 Les photos et les fiches sont un sous-ensemble du jeu public \textbf{Amazon Berkeley Objects}
-(Amazon et université de Berkeley, licence CC BY-NC 4.0) : six types de produits (chaises,
+(Amazon et université de Berkeley, licence CC BY-NC 4.0), avec six types de produits (chaises,
 canapés, tables, tapis, chaussures et sacs à main), environ 500 par type, répartis entre douze
 vendeurs fictifs. Comme dans la
 réalité, le lot contient des défauts, ajoutés volontairement : fichiers coupés pendant l'envoi,
 fichier qui n'est pas une image, vignettes minuscules, même photo envoyée deux fois, ou recadrée.
 
-\begin{notion}
-\textbf{Une image est une donnée non structurée :} pour un ordinateur, ce n'est qu'une grille de
+\begin{notion}[Une image est une donnée non structurée]
+pour un ordinateur, ce n'est qu'une grille de
 pixels. Pour l'exploiter, on en extrait des informations \emph{structurées} : ses dimensions, une
 empreinte qui permet de reconnaître les doublons, et un \textbf{vecteur} de caractéristiques
 calculé par un réseau de neurones, qui résume ce qu'elle montre.
@@ -197,72 +222,122 @@ l'\textbf{observabilité} de toute la plateforme.
 \resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[
   font=\sffamily\small, >=Stealth,
-  col/.style={draw=#1,thick,rounded corners=4pt,fill=#1!7,text width=3.3cm,align=left,
-              inner sep=6pt,font=\sffamily\footnotesize,minimum height=3.0cm},
-  op/.style={font=\sffamily\scriptsize,text=black!70,align=center},
-  num/.style={circle,fill=lhblue,text=white,font=\sffamily\bfseries\scriptsize,inner sep=1.4pt}]
+  barre/.style={fill=lhfonce,text=white,font=\sffamily\bfseries\small,minimum height=0.6cm,inner sep=0pt},
+  cadre/.style={draw=lhfonce,line width=0.8pt},
+  bloc/.style={draw=lhfonce!60,line width=0.6pt,fill=white},
+  et/.style={font=\sffamily\scriptsize,text=lhfonce,align=center},
+  flux/.style={->,very thick,lhfonce}]
 
-\node[col=gray] (src) at (0,0) {\textbf{Sources}\\[3pt] PostgreSQL (TP 1)\\ CSV, avis (TP 1, 2)\\ JSON du suivi (TP 2)\\ \textbf{photos, fiches (TP 3)}};
-\node[col=darkgray] (land) at (4.3,0) {\textbf{Landing}\\ \texttt{s3://landing/}\\[3pt] fichiers déposés\\ tels quels};
-\node[col=lhbronze] (br) at (8.6,0) {\textbf{Bronze}\\[3pt] copie fidèle\\ \texttt{photos} : octets\\ et empreinte \texttt{sha256}};
-\node[col=lhsilver] (si) at (12.9,0) {\textbf{Silver}\\[3pt] contrôlé, dédoublonné\\ \texttt{photos}\\ + quarantaine};
-\node[col=lhgold] (go) at (17.2,0) {\textbf{Gold}\\[3pt] constellation (dbt)\\ \texttt{photos\_vecteurs}\\ \texttt{photos\_controle}};
+% ===== Sources =====
+\draw[cadre] (0,0) rectangle (3.2,-10.2);
+\node[barre,minimum width=3.2cm,anchor=north west] at (0,0) {Sources};
+\node at (1.6,-1.55) {\logo[2.2em]{postgres}};  \node[et] at (1.6,-2.3) {Base de vente\\(TP 1)};
+\pic at (1.6,-3.55) {fichier=CSV};             \node[et] at (1.6,-4.5) {CSV et avis\\(TP 1 et 2)};
+\pic at (1.6,-5.4) {fichier=\{ \}};            \node[et] at (1.6,-6.35) {Suivi des colis\\(TP 2)};
+\pic at (1.6,-7.3) {photo};                    \node[et] at (1.6,-8.15) {\textbf{Photos et fiches}\\\textbf{(TP 3)}};
 
-\draw[->,thick] (src) -- node[num]{1} (land);
-\draw[->,thick] (land) -- node[num]{2} (br);
-\draw[->,thick] (br) -- node[num]{3} (si);
-\draw[->,thick] (si) -- node[num]{4} (go);
+% ===== Plateforme Lakehouse =====
+\draw[draw=lhblue,line width=2.4pt] (3.9,0) rectangle (16.3,-10.2);
+\node[fill=lhblue,text=white,font=\sffamily\bfseries,minimum width=12.4cm,minimum height=0.7cm,anchor=north west]
+  at (3.9,0) {Plateforme Lakehouse};
+\node[barre,minimum width=5.7cm] (orch) at (7.2,-1.25) {\logo[1.1em]{airflow}Orchestration (Airflow)};
+\node[barre,minimum width=5.9cm] (obs)  at (13.1,-1.25)
+  {\logo[1.1em]{prometheus}\logo[1.1em]{grafana}\logo[1.1em]{marquez}Supervision, observabilité};
+\node[pastille] at (orch.north west) {5};
+\node[pastille] at (obs.north west) {10};
 
-% Orchestration
-\node[draw=lhblue,thick,rounded corners=4pt,fill=lhblue!5,minimum width=17.6cm,minimum height=1.1cm,
-      font=\sffamily\footnotesize,align=center] (af) at (10.75,3.0)
-  {\textbf{Apache Airflow} -- DAG \texttt{catalogue\_photos} (chaque jour) et \texttt{maintenance\_iceberg} (chaque semaine)};
-\node[num] at ([xshift=4mm]af.west) {5};
-\node[draw=lhteal,thick,rounded corners=4pt,fill=lhteal!6,minimum width=17.6cm,minimum height=0.8cm,
-      font=\sffamily\footnotesize,align=center] (obs) at (10.75,4.45)
-  {\textbf{Supervision et observabilité} -- Prometheus + Grafana (métriques, alertes) \quad OpenLineage + Marquez (lineage)};
-\foreach \n in {land,br,si,go} \draw[->,lhblue,thick] (af.south -| \n) -- (\n.north);
+% Traitement
+\draw[bloc] (4.35,-2.2) rectangle (7.25,-6.1);
+\node[et,font=\sffamily\bfseries\scriptsize] at (5.8,-2.55) {Traitement};
+\node at (5.8,-3.35) {\logo[1.7em]{jupyter}}; \node[et] at (5.8,-3.9) {JupyterLab};
+\node at (5.8,-4.6)  {\logo[1.5em]{spark}\logo[1.5em]{dbt}}; \node[et] at (5.8,-5.15) {Spark, dbt};
 
-% Exposition et usages
-\node[col=lhblue,minimum height=1.4cm,text width=3.3cm] (tr) at (17.2,-3.6) {\textbf{Trino}\\ SQL interactif\\ et fédération};
-\node[col=lhblue,minimum height=1.4cm,text width=3.3cm] (ss) at (12.9,-3.6) {\textbf{Superset}\\ tableau de bord\\ de l'entreprise};
-\node[col=lhblue,minimum height=1.4cm,text width=3.3cm] (ml) at (21.5,-3.6) {\textbf{Vision}\\ MobileNet (ONNX)\\ + scikit-learn};
-\draw[->,thick] (go.south) -- node[num]{6} (tr.north);
-\draw[->,thick] (tr.west) -- node[num]{7} (ss.east);
-\draw[<->,thick] (go.east) -| node[num,pos=0.75]{8} (ml.north);
-\draw[->,thick] (src.south) -- ++(0,-4.1) -| node[num,pos=0.25]{9} (tr.south);
-\node[op,anchor=south west] at (0.2,-5.0) {fédération : Trino lit aussi PostgreSQL en direct};
+% Tables par couche
+\draw[bloc] (7.85,-2.2) rectangle (15.85,-6.1);
+\node[et,font=\sffamily\bfseries\scriptsize] at (11.85,-2.55) {Tables par couche};
+\pic at (8.9,-3.55)  {table=gray};      \node[et] at (8.9,-4.45)  {landing};
+\pic at (10.9,-3.55) {table=lhbronze};  \node[et] at (10.9,-4.45) {bronze};
+\pic at (12.9,-3.55) {table=lhsilver};  \node[et] at (12.9,-4.45) {silver};
+\pic at (14.9,-3.55) {table=lhgold};    \node[et] at (14.9,-4.45) {gold};
+\pic at (12.9,-5.45) {table=gray};      \node[et,anchor=west] at (13.4,-5.45) {quarantaine};
+\draw[flux] (9.45,-3.55) -- (10.35,-3.55) node[pastille,midway]{2};
+\draw[flux] (11.45,-3.55) -- (12.35,-3.55) node[pastille,midway]{3};
+\draw[flux] (13.45,-3.55) -- (14.35,-3.55) node[pastille,midway]{4};
+\draw[->,thick,lhfonce] (12.9,-4.7) -- (12.9,-4.95);
+\draw[<->,thick,lhfonce] (7.25,-3.55) -- (7.85,-3.55);
+
+% Socle : catalogue et stockage ouvert
+\node[fill=lhblue,text=white,font=\sffamily\bfseries\small,minimum width=11.5cm,minimum height=0.6cm]
+  at (10.1,-6.85) {Lakehouse ouvert};
+\draw[bloc] (4.35,-7.3) rectangle (8.35,-9.75);
+\node[barre,minimum width=4.0cm,anchor=north west] at (4.35,-7.3) {Catalogue};
+\node[et] at (6.35,-8.55) {\logo[2.0em]{iceberg}\\[2pt]Iceberg REST};
+\draw[bloc] (8.75,-7.3) rectangle (15.85,-9.75);
+\node[barre,minimum width=7.1cm,anchor=north west] at (8.75,-7.3) {Stockage ouvert (S3)};
+\node[et] at (10.0,-8.55) {\logo[2.0em]{rustfs}\\[2pt]RustFS};
+\node[et] at (11.9,-8.55) {\logo[2.0em]{iceberg}\\[2pt]Iceberg};
+\node[et] at (13.6,-8.55) {\logo[2.0em]{parquet}\\[2pt]Parquet};
+\node[et] at (15.0,-8.55) {\logo[2.0em]{delta}\\[2pt]Delta Lake};
+
+% ===== Usages =====
+\draw[cadre] (17.0,0) rectangle (20.4,-2.95);
+\node at (18.7,-1.05) {\logo[2em]{trino}}; \node[et] at (18.7,-1.95) {Requêtes SQL\\(Trino)};
+\draw[cadre] (17.0,-3.6) rectangle (20.4,-6.55);
+\node at (18.7,-4.65) {\logo[1.8em]{superset}}; \node[et] at (18.7,-5.55) {Tableau de bord\\(Superset)};
+\draw[cadre] (17.0,-7.2) rectangle (20.4,-10.2);
+\node at (18.7,-8.25) {\logo[2em]{sklearn}}; \node[et] at (18.7,-9.2) {Vision\\MobileNet (ONNX)};
+
+% ===== Infrastructure =====
+\node[fill=lhfonce,text=white,minimum width=20.4cm,minimum height=0.75cm,anchor=north west] at (0,-10.6)
+  {\logo[1.3em]{docker}\textbf{Infrastructure : conteneurs Docker}};
+
+% ===== Flux =====
+\draw[flux] (3.2,-7.3) -- (3.9,-7.3);
+\node[pastille] at (3.55,-7.3) {1};
+\draw[flux] (16.3,-1.5) -- (17.0,-1.5) node[pastille,midway,above=3pt]{6};
+\draw[flux] (18.7,-2.95) -- (18.7,-3.6) node[pastille,midway,right=3pt]{7};
+\draw[<->,very thick,lhfonce] (16.3,-8.7) -- (17.0,-8.7) node[pastille,midway,above=3pt]{8};
+\draw[flux] (1.6,0) -- (1.6,0.75) -| (18.7,0);
+\node[pastille] at (10.1,0.75) {9};
+\node[et,above=4pt] at (10.1,0.75) {fédération : Trino lit aussi la base de vente en direct};
 \end{tikzpicture}}
-\caption{L'architecture complète du module. Les numéros renvoient aux étapes décrites ci-dessous.}
+\caption{L'architecture complète du module. Tous les services tournent dans des conteneurs Docker.}
 \label{fig:archi}
 \end{figure}
 
+Les numéros renvoient aux étapes suivantes.
+
 \begin{description}[leftmargin=1.4em,labelindent=0pt,itemsep=3pt,font=\normalfont]
-\item[\etape{1}] \textbf{Dépôt :} les vendeurs envoient leurs photos dans la zone d'atterrissage,
-  par lots (script \cmd{deposer\_photos.py}).
-\item[\etape{2}] \textbf{Bronze :} chaque nouvelle photo devient une ligne de \cmd{bronze.photos} :
-  son chemin, son vendeur, sa taille, son empreinte exacte (\cmd{sha256}) et ses octets.
-\item[\etape{3}] \textbf{Silver :} chaque photo est décodée et contrôlée ; les photos illisibles,
-  trop petites ou en double partent en quarantaine.
-\item[\etape{4}] \textbf{Gold :} le réseau MobileNet calcule le vecteur de chaque photo ; un
-  classifieur reconnaît le type de produit et signale les fiches incohérentes. dbt reconstruit
-  la constellation du TP 2.
-\item[\etape{5}] \textbf{Orchestration :} Airflow enchaîne ces étapes chaque jour, attend les
-  nouvelles photos, relance une étape en cas d'erreur passagère, arrête tout si un contrôle
-  échoue, et compacte les tables chaque semaine.
-\item[\etape{6}] \textbf{SQL interactif :} Trino lit les tables Gold, sans Spark et sans copie.
-\item[\etape{7}] \textbf{Tableau de bord :} Superset présente les indicateurs, à partir de Trino.
-\item[\etape{8}] \textbf{Vision par ordinateur :} les vecteurs servent à classer les photos et à
-  retrouver les photos semblables.
-\item[\etape{9}] \textbf{Fédération :} Trino joint, dans une même requête, la base PostgreSQL de
-  l'application de vente et les tables du Lakehouse.
+\item[\etape{1}] \textbf{Dépôt} (\nb{01\_images\_catalogue}) : les vendeurs envoient leurs photos et
+  leurs fiches dans la zone d'atterrissage, par lots (script \cmd{deposer\_photos.py}).
+\item[\etape{2}] \textbf{Bronze} (\nb{01\_images\_catalogue}, puis \nb{pipeline/}) : chaque nouvelle
+  photo devient une ligne de \cmd{bronze.photos}, avec son chemin, son vendeur, sa taille, son
+  empreinte exacte (\cmd{sha256}) et ses octets.
+\item[\etape{3}] \textbf{Silver} (\nb{01\_images\_catalogue}, puis \nb{pipeline/}) : chaque photo est
+  décodée et contrôlée, et les photos illisibles, trop petites ou en double partent en quarantaine.
+\item[\etape{4}] \textbf{Gold} (\nb{01\_images\_catalogue}, puis \nb{pipeline/}) : le réseau MobileNet
+  calcule le vecteur de chaque photo, et un classifieur reconnaît le type de produit et signale les
+  fiches incohérentes. dbt reconstruit la constellation du TP 2.
+\item[\etape{5}] \textbf{Orchestration} (\nb{02\_pipeline\_airflow}, \nb{03\_optimiser}) : Airflow
+  enchaîne ces étapes chaque jour, attend les nouvelles photos, relance une étape en cas d'erreur
+  passagère, arrête tout si un contrôle échoue, et compacte les tables chaque semaine.
+\item[\etape{6}] \textbf{SQL interactif} (\nb{04\_trino\_superset}) : Trino lit les tables Gold, sans
+  Spark et sans copie.
+\item[\etape{7}] \textbf{Tableau de bord} (Superset) : Superset présente les indicateurs, à partir de Trino.
+\item[\etape{8}] \textbf{Vision par ordinateur} (\nb{01\_images\_catalogue}) : les vecteurs servent à
+  classer les photos et à retrouver les photos semblables.
+\item[\etape{9}] \textbf{Fédération} (\nb{04\_trino\_superset}) : Trino joint, dans une même requête,
+  la base PostgreSQL de l'application de vente et les tables du Lakehouse.
+\item[\etape{10}] \textbf{Supervision et observabilité} (\nb{05\_surveiller\_observer}) : Prometheus
+  et Grafana mesurent les services et les tâches, et Marquez reconstitue le lineage à partir des
+  exécutions.
 \end{description}
 
 % =====================================================================
 \section{Déroulé}\label{sec:deroule}
 % =====================================================================
 
-\textbf{Mettre à jour l'environnement (une fois, au début de la séance 1) :} le TP 3 utilise de
+\textbf{Mettre à jour l'environnement, une fois, au début de la séance 1.} Le TP 3 utilise de
 nouvelles versions des images (avec la lecture d'images et Airflow). Dans le terminal Ubuntu, depuis
 le dossier du dépôt :
 \begin{lstlisting}[style=shell]
@@ -293,8 +368,8 @@ cp -r notebooks/tp3 notebooks/mon_travail/
 \end{tabularx}
 \end{center}
 
-\begin{attention}
-\textbf{Mémoire :} JupyterLab, Airflow, Trino et Superset ne doivent pas tourner tous ensemble sur une
+\begin{attention}[Mémoire]
+JupyterLab, Airflow, Trino et Superset ne doivent pas tourner tous ensemble sur une
 machine de 8 Go. Arrêtez ce qui ne sert pas à la partie en cours :
 \cmd{docker compose -{}-profile orchestration stop airflow} ou
 \cmd{docker compose -{}-profile full stop trino superset}. Les outils de la partie 5 ajoutent
@@ -311,16 +386,16 @@ Vous ingérez le premier lot de photos en Bronze, vous contrôlez chaque photo e
 calculez les vecteurs MobileNet en Gold, pour retrouver les photos semblables et contrôler les
 types de produits déclarés.
 
-\begin{notion}
-\textbf{Deux sortes de doublons :} l'empreinte \cmd{sha256} identifie un fichier \emph{à l'octet
-près} : elle reconnaît la même photo, même renommée ou envoyée par un autre vendeur. Mais une photo
+\begin{notion}[Deux sortes de doublons]
+l'empreinte \cmd{sha256} identifie un fichier \emph{à l'octet
+près}. Elle reconnaît la même photo, même renommée ou envoyée par un autre vendeur. Mais une photo
 recadrée ou recompressée a une empreinte complètement différente : on applique donc aussi une règle
 métier, \og une seule photo par produit \fg{}. Comparer les photos d'un produit à l'autre serait
 trompeur : beaucoup de fiches sont des variantes d'un même modèle, photographiées de la même façon.
 \end{notion}
 
-\begin{notion}
-\textbf{L'apprentissage par transfert :} MobileNet a appris, sur des millions d'images, à reconnaître
+\begin{notion}[L'apprentissage par transfert]
+MobileNet a appris, sur des millions d'images, à reconnaître
 des formes, des textures et des parties d'objets. On ne le réentraîne pas : on récupère, pour chaque
 photo, le vecteur de 576 nombres qu'il calcule avant sa décision finale, et une simple régression
 logistique apprend nos six types de produits à partir de ces vecteurs. Le modèle est fourni au
@@ -328,8 +403,8 @@ format \textbf{ONNX}, lisible sans PyTorch.
 \end{notion}
 
 \begin{resultat}
-Le lot 1 compte 1\,977 photos ; 76 partent en quarantaine (22 trop petites, 21 doublons exacts,
-17 illisibles, 16 photos en double). Le type de produit est reconnu sur environ 95~\% des photos ;
+le lot 1 compte 1\,977 photos, dont 76 partent en quarantaine (22 trop petites, 21 doublons exacts,
+17 illisibles, 16 photos en double). Le type de produit est reconnu sur environ 95~\% des photos, et
 une cinquantaine de fiches sont signalées, dont beaucoup sont réellement mal catégorisées (un canapé
 déclaré comme chaise, des barquettes déclarées comme table).
 \end{resultat}
@@ -360,8 +435,8 @@ Le code du notebook devient quatre scripts, un par étape, puis un DAG Airflow l
 \label{fig:dag}
 \end{figure}
 
-\begin{notion}
-\textbf{Orchestrer un pipeline :} un orchestrateur comme \textbf{Apache Airflow} décrit les étapes
+\begin{notion}[Orchestrer un pipeline]
+un orchestrateur comme \textbf{Apache Airflow} décrit les étapes
 d'un traitement et leur ordre dans un \textbf{DAG}, un graphe de tâches écrit en Python. Il les
 déclenche selon un \textbf{calendrier} (\cmd{@daily}) ou quand une condition est remplie (un
 \emph{capteur} attend de nouvelles photos), \textbf{relance} une tâche après une erreur passagère,
@@ -369,15 +444,15 @@ n'exécute une tâche que si les précédentes ont réussi, et garde le \textbf{
 chaque exécution.
 \end{notion}
 
-\begin{notion}
-\textbf{Idempotence :} une étape idempotente peut être relancée sans changer le résultat. C'est
+\begin{notion}[Idempotence]
+une étape idempotente peut être relancée sans changer le résultat. C'est
 indispensable dès qu'un pipeline est automatisé : les relances sont fréquentes (panne, relance
 automatique, rejeu). Les scripts du TP sont incrémentaux : ils ne traitent que les photos qu'ils
 n'ont pas encore vues.
 \end{notion}
 
 \begin{resultat}
-Le DAG s'exécute sans erreur sur le lot 1, puis, après le dépôt du lot 2, ne traite que les
+le DAG s'exécute sans erreur sur le lot 1, puis, après le dépôt du lot 2, ne traite que les
 nouvelles photos. Avec un seuil de rejet abaissé à 1~\%, la tâche \cmd{controle\_qualite} échoue
 après ses relances, et \cmd{dbt\_build} n'est pas exécutée.
 \end{resultat}
@@ -390,19 +465,48 @@ après ses relances, et \cmd{dbt\_build} n'est pas exécutée.
 Vous mesurez l'effet des petits fichiers, vous compactez une table, vous partitionnez une table par
 vendeur, puis vous confiez la maintenance à un second DAG, hebdomadaire.
 
-\begin{notion}
-\textbf{Ranger les fichiers :} chaque écriture ajoute des fichiers et une version à une table
-Iceberg. Le \textbf{compactage} (\cmd{rewrite\_data\_files}) regroupe les petits fichiers ; la
+\begin{notion}[Ranger les fichiers]
+chaque écriture ajoute des fichiers et une version à une table
+Iceberg. Le \textbf{compactage} (\cmd{rewrite\_data\_files}) regroupe les petits fichiers, et la
 \textbf{purge} (\cmd{expire\_snapshots}) supprime les versions trop anciennes. Le
-\textbf{partitionnement} range les fichiers par valeur d'une colonne : une requête filtrée ne lit
-que les fichiers utiles.
+\textbf{partitionnement} range les fichiers par valeur d'une colonne, si bien qu'une requête filtrée ne lit
+que les fichiers utiles (figure~\ref{fig:optim}).
 \end{notion}
 
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[font=\sffamily\footnotesize, >=Stealth,
+  f/.style={draw=lhfonce,fill=lhsilver!30,minimum width=#1,minimum height=0.32cm,inner sep=0pt},
+  lu/.style={draw=lhfonce,fill=lhvert,minimum width=1.5cm,minimum height=0.5cm,inner sep=0pt},
+  et/.style={font=\sffamily\scriptsize,text=lhfonce,align=center}]
+% Compactage
+\foreach \i in {0,...,5} \foreach \j in {0,...,3} \node[f=0.28cm] at (\i*0.36,-\j*0.42) {};
+\node[et] at (0.9,0.55) {\textbf{avant} : 90 petits fichiers};
+\draw[->,very thick,lhfonce] (2.3,-0.63) -- node[et,above]{\texttt{rewrite\_data\_files}} (5.4,-0.63);
+\node[f=1.6cm,minimum height=1.2cm] at (6.4,-0.63) {};
+\node[et] at (6.4,0.55) {\textbf{après} : 1 fichier};
+% Partitionnement
+\draw[lhfonce!40] (8.2,0.8) -- (8.2,-1.6);
+\begin{scope}[xshift=9.4cm]
+\node[et] at (2.4,0.55) {\textbf{partitionnée par vendeur}};
+\foreach \v/\x in {01/0,02/1.6,03/3.2,04/4.8} {
+  \node[et] at (\x,0.15) {\texttt{vendeur=\v}};
+  \node[f=0.75cm,minimum height=0.6cm] at (\x,-0.45) {};}
+\node[lu,minimum width=0.75cm,minimum height=0.6cm] at (3.2,-0.45) {};
+\node[et] at (2.4,-1.25) {\texttt{WHERE vendeur = '03'} : un seul fichier lu};
+\end{scope}
+\end{tikzpicture}}
+\caption{Les deux optimisations de la partie 3 : le compactage regroupe les petits fichiers, et le
+partitionnement permet à une requête filtrée de ne lire que les fichiers utiles (en vert).}
+\label{fig:optim}
+\end{figure}
+
 \begin{resultat}
-Après 90 petites écritures, la table de démonstration compte plus de 90 fichiers ; le compactage
-les ramène à un seul. La table partitionnée compte un fichier par vendeur : pour le vendeur 03, la
+après 90 petites écritures, la table de démonstration compte plus de 90 fichiers, et le compactage
+les ramène à un seul. La table partitionnée compte un fichier par vendeur. Pour le vendeur 03, la
 requête n'en lit qu'un, contre tous les fichiers de la table non partitionnée. Déclenché depuis le notebook,
-le DAG \cmd{maintenance\_iceberg} compacte à son tour les tables du TP 3 : leur nombre de fichiers diminue.
+le DAG \cmd{maintenance\_iceberg} compacte à son tour les tables du TP 3, et leur nombre de fichiers diminue.
 \end{resultat}
 
 \capture{tp3_03_fichiers}{Partie 3 : le nombre de fichiers avant et après le compactage.}{fig:res03}
@@ -412,32 +516,32 @@ le DAG \cmd{maintenance\_iceberg} compacte à son tour les tables du TP 3 : leur
 Vous interrogez le Lakehouse avec Trino, vous joignez la base PostgreSQL et les tables Iceberg dans
 une même requête, puis vous construisez le tableau de bord de l'entreprise dans Superset.
 
-\begin{notion}
-\textbf{Séparer le stockage et le calcul :} les tables Iceberg sont de simples fichiers dans S3,
+\begin{notion}[Séparer le stockage et le calcul]
+les tables Iceberg sont de simples fichiers dans S3,
 décrits par le catalogue. Plusieurs moteurs les utilisent \emph{en même temps} et sans copie :
 Spark pour les traitements lourds, Trino pour les requêtes interactives, Superset au-dessus de
 Trino. Chacun se dimensionne et se remplace indépendamment des données.
 \end{notion}
 
 \begin{resultat}
-La requête fédérée montre les quelques commandes de PostgreSQL absentes de \cmd{silver.orders} :
+la requête fédérée montre les quelques commandes de PostgreSQL absentes de \cmd{silver.orders},
 celles mises en quarantaine au TP 1.
 \end{resultat}
 
 \subsection*{Partie 5 -- Surveiller et observer \hfill \nb{05\_surveiller\_observer}}
 
-Tout est déjà configuré, et vous ne programmez rien : vous utilisez les outils comme une équipe
-d'exploitation. Le notebook rejoue le pipeline photo dans Airflow, cette fois sous surveillance ; vous
-lisez pendant ce temps le tableau de bord Grafana. Il lance ensuite une panne simulée : vous regardez
-l'alerte fournie se déclencher. Enfin, vous suivez dans Marquez le lineage, construit à partir de ces exécutions :
-complet pour la couche Gold de dbt, il s'interrompt là où les scripts photo font sortir les données de
+Tout est déjà configuré, et vous ne programmez rien. Vous utilisez les outils comme une équipe
+d'exploitation. Le notebook rejoue le pipeline photo dans Airflow, cette fois sous surveillance, et
+vous lisez pendant ce temps le tableau de bord Grafana. Il lance ensuite une panne simulée, et vous
+regardez l'alerte fournie se déclencher. Enfin, vous suivez dans Marquez le lineage construit à partir
+de ces exécutions. Complet pour la couche Gold de dbt, il s'interrompt là où les scripts photo font sortir les données de
 Spark, ce qui montre les limites d'un lineage automatique.
 
 \begin{attention}
-Démarrez la supervision \emph{avant} Airflow, ou redémarrez Airflow après elle
-(\cmd{docker compose -{}-profile orchestration restart airflow}) : Airflow ne cherche le service de
+démarrez la supervision \emph{avant} Airflow, ou redémarrez Airflow après elle
+(\cmd{docker compose -{}-profile orchestration restart airflow}), car Airflow ne cherche le service de
 métriques qu'à son démarrage. Le message \cmd{Could not configure StatsClient} dans ses logs signifie
-qu'il n'enverra aucune métrique ; il est normal pendant les parties 2 à 4, où la supervision n'est pas
+qu'il n'enverra aucune métrique. Il est normal pendant les parties 2 à 4, où la supervision n'est pas
 lancée.
 \end{attention}
 
@@ -456,10 +560,10 @@ En entreprise & Datadog, CloudWatch, Azure Monitor & DataHub, Unity Catalog, Mon
 \end{tabularx}
 \end{center}
 
-\begin{notion}
-\textbf{Le lineage :} le graphe qui relie chaque table aux jobs qui la produisent et aux tables
+\begin{notion}[Le lineage]
+le graphe qui relie chaque table aux jobs qui la produisent et aux tables
 qu'ils lisent. Avec OpenLineage, chaque job Spark envoie lui-même la description de ses entrées et de
-ses sorties à chaque exécution : le graphe n'est pas dessiné à la main, il est \emph{déduit des
+ses sorties à chaque exécution. Le graphe n'est donc pas dessiné à la main, il est \emph{déduit des
 exécutions réelles}. Il sert à trouver l'origine d'une erreur (\emph{analyse de cause}) et à savoir
 ce qui sera touché par un changement (\emph{analyse d'impact}).
 \end{notion}
@@ -478,6 +582,13 @@ Marquez    & \url{http://localhost:3001} & sans mot de passe, espace de noms \cm
 \end{tabularx}
 \end{center}
 
+\begin{resultat}
+pendant l'exécution du DAG, Grafana montre la mémoire et le processeur de chaque conteneur et la durée de
+chaque tâche. Une à deux minutes après la panne simulée, l'alerte \og Exécution de DAG en échec \fg{}
+passe à l'état \emph{Firing}. Dans Marquez, le job \cmd{panne\_simulee.tache\_en\_panne} apparaît en
+échec (\emph{FAILED}), et le lineage de \cmd{gold.photos\_controle} relie la table aux jobs qui la produisent.
+\end{resultat}
+
 \capture{tp3_05_grafana}{Partie 5 : le tableau de bord Grafana pendant une exécution du DAG.}{fig:grafana}
 \capture{tp3_05_lineage}{Partie 5 : le lineage de \texttt{gold.photos\_controle} dans Marquez.}{fig:marquez}
 
@@ -485,33 +596,36 @@ Marquez    & \url{http://localhost:3001} & sans mot de passe, espace de noms \cm
 \section{Le tableau de bord}\label{sec:dashboard}
 % =====================================================================
 
-Dans Superset (\url{http://localhost:8088}, \cmd{admin} / \cmd{admin}) :
+Dans Superset (\url{http://localhost:8088}, \cmd{admin} / \cmd{admin}), suivez ces quatre étapes :
 \begin{enumerate}[leftmargin=*,itemsep=2pt]
-  \item \textbf{Connecter Trino :} \emph{Settings > Database Connections > + Database}, choisir
-        \emph{Trino}, adresse \cmd{trino://superset@trino:8080/lakehouse}, puis \emph{Test connection}.
-  \item \textbf{Déclarer les jeux de données :} \emph{Datasets > + Dataset} pour
+  \item \textbf{Connecter Trino} : ouvrez \emph{Settings > Database Connections > + Database}, choisissez
+        \emph{Trino}, saisissez l'adresse \cmd{trino://superset@trino:8080/lakehouse}, puis cliquez sur
+        \emph{Test connection}.
+  \item \textbf{Déclarer les jeux de données} : utilisez \emph{Datasets > + Dataset} pour
         \cmd{gold.fait\_avis}, \cmd{gold.fait\_livraisons} et \cmd{gold.photos\_controle}. Dans
         \emph{SQL Lab}, exécutez la requête de l'étape 4 du notebook 04 et enregistrez-la comme jeu
         de données (\emph{Save dataset}). Les tables de faits ne contiennent que des clés
-        (\cmd{date\_avis\_id}, \cmd{customer\_id}) : pour grouper par mois ou filtrer par état,
+        (\cmd{date\_avis\_id}, \cmd{customer\_id}). Pour grouper par mois ou filtrer par état,
         enregistrez de la même façon une requête qui joint \cmd{fait\_avis} à \cmd{dim\_date} et à
         \cmd{dim\_client}.
-  \item \textbf{Construire au moins cinq graphiques :} la note moyenne et la part d'avis négatifs
+  \item \textbf{Construire au moins cinq graphiques} : la note moyenne et la part d'avis négatifs
         (indicateurs), la part d'avis négatifs par mois, les incidents par transporteur, la part de
         photos rejetées par vendeur, et le tableau des fiches incohérentes.
-  \item \textbf{Assembler le tableau de bord}, avec un \textbf{filtre} commun (par exemple l'état
+  \item \textbf{Assembler le tableau de bord} : ajoutez un \textbf{filtre} commun (par exemple l'état
         du client), et donnez-lui un titre clair.
 \end{enumerate}
 
 \capture{tp3_dashboard}{Le tableau de bord Superset attendu.}{fig:dash}
 
+\needspace{24\baselineskip}
 % =====================================================================
 \section{Livrables}\label{sec:livrables}
 % =====================================================================
 
 \subsection*{Le compte rendu}
 
-Il ne recopie pas le code : il explique vos choix et vos résultats.
+Au format PDF, nommé \cmd{NOM\_Prenom\_TP3.pdf}, il ne recopie pas le code mais explique vos choix
+et vos résultats. Il contient :
 \begin{enumerate}[leftmargin=*,itemsep=2pt]
   \item \textbf{Architecture} : votre schéma de bout en bout, et le rôle de chaque composant.
   \item \textbf{Images} : le stockage choisi, les règles de qualité, le bilan de la quarantaine, et ce
@@ -569,7 +683,7 @@ Connexion Superset & trino://superset@trino:8080/lakehouse \\
 Démarrer les outils & docker compose -{}-profile observabilite -{}-profile orchestration up -d \\
 Puis redémarrer Airflow & docker compose -{}-profile orchestration restart airflow \\
 Mémoire des conteneurs (PromQL) & container\_memory\_working\_set\_bytes\{name=\~{}"lakehouse-.*"\} \\
-Tâches en échec sur 5 min & sum(increase(airflow\_taches\_en\_echec\_total[5m])) \\
+Exécutions de DAG en échec & airflow\_execution\_dag\_duree\_secondes\_count\{etat="failed"\} \\
 \bottomrule
 \end{tabularx}
 \end{center}
