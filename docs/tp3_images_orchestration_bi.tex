@@ -122,9 +122,9 @@
 \newenvironment{notion}[1][]{\par\medskip\noindent\textbf{\textcolor{lhblue}{Notion clé\if\relax\detokenize{#1}\relax\else{} -- #1\fi{} :}}\ }{\par\medskip}
 \newcommand{\nb}[1]{\textcolor{lhblue}{\texttt{#1}}}
 % Captures : comment les obtenir (avant la figure), comment les lire (après la figure)
-\newenvironment{obtenir}{\par\needspace{18\baselineskip}\smallskip\noindent\textbf{Pour obtenir cette capture :}
+\newenvironment{obtenir}{\par\needspace{12\baselineskip}\smallskip
   \begin{enumerate}[leftmargin=*,nosep,label=\arabic*.]}{\end{enumerate}\par}
-\newenvironment{lecture}{\par\noindent\textbf{\textcolor{lhblue}{À lire :}}\ }{\par\medskip}
+\newenvironment{lecture}{\par\noindent\ignorespaces}{\par\medskip}
 
 % =====================================================================
 \begin{document}
@@ -419,10 +419,11 @@ déclaré comme chaise, des barquettes déclarées comme table).
 \end{obtenir}
 \capture{tp3_01_doublons}{Partie 1 : un produit envoyé avec deux photos, la même recadrée.}{fig:res01a}
 \begin{lecture}
-les deux photos montrent le même produit, mais leurs empreintes \cmd{sha256} (les huit premiers
-caractères sont affichés sous chaque photo) sont complètement différentes. L'empreinte ne reconnaît
-donc que les copies exactes. C'est la règle métier \og une seule photo par produit \fg{} qui écarte la
-version recadrée, avec la raison \cmd{photo\_en\_double}.
+Les deux fichiers montrent le même article, mais leurs empreintes \cmd{sha256}, dont les huit premiers
+caractères sont affichés sous chaque photo, n'ont rien en commun : il a suffi de recadrer l'image pour
+changer chaque octet du fichier. L'empreinte n'écarte donc que les copies exactes (21 au lot 1). La
+version recadrée est écartée par la règle \og une seule photo par produit \fg{}, avec la raison
+\cmd{photo\_en\_double} (16 au lot 1).
 \end{lecture}
 
 \begin{obtenir}
@@ -431,10 +432,12 @@ version recadrée, avec la raison \cmd{photo\_en\_double}.
 \end{obtenir}
 \capture{tp3_01_similaires}{Partie 1 : une photo et les cinq photos les plus semblables selon MobileNet.}{fig:res01b}
 \begin{lecture}
-les voisines sont presque toutes du même type que la photo de départ (le type déclaré est écrit
-sous chaque photo), alors que MobileNet n'a jamais appris nos six types. Ses vecteurs résument donc
-bien le contenu d'une image. C'est ce qui permet ensuite à une simple régression logistique de
-reconnaître le type de produit sur environ 95~\% des photos.
+Les cinq voisines ont le même type déclaré que la photo de départ, écrit sous chaque image, alors que
+MobileNet n'a jamais vu nos six types de produits : ses 576 nombres décrivent la forme et la texture
+de l'objet, ce qui suffit à rapprocher deux chaises ou deux sacs. Une régression logistique entraînée
+sur ces vecteurs reconnaît le type de 95~\% des photos. Ses erreurs se concentrent sur les chaises et
+les canapés, qui se ressemblent (F1 de 0,89 et 0,90), alors que chaussures et sacs sont reconnus sans
+erreur.
 \end{lecture}
 
 
@@ -491,10 +494,11 @@ après ses relances, et \cmd{dbt\_build} n'est pas exécutée.
 \end{obtenir}
 \capture{tp3_02_graph}{Partie 2 : le DAG \texttt{catalogue\_photos} dans Airflow, vue \emph{Graph}, après le lot 1.}{fig:res02a}
 \begin{lecture}
-les six tâches sont vertes et s'enchaînent dans l'ordre de la figure~\ref{fig:dag}. Le capteur
-\cmd{attendre\_photos} démarre en premier, et \cmd{dbt\_build} ne s'exécute qu'après le contrôle de
-qualité. Une vue sans couleur signifie qu'aucune exécution n'est sélectionnée : la page ne montre
-alors que la structure du DAG.
+Les six tâches sont vertes et portent la mention \emph{success}. Sur cette exécution, l'ensemble a
+duré 2 minutes : le capteur \cmd{attendre\_photos} a rendu la main en 2 secondes, puis
+\cmd{bronze\_photos}, \cmd{silver\_photos}, \cmd{gold\_photos} et \cmd{controle\_qualite} se sont
+succédé, et \cmd{dbt\_build} n'a démarré qu'une fois le contrôle réussi, à 20 h 07. Une vue grise
+signifie qu'aucune exécution n'est sélectionnée.
 \end{lecture}
 
 \begin{obtenir}
@@ -505,11 +509,10 @@ alors que la structure du DAG.
 \end{obtenir}
 \capture{tp3_02_gantt}{Partie 2 : la durée de chaque tâche, vue \emph{Gantt}, pour le lot 2.}{fig:res02b}
 \begin{lecture}
-\cmd{bronze\_photos} et \cmd{silver\_photos} sont plus courtes qu'au lot 1 (environ 35 secondes
-chacune), car elles ne traitent que les 1\,005 nouvelles photos : le pipeline est incrémental.
-\cmd{gold\_photos}, elle, reste la tâche la plus longue (plus d'une minute) : pourquoi ne
-raccourcit-elle pas autant que les deux premières ? C'est la question~2 du notebook. Les durées varient
-d'une machine à l'autre, seules les proportions comptent.
+Au lot 2, \cmd{bronze\_photos} dure 37 secondes et \cmd{silver\_photos} 34 secondes : chacune ne
+traite que les 1\,005 nouvelles photos, et \cmd{bronze.photos} passe de 1\,977 à 2\,982 lignes sans
+doublon. \cmd{gold\_photos} reste la plus longue, avec 1 minute 12 : pourquoi ne raccourcit-elle pas
+comme les deux premières ? C'est la question~2 du notebook.
 \end{lecture}
 
 
@@ -568,11 +571,11 @@ le DAG \cmd{maintenance\_iceberg} compacte à son tour les tables du TP 3, qui r
 \end{obtenir}
 \capture{tp3_03_fichiers}{Partie 3 : le nombre de fichiers avant et après le compactage.}{fig:res03}
 \begin{lecture}
-chaque exécution du pipeline a ajouté de petits fichiers aux tables du TP 3, par exemple 94 pour
-\cmd{bronze.photos} après les deux lots et quelques relances. Le compactage les regroupe en un seul
-fichier par table, sans qu'aucune ligne ne soit perdue. La
-purge supprime en plus les versions de plus de sept jours, et avec elles les fichiers qu'elles seules
-utilisaient.
+Après les deux lots et les relances, \cmd{bronze.photos} comptait 94 fichiers, \cmd{silver.photos}
+40, \cmd{silver.quarantaine\_photos} 39 et \cmd{gold.photos\_vecteurs} 40 : un ou plusieurs par
+écriture. La tâche \cmd{compacter\_et\_purger} a tourné 30 secondes, et chaque table ne compte plus
+qu'un seul fichier, avec le même nombre de lignes. Les requêtes suivantes ouvrent donc un fichier au
+lieu de 40 à 94.
 \end{lecture}
 
 
@@ -661,10 +664,11 @@ passe à l'état \emph{Firing}. Dans Marquez, le job \cmd{panne\_simulee.tache\_
 \end{obtenir}
 \capture{tp3_05_grafana}{Partie 5 : le tableau de bord Grafana pendant une exécution du DAG.}{fig:grafana}
 \begin{lecture}
-les courbes de processeur et de mémoire montent pendant l'exécution, surtout pour les conteneurs
-\cmd{jupyter} et \cmd{airflow}, qui font tourner Spark. Le panneau de durée des tâches montre que
-\cmd{gold\_photos} et \cmd{dbt\_build} sont les plus longues. Après la panne simulée, le panneau
-\og Exécutions de DAG en échec \fg{} passe de 0 (en vert) à 1 (en rouge), et l'alerte se déclenche.
+Onze conteneurs du cours tournent, pour 4,84~Go de mémoire au total. Pendant l'exécution, le
+processeur et la mémoire de \cmd{jupyter} et d'\cmd{airflow} montent en pic (près de 4~Go et de
+dix cœurs), car ce sont eux qui font tourner Spark, puis redescendent dès la fin du DAG. Le panneau
+de durée des tâches place \cmd{gold\_photos} et \cmd{dbt\_build} en tête, autour de 40 secondes. Le
+panneau \og Exécutions de DAG en échec \fg{} est encore à 0 : il passe à 1 après la panne simulée.
 \end{lecture}
 
 \begin{obtenir}
@@ -674,11 +678,11 @@ les courbes de processeur et de mémoire montent pendant l'exécution, surtout p
 \end{obtenir}
 \capture{tp3_05_lineage}{Partie 5 : le lineage de \texttt{gold.photos\_controle} dans Marquez.}{fig:marquez}
 \begin{lecture}
-le graphe montre la table, ses colonnes et les deux jobs Spark du script \cmd{gold\_photos.py}
-qui l'écrivent (\cmd{tp3\_gold\_photos\dots}). Rien n'arrive en amont de ces jobs : le graphe ne
-remonte ni à \cmd{gold.photos\_vecteurs} ni à \cmd{silver.photos}, que le script lit pourtant. Pour les modèles dbt, au contraire, le
-graphe relie chaque table Gold à toutes les tables Silver qu'elle utilise. D'où vient cette différence,
-et quel risque fait-elle courir ? C'est la question~4 du notebook.
+La table \cmd{gold.photos\_controle} et ses huit colonnes sont reliées aux deux jobs Spark du script
+\cmd{gold\_photos.py} qui l'écrivent (\cmd{tp3\_gold\_photos\dots}). Rien n'arrive en amont de ces
+jobs : le graphe ne remonte ni à \cmd{gold.photos\_vecteurs} ni à \cmd{silver.photos}, que le script
+lit pourtant. Ouvrez \cmd{fait\_avis} pour comparer : ce modèle dbt est relié à \cmd{silver.avis} et à
+\cmd{silver.orders}. D'où vient la différence ? C'est la question~4 du notebook.
 \end{lecture}
 
 
@@ -711,10 +715,9 @@ Dans Superset (\url{http://localhost:8088}, \cmd{admin} / \cmd{admin}), suivez c
 \end{obtenir}
 \capture{tp3_dashboard}{Le tableau de bord Superset attendu.}{fig:dash}
 \begin{lecture}
-les indicateurs du haut donnent la part d'avis négatifs (environ 15~\%) et la part de colis avec
-un incident (environ 5~\%). Le graphique par vendeur montre que la part de photos rejetées varie d'un
-vendeur à l'autre, et le tableau du bas liste les fiches à corriger (78 après les deux lots). Le
-filtre \og État du client \fg{} change les graphiques sur les avis et les livraisons, mais pas ceux du
+15,1~\% des avis sont négatifs et 4,7~\% des colis ont subi au moins un incident. Le tableau du bas
+liste les 78 fiches dont la photo contredit le type déclaré, avec une confiance d'au moins 0,8. Le
+filtre \og État du client \fg{} modifie les graphiques des avis et des livraisons, mais pas ceux du
 catalogue photo, qui ne dépendent pas du client.
 \end{lecture}
 
