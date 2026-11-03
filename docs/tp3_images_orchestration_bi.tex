@@ -668,7 +668,8 @@ Onze conteneurs du cours tournent, pour 4,84~Go de mémoire au total. Pendant l'
 processeur et la mémoire de \cmd{jupyter} et d'\cmd{airflow} montent en pic (près de 4~Go et de
 dix cœurs), car ce sont eux qui font tourner Spark, puis redescendent dès la fin du DAG. Le panneau
 de durée des tâches place \cmd{gold\_photos} et \cmd{dbt\_build} en tête, autour de 40 secondes. Le
-panneau \og Exécutions de DAG en échec \fg{} est encore à 0 : il passe à 1 après la panne simulée.
+panneau \og Exécutions de DAG en échec \fg{} affiche 1, car la panne simulée a déjà été jouée sur
+cette machine : il reste à 0 tant qu'elle n'a pas eu lieu.
 \end{lecture}
 
 \begin{obtenir}
