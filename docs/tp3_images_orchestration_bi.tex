@@ -674,8 +674,9 @@ les courbes de processeur et de mémoire montent pendant l'exécution, surtout p
 \end{obtenir}
 \capture{tp3_05_lineage}{Partie 5 : le lineage de \texttt{gold.photos\_controle} dans Marquez.}{fig:marquez}
 \begin{lecture}
-le graphe montre le job qui écrit \cmd{gold.photos\_controle}, mais il ne remonte pas jusqu'à
-\cmd{silver.photos}, alors que le script lit bien cette table. Pour les modèles dbt, au contraire, le
+le graphe montre la table, ses colonnes et les deux jobs Spark du script \cmd{gold\_photos.py}
+qui l'écrivent (\cmd{tp3\_gold\_photos\dots}). Rien n'arrive en amont de ces jobs : le graphe ne
+remonte ni à \cmd{gold.photos\_vecteurs} ni à \cmd{silver.photos}, que le script lit pourtant. Pour les modèles dbt, au contraire, le
 graphe relie chaque table Gold à toutes les tables Silver qu'elle utilise. D'où vient cette différence,
 et quel risque fait-elle courir ? C'est la question~4 du notebook.
 \end{lecture}
