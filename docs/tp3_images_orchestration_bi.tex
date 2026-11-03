@@ -558,7 +558,7 @@ partitionnement permet à une requête filtrée de ne lire que les fichiers util
 après 90 petites écritures, la table de démonstration compte plus de 90 fichiers, et le compactage
 les ramène à un seul. La table partitionnée compte un fichier par vendeur. Pour le vendeur 03, la
 requête n'en lit qu'un, contre tous les fichiers de la table non partitionnée. Déclenché depuis le notebook,
-le DAG \cmd{maintenance\_iceberg} compacte à son tour les tables du TP 3, et leur nombre de fichiers diminue.
+le DAG \cmd{maintenance\_iceberg} compacte à son tour les tables du TP 3, qui retombent chacune à un seul fichier.
 \end{resultat}
 
 \begin{obtenir}
@@ -568,8 +568,9 @@ le DAG \cmd{maintenance\_iceberg} compacte à son tour les tables du TP 3, et le
 \end{obtenir}
 \capture{tp3_03_fichiers}{Partie 3 : le nombre de fichiers avant et après le compactage.}{fig:res03}
 \begin{lecture}
-chaque exécution du pipeline a ajouté de petits fichiers aux tables du TP 3, et le compactage les
-regroupe. Le nombre de fichiers de chaque table diminue donc, sans qu'aucune ligne ne soit perdue. La
+chaque exécution du pipeline a ajouté de petits fichiers aux tables du TP 3, par exemple 94 pour
+\cmd{bronze.photos} après les deux lots et quelques relances. Le compactage les regroupe en un seul
+fichier par table, sans qu'aucune ligne ne soit perdue. La
 purge supprime en plus les versions de plus de sept jours, et avec elles les fichiers qu'elles seules
 utilisaient.
 \end{lecture}
