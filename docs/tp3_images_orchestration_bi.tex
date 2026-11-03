@@ -121,6 +121,10 @@
 
 \newenvironment{notion}[1][]{\par\medskip\noindent\textbf{\textcolor{lhblue}{Notion clé\if\relax\detokenize{#1}\relax\else{} -- #1\fi{} :}}\ }{\par\medskip}
 \newcommand{\nb}[1]{\textcolor{lhblue}{\texttt{#1}}}
+% Captures : comment les obtenir (avant la figure), comment les lire (après la figure)
+\newenvironment{obtenir}{\par\needspace{18\baselineskip}\smallskip\noindent\textbf{Pour obtenir cette capture :}
+  \begin{enumerate}[leftmargin=*,nosep,label=\arabic*.]}{\end{enumerate}\par}
+\newenvironment{lecture}{\par\noindent\textbf{\textcolor{lhblue}{À lire :}}\ }{\par\medskip}
 
 % =====================================================================
 \begin{document}
@@ -409,8 +413,30 @@ une cinquantaine de fiches sont signalées, dont beaucoup sont réellement mal c
 déclaré comme chaise, des barquettes déclarées comme table).
 \end{resultat}
 
+\begin{obtenir}
+  \item Dans \nb{01\_images\_catalogue}, exécutez l'étape 3 jusqu'à la cellule 14, qui affiche des produits envoyés avec plusieurs photos.
+  \item La cellule montre deux paires. Capturez la seconde, dont un fichier se termine par \cmd{\_v2.jpg}.
+\end{obtenir}
 \capture{tp3_01_doublons}{Partie 1 : un produit envoyé avec deux photos, la même recadrée.}{fig:res01a}
+\begin{lecture}
+les deux photos montrent le même produit, mais leurs empreintes \cmd{sha256} (les huit premiers
+caractères sont affichés sous chaque photo) sont complètement différentes. L'empreinte ne reconnaît
+donc que les copies exactes. C'est la règle métier \og une seule photo par produit \fg{} qui écarte la
+version recadrée, avec la raison \cmd{photo\_en\_double}.
+\end{lecture}
+
+\begin{obtenir}
+  \item Toujours dans \nb{01\_images\_catalogue}, exécutez l'étape 4 jusqu'à la cellule 23.
+  \item Capturez une rangée de six photos : la première est la photo de départ, les cinq suivantes ses plus proches voisines.
+\end{obtenir}
 \capture{tp3_01_similaires}{Partie 1 : une photo et les cinq photos les plus semblables selon MobileNet.}{fig:res01b}
+\begin{lecture}
+les voisines sont presque toutes du même type que la photo de départ (le type déclaré est écrit
+sous chaque photo), alors que MobileNet n'a jamais appris nos six types. Ses vecteurs résument donc
+bien le contenu d'une image. C'est ce qui permet ensuite à une simple régression logistique de
+reconnaître le type de produit sur environ 95~\% des photos.
+\end{lecture}
+
 
 \subsection*{Partie 2 -- Du notebook au pipeline \hfill \nb{02\_pipeline\_airflow}}
 
@@ -457,8 +483,35 @@ nouvelles photos. Avec un seuil de rejet abaissé à 1~\%, la tâche \cmd{contro
 après ses relances, et \cmd{dbt\_build} n'est pas exécutée.
 \end{resultat}
 
-\capture{tp3_02_graph}{Partie 2 : le DAG \texttt{catalogue\_photos} dans Airflow, vue \emph{Graph}.}{fig:res02a}
-\capture{tp3_02_gantt}{Partie 2 : la durée de chaque tâche, vue \emph{Gantt}, pour le lot 1 et le lot 2.}{fig:res02b}
+\begin{obtenir}
+  \item Dans \nb{02\_pipeline\_airflow}, après la cellule 16, déclenchez le DAG dans Airflow (\url{http://localhost:8085}, bouton \emph{Trigger}) et attendez la fin de l'exécution.
+  \item Sur la page du DAG \cmd{catalogue\_photos}, passez en vue grille (icône carrée en haut à gauche), puis cliquez sur la colonne de cette exécution.
+  \item Vérifiez qu'il s'agit bien du lot 1 : dans l'onglet \emph{Logs} de la tâche \cmd{bronze\_photos}, la ligne qui suit \cmd{Output:} indique \cmd{1977 nouvelle(s) photo(s) à ingérer}.
+  \item Passez en vue \emph{Graph} (seconde icône), fermez le panneau de droite et ajustez le graphe à la fenêtre (icône sous les boutons $+$ et $-$).
+\end{obtenir}
+\capture{tp3_02_graph}{Partie 2 : le DAG \texttt{catalogue\_photos} dans Airflow, vue \emph{Graph}, après le lot 1.}{fig:res02a}
+\begin{lecture}
+les six tâches sont vertes et s'enchaînent dans l'ordre de la figure~\ref{fig:dag}. Le capteur
+\cmd{attendre\_photos} démarre en premier, et \cmd{dbt\_build} ne s'exécute qu'après le contrôle de
+qualité. Une vue sans couleur signifie qu'aucune exécution n'est sélectionnée : la page ne montre
+alors que la structure du DAG.
+\end{lecture}
+
+\begin{obtenir}
+  \item Dans \nb{02\_pipeline\_airflow}, exécutez la cellule 19, qui dépose le lot 2, puis déclenchez de nouveau le DAG.
+  \item Vérifiez dans le journal de \cmd{bronze\_photos} la ligne \cmd{1005 nouvelle(s) photo(s) à ingérer}, suivie de \cmd{bronze.photos : 2982 photos au total}.
+  \item En vue grille, cliquez sur la colonne de cette exécution, quand toutes ses tâches sont vertes. Le diagramme de Gantt s'affiche à droite des noms de tâches : une barre par tâche, dont la longueur est sa durée.
+  \item Pour comparer avec le lot 1, ouvrez une tâche, puis l'onglet \emph{Task Instances} : la colonne \emph{Duration} donne sa durée à chaque exécution.
+\end{obtenir}
+\capture{tp3_02_gantt}{Partie 2 : la durée de chaque tâche, vue \emph{Gantt}, pour le lot 2.}{fig:res02b}
+\begin{lecture}
+\cmd{bronze\_photos} et \cmd{silver\_photos} sont plus courtes qu'au lot 1 (environ 35 secondes
+chacune), car elles ne traitent que les 1\,005 nouvelles photos : le pipeline est incrémental.
+\cmd{gold\_photos}, elle, reste la tâche la plus longue (plus d'une minute) : pourquoi ne
+raccourcit-elle pas autant que les deux premières ? C'est la question~2 du notebook. Les durées varient
+d'une machine à l'autre, seules les proportions comptent.
+\end{lecture}
+
 
 \subsection*{Partie 3 -- Mesurer, puis optimiser \hfill \nb{03\_optimiser}}
 
@@ -508,7 +561,19 @@ requête n'en lit qu'un, contre tous les fichiers de la table non partitionnée.
 le DAG \cmd{maintenance\_iceberg} compacte à son tour les tables du TP 3, et leur nombre de fichiers diminue.
 \end{resultat}
 
+\begin{obtenir}
+  \item Démarrez Airflow (\cmd{docker compose -{}-profile orchestration up -d}).
+  \item Dans \nb{03\_optimiser}, exécutez la cellule 19 de l'étape 4. Elle déclenche le DAG \cmd{maintenance\_iceberg}, attend la fin de son exécution et affiche le nombre de fichiers de chaque table, avant et après.
+  \item Capturez la sortie de la cellule.
+\end{obtenir}
 \capture{tp3_03_fichiers}{Partie 3 : le nombre de fichiers avant et après le compactage.}{fig:res03}
+\begin{lecture}
+chaque exécution du pipeline a ajouté de petits fichiers aux tables du TP 3, et le compactage les
+regroupe. Le nombre de fichiers de chaque table diminue donc, sans qu'aucune ligne ne soit perdue. La
+purge supprime en plus les versions de plus de sept jours, et avec elles les fichiers qu'elles seules
+utilisaient.
+\end{lecture}
+
 
 \subsection*{Partie 4 -- Trino et Superset \hfill \nb{04\_trino\_superset}}
 
@@ -588,8 +653,32 @@ passe à l'état \emph{Firing}. Dans Marquez, le job \cmd{panne\_simulee.tache\_
 échec (\emph{FAILED}), et le lineage de \cmd{gold.photos\_controle} relie la table aux jobs qui la produisent.
 \end{resultat}
 
+\begin{obtenir}
+  \item Démarrez les outils de supervision et redémarrez Airflow (commandes de l'aide-mémoire).
+  \item Dans \nb{05\_surveiller\_observer}, exécutez la cellule 5 (étape 1), qui rejoue le DAG \cmd{catalogue\_photos}.
+  \item Pendant ce temps, ouvrez Grafana (\url{http://localhost:3000}), menu \emph{Dashboards} > dossier \emph{Lakehouse} > \emph{Lakehouse -- supervision}, puis capturez le tableau de bord, avec la période des trois dernières heures.
+\end{obtenir}
 \capture{tp3_05_grafana}{Partie 5 : le tableau de bord Grafana pendant une exécution du DAG.}{fig:grafana}
+\begin{lecture}
+les courbes de processeur et de mémoire montent pendant l'exécution, surtout pour les conteneurs
+\cmd{jupyter} et \cmd{airflow}, qui font tourner Spark. Le panneau de durée des tâches montre que
+\cmd{gold\_photos} et \cmd{dbt\_build} sont les plus longues. Après la panne simulée, le panneau
+\og Exécutions de DAG en échec \fg{} passe de 0 (en vert) à 1 (en rouge), et l'alerte se déclenche.
+\end{lecture}
+
+\begin{obtenir}
+  \item Après l'étape 1 de \nb{05\_surveiller\_observer}, ouvrez Marquez (\url{http://localhost:3001}) et choisissez l'espace de noms \cmd{lakehouse}.
+  \item Dans la barre de recherche, tapez \cmd{photos\_controle}, puis cliquez sur le jeu de données qui apparaît.
+  \item Capturez le graphe affiché, qui relie la table aux jobs qui l'ont lue ou écrite (question~4, cellule 16).
+\end{obtenir}
 \capture{tp3_05_lineage}{Partie 5 : le lineage de \texttt{gold.photos\_controle} dans Marquez.}{fig:marquez}
+\begin{lecture}
+le graphe montre le job qui écrit \cmd{gold.photos\_controle}, mais il ne remonte pas jusqu'à
+\cmd{silver.photos}, alors que le script lit bien cette table. Pour les modèles dbt, au contraire, le
+graphe relie chaque table Gold à toutes les tables Silver qu'elle utilise. D'où vient cette différence,
+et quel risque fait-elle courir ? C'est la question~4 du notebook.
+\end{lecture}
+
 
 % =====================================================================
 \section{Le tableau de bord}\label{sec:dashboard}
@@ -614,7 +703,19 @@ Dans Superset (\url{http://localhost:8088}, \cmd{admin} / \cmd{admin}), suivez c
         du client), et donnez-lui un titre clair.
 \end{enumerate}
 
+\begin{obtenir}
+  \item Construisez le tableau de bord en suivant les quatre étapes ci-dessus, Trino et Superset démarrés (\cmd{-{}-profile full}).
+  \item Ouvrez-le depuis le menu \emph{Dashboards} de Superset, sans filtre sélectionné, puis capturez la page entière.
+\end{obtenir}
 \capture{tp3_dashboard}{Le tableau de bord Superset attendu.}{fig:dash}
+\begin{lecture}
+les indicateurs du haut donnent la part d'avis négatifs (environ 15~\%) et la part de colis avec
+un incident (environ 5~\%). Le graphique par vendeur montre que la part de photos rejetées varie d'un
+vendeur à l'autre, et le tableau du bas liste les fiches à corriger (78 après les deux lots). Le
+filtre \og État du client \fg{} change les graphiques sur les avis et les livraisons, mais pas ceux du
+catalogue photo, qui ne dépendent pas du client.
+\end{lecture}
+
 
 \needspace{24\baselineskip}
 % =====================================================================
