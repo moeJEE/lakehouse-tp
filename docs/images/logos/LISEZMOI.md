@@ -23,3 +23,4 @@ changement de format (SVG vers PNG). Provenance (dépôts officiels des projets)
 | parquet.png | apache/parquet-site, `static/favicons/android-chrome-512x512.png` |
 | rustfs.png | rustfs/console, `assets/logo-symbol.svg` |
 | delta.png | delta-io/delta, `docs/src/assets/delta-lake-logo-light.svg` (symbole seul) |
+| kafka.png, kafka_blanc.png | apache/kafka-site, `assets/icons/logo.svg` (version blanche pour les bandeaux foncés) |

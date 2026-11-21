@@ -1,0 +1,774 @@
+% =====================================================================
+%  Module Data Lakehouse -- TP 4 : Batch ou streaming
+%  Compilation : pdflatex (2 passes)
+% =====================================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+\usepackage[babel=true]{microtype}
+
+\usepackage[a4paper,margin=2.3cm,headheight=14pt]{geometry}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{needspace}
+\usepackage{enumitem}
+\usepackage{amssymb}
+
+\usepackage[table]{xcolor}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,shapes.geometric,babel}
+\usepackage{listings}
+
+\usepackage[htt]{hyphenat}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xurl}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{graphicx}
+% Captures d'écran : <nom>.png à la racine du projet (Overleaf) ou dans images/tp4/ ;
+% tant que le fichier manque, un cadre indique le nom attendu.
+\newcommand{\capture}[3]{%
+  \begin{figure}[H]\centering
+  \IfFileExists{#1.png}%
+    {\includegraphics[width=0.92\textwidth,height=0.42\textheight,keepaspectratio]{#1.png}}%
+    {\IfFileExists{images/tp4/#1.png}%
+      {\includegraphics[width=0.92\textwidth,height=0.42\textheight,keepaspectratio]{images/tp4/#1.png}}%
+      {\fbox{\parbox[c][3.2cm][c]{0.88\textwidth}{\centering\footnotesize
+         Capture à ajouter : \texttt{\detokenize{#1}.png}}}}}%
+  \caption{#2}\label{#3}
+  \end{figure}}
+\captionsetup{font=small,labelfont=bf,labelsep=period}
+
+\setlength{\parskip}{0.5em}
+\setlength{\parindent}{0pt}
+\setlength{\emergencystretch}{3em}
+
+% ---------- Couleurs ----------
+\definecolor{lhblue}{HTML}{1F4E79}
+\definecolor{lhteal}{HTML}{0F766E}
+\definecolor{lhred}{HTML}{B91C1C}
+\definecolor{lhviolet}{HTML}{6D28D9}
+\definecolor{lhgray}{HTML}{F3F4F6}
+\definecolor{lhbronze}{HTML}{A16207}
+\definecolor{lhsilver}{HTML}{64748B}
+\definecolor{lhgold}{HTML}{CA8A04}
+\definecolor{lhfonce}{HTML}{17394D}
+\definecolor{lhvert}{HTML}{5FB89D}
+% Logos des logiciels (docs/images/logos/, voir LISEZMOI.md) ; sans le fichier, rien ne s'affiche
+\newcommand{\logo}[2][1.15em]{\IfFileExists{images/logos/#2.png}{\raisebox{-0.22em}{\includegraphics[height=#1]{images/logos/#2.png}}\hspace{0.3em}}%
+  {\IfFileExists{logos/#2.png}{\raisebox{-0.22em}{\includegraphics[height=#1]{logos/#2.png}}\hspace{0.3em}}{}}}
+% Pictogrammes de la figure d'architecture (dessins génériques)
+\tikzset{
+  pics/fichier/.style={code={%
+    \fill[white,draw=lhfonce,line width=0.7pt] (-0.32,-0.42) -- (0.18,-0.42) -- (0.32,-0.28) -- (0.32,0.42) -- (-0.32,0.42) -- cycle;
+    \draw[lhfonce,line width=0.7pt] (0.18,-0.42) -- (0.18,-0.28) -- (0.32,-0.28);
+    \node[font=\sffamily\bfseries\tiny,text=lhfonce] at (0,0.05) {#1};}},
+  pics/table/.style={code={%
+    \node[cylinder,shape border rotate=90,aspect=0.28,draw=#1!75!black,fill=#1!35,
+          minimum width=0.85cm,minimum height=0.95cm,line width=0.6pt] {};}},
+  pastille/.style={circle,fill=lhvert,draw=white,line width=1pt,text=white,
+                   font=\sffamily\bfseries\scriptsize,inner sep=1.6pt},
+  case/.style={draw=lhfonce,fill=white,minimum width=0.4cm,minimum height=0.4cm,inner sep=0pt,
+               font=\sffamily\tiny,text=lhfonce},
+}
+
+
+% ---------- Titres, en-têtes ----------
+\titleformat{\section}{\needspace{6\baselineskip}\Large\bfseries\color{lhblue}}{\thesection.}{0.6em}{}
+\titleformat{\subsection}{\large\bfseries\color{lhblue}}{\thesubsection}{0.6em}{}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{lhblue}Module Data Lakehouse}
+\fancyhead[R]{\small\color{lhblue}TP 4 -- Batch ou streaming}
+\fancyfoot[C]{\small\thepage}
+
+% ---------- Encadrés : texte simple, sans boîte ----------
+% Un titre en gras introduit le paragraphe ; seul « Attention » est en rouge.
+\newenvironment{resultat}{\par\medskip\noindent\textbf{Résultat attendu :}\ }{\par\medskip}
+\newenvironment{astuce}{\par\medskip\noindent\textbf{Astuce :}\ }{\par\medskip}
+\newenvironment{attention}[1][]{\par\medskip\noindent\textbf{\textcolor{lhred}{Attention\if\relax\detokenize{#1}\relax\else{} -- #1\fi{} :}}\ }{\par\medskip}
+
+% ---------- Code ----------
+\lstset{
+  basicstyle=\ttfamily\small, columns=fullflexible, keepspaces=true,
+  breaklines=true, showstringspaces=false, upquote=true,
+  frame=single, framesep=5pt, xleftmargin=6pt, xrightmargin=6pt,
+  backgroundcolor=\color{lhgray}, rulecolor=\color{black!15},
+  commentstyle=\color{black!55}\itshape,
+  keywordstyle=\color{lhblue}\bfseries, stringstyle=\color{black!70},
+  literate=
+   {é}{{\'e}}1 {è}{{\`e}}1 {ê}{{\^e}}1 {à}{{\`a}}1 {ç}{{\c c}}1
+   {ù}{{\`u}}1 {î}{{\^i}}1 {ô}{{\^o}}1 {É}{{\'E}}1 {Ê}{{\^E}}1
+}
+\lstdefinestyle{shell}{language=bash,backgroundcolor=\color{black!85},
+  basicstyle=\ttfamily\small\color{white},rulecolor=\color{black!85},
+  commentstyle=\color{black!35}\itshape,keywordstyle=\color{white}}
+
+\newcommand{\cmd}[1]{\texttt{#1}}
+\newcommand{\etape}[1]{\tikz[baseline=(n.base)]\node[circle,fill=lhvert,text=white,
+  font=\sffamily\bfseries\scriptsize,inner sep=1.4pt](n){#1};}
+\pdfstringdefDisableCommands{\def\cmd#1{#1}}
+\hypersetup{pdftitle={TP 4 -- Batch ou streaming},pdfauthor={Anouar Riadsolh}}
+
+\newenvironment{notion}[1][]{\par\medskip\noindent\textbf{\textcolor{lhblue}{Notion clé\if\relax\detokenize{#1}\relax\else{} -- #1\fi{} :}}\ }{\par\medskip}
+\newcommand{\nb}[1]{\textcolor{lhblue}{\texttt{#1}}}
+% Captures : comment les obtenir (avant la figure), comment les lire (après la figure)
+\newenvironment{obtenir}{\par\needspace{12\baselineskip}\smallskip
+  \begin{enumerate}[leftmargin=*,nosep,label=\arabic*.]}{\end{enumerate}\par}
+\newenvironment{lecture}{\par\noindent\ignorespaces}{\par\medskip}
+
+% =====================================================================
+\begin{document}
+% =====================================================================
+
+\begin{tikzpicture}[remember picture,overlay]
+  \fill[lhblue] (current page.north west) rectangle ([yshift=-5.2cm]current page.north east);
+  \node[anchor=north west,text=white,font=\sffamily] at ([xshift=2.3cm,yshift=-1.3cm]current page.north west)
+    {Module Data Lakehouse};
+  \node[anchor=north west,text=white,font=\sffamily\bfseries\fontsize{26}{30}\selectfont] at ([xshift=2.3cm,yshift=-2.2cm]current page.north west)
+    {TP 4 -- Batch ou streaming};
+  \node[anchor=north west,text=white!85!lhblue,font=\sffamily\large] at ([xshift=2.3cm,yshift=-3.6cm]current page.north west)
+    {Des événements en continu : Kafka, Spark Structured Streaming et Iceberg};
+  \node[anchor=north east,text=white!85!lhblue,font=\sffamily] at ([xshift=-2.3cm,yshift=-4.25cm]current page.north east)
+    {Pr.~Anouar Riadsolh};
+\end{tikzpicture}
+\thispagestyle{empty}
+\vspace*{4.2cm}
+
+{\large\bfseries\color{lhblue}En bref}\par\smallskip
+\begin{tabularx}{\linewidth}{@{}>{\bfseries}l X@{}}
+\toprule
+Objectif & Recevoir le suivi des colis sous forme d'événements, en continu, avec Kafka, l'écrire dans
+           le Lakehouse sans perte ni doublon avec Spark Structured Streaming, traiter les événements
+           en retard, puis décider, mesures à l'appui, quand le streaming vaut son coût. \\
+Durée    & 2 séances de 3 h (+ environ 2 h de travail personnel). \\
+Prérequis & TP 1 à 3 terminés. Images du cours mises à jour et profil \cmd{streaming}
+            (section~\ref{sec:deroule}). \\
+À rendre & Un compte rendu et les cinq notebooks exécutés (section~\ref{sec:livrables}). \\
+\bottomrule
+\end{tabularx}
+
+% =====================================================================
+\section{Le scénario}
+% =====================================================================
+
+Au TP 2, les transporteurs envoyaient le suivi des colis une fois par mois : un message par colis,
+avec toutes ses étapes, une fois le colis livré. Ils proposent maintenant d'envoyer chaque
+\textbf{événement} au moment où il se produit : colis pris en charge, en transit, en livraison,
+livré, ou incident. Trois équipes sont intéressées :
+
+\begin{enumerate}[leftmargin=*,nosep]
+  \item \textbf{Le service client} veut savoir où en est chaque colis et être prévenu d'un incident
+        dans la journée, pas un mois plus tard.
+  \item \textbf{La direction} veut toujours son bilan mensuel des incidents par transporteur, exact.
+  \item \textbf{L'équipe data} doit stocker ces événements dans le Lakehouse sans en perdre ni en
+        doubler, même si un serveur tombe en panne.
+\end{enumerate}
+
+Les données n'ont plus de fin : c'est un \textbf{flux}. Ce TP termine le module. Il ajoute à
+l'architecture construite aux TP 1 à 3 la dimension temps réel, et la question qui va avec : de
+quel délai le métier a-t-il vraiment besoin ?
+
+% =====================================================================
+\section{Les données}
+% =====================================================================
+
+Le flux est reconstitué à partir des messages du TP 2 (\cmd{data/olist/suivi/}). Le script
+\cmd{scripts/rejouer\_suivi.py} découpe chaque message en événements, un par étape ou par incident,
+et les envoie dans l'ordre où ils se sont produits, en \textbf{temps accéléré} : par défaut, une
+journée Olist par seconde. Il écrit dans Kafka, ou dans un dossier avec l'option \cmd{-{}-dossier}.
+
+\begin{lstlisting}
+{"evenement_id": "CL5A9F638CAE9F-E1", "colis_id": "CL5A9F638CAE9F",
+ "order_id": "5a9f638cae9fc9cd16c2f1e748da4c77", "transporteur": "Correios",
+ "categorie": "etape", "code": "EN_TRANSIT", "horodatage": "2018-03-01 00:00:23",
+ "ville": "Cajamar", "etat": "SP"}
+\end{lstlisting}
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{@{}l X@{}}
+\toprule
+\textbf{Champ} & \textbf{Contenu} \\
+\midrule
+\cmd{evenement\_id} & identifiant de l'événement : le colis, puis \cmd{E} et le rang de l'étape, ou \cmd{I} et le rang de l'incident \\
+\cmd{categorie}, \cmd{code} & \cmd{etape} (\cmd{PRIS\_EN\_CHARGE}, \cmd{EN\_TRANSIT}, \cmd{EN\_LIVRAISON}, \cmd{LIVRE}) ou \cmd{incident} (\cmd{DESTINATAIRE\_ABSENT}, \cmd{COLIS\_ENDOMMAGE}\dots) \\
+\cmd{horodatage} & le moment où l'événement s'est produit \\
+\cmd{transporteur}, \cmd{ville}, \cmd{etat} & qui transporte le colis, et où il se trouve \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Le mois de mars 2018 compte 34\,951 événements. Comme dans un vrai flux, le rejeu garde trois
+défauts, et le tirage est fixé : deux rejeux envoient exactement les mêmes événements.
+\begin{itemize}[leftmargin=*,nosep]
+  \item \textbf{des messages tronqués} : quelques-uns par mois, au JSON invalide ;
+  \item \textbf{des doublons} : un message renvoyé par le transporteur redonne les mêmes événements, avec le même \cmd{evenement\_id} ;
+  \item \textbf{des retards} : 5~\% des événements arrivent de 2 à 48 heures après s'être produits.
+\end{itemize}
+
+\begin{notion}[Événement et état]
+un événement décrit ce qui \emph{s'est passé} (\og le colis est
+arrivé en transit à Cajamar à 0 h 00 \fg{}) : on ne le modifie jamais, on en ajoute. L'état décrit
+ce qui \emph{est vrai maintenant} (\og le colis est en transit \fg{}) : il change à chaque
+événement. Un flux transporte des événements, et c'est au traitement d'en déduire les états.
+\end{notion}
+
+% =====================================================================
+\section{L'architecture du flux}
+% =====================================================================
+
+La figure~\ref{fig:archi} montre le chemin d'un événement, du transporteur jusqu'aux équipes métier.
+Elle reprend le Lakehouse des TP précédents, et y ajoute \textbf{Kafka}, qui transporte le flux, et
+\textbf{Spark Structured Streaming}, qui le traite par micro-lots.
+
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  font=\sffamily\small, >=Stealth,
+  barre/.style={fill=lhfonce,text=white,font=\sffamily\bfseries\small,minimum height=0.6cm,inner sep=0pt},
+  cadre/.style={draw=lhfonce,line width=0.8pt},
+  bloc/.style={draw=lhfonce!60,line width=0.6pt,fill=white},
+  et/.style={font=\sffamily\scriptsize,text=lhfonce,align=center},
+  flux/.style={->,very thick,lhfonce}]
+
+% ===== Sources =====
+\draw[cadre] (0,0) rectangle (3.2,-10.2);
+\node[barre,minimum width=3.2cm,anchor=north west] at (0,0) {Sources};
+\pic at (1.6,-1.55) {fichier=\{ \}};
+\node[et] at (1.6,-2.4) {Suivi des colis\\fichiers JSON};
+\draw[->,thick,lhfonce] (1.6,-2.85) -- (1.6,-3.15);
+\node[draw=lhfonce,line width=0.7pt,fill=lhgray,rounded corners=2pt,font=\sffamily\scriptsize,align=center,
+      minimum width=2.4cm] at (1.6,-3.6) {\texttt{rejouer\_suivi.py}\\producteur};
+\node[et] at (1.6,-4.75) {un événement\\par étape, en\\temps accéléré};
+
+% ===== Kafka =====
+\draw[cadre] (3.9,0) rectangle (7.4,-10.2);
+\node[barre,minimum width=3.5cm,anchor=north west] at (3.9,0) {\logo[1.2em]{kafka_blanc}Kafka};
+\node[et,font=\sffamily\bfseries\scriptsize] (topic) at (5.65,-1.2) {topic \texttt{suivi\_colis}};
+\node[pastille,left=1pt] at (topic.west) {2};
+% pas de \foreach dans \resizebox : babel français le casse
+\node[et] at (4.3,-1.9) {P0};
+\node[case] at (4.75,-1.9) {0}; \node[case] at (5.15,-1.9) {1}; \node[case] at (5.55,-1.9) {2}; \node[case] at (5.95,-1.9) {3}; \node[case] at (6.35,-1.9) {4}; \node[case] at (6.75,-1.9) {5};
+\node[et] at (4.3,-2.6) {P1};
+\node[case] at (4.75,-2.6) {0}; \node[case] at (5.15,-2.6) {1}; \node[case] at (5.55,-2.6) {2}; \node[case] at (5.95,-2.6) {3}; \node[case] at (6.35,-2.6) {4}; \node[case] at (6.75,-2.6) {5};
+\node[et] at (4.3,-3.3) {P2};
+\node[case] at (4.75,-3.3) {0}; \node[case] at (5.15,-3.3) {1}; \node[case] at (5.55,-3.3) {2}; \node[case] at (5.95,-3.3) {3}; \node[case] at (6.35,-3.3) {4}; \node[case] at (6.75,-3.3) {5};
+\node[et] at (5.65,-4.15) {3 partitions,\\clé \texttt{colis\_id},\\offsets 0, 1, 2\dots};
+\node[et] at (5.65,-5.6) {les messages restent\\7 jours après lecture};
+\draw[bloc] (4.3,-7.4) rectangle (7.0,-9.6);
+\node[et,font=\sffamily\bfseries\scriptsize] at (5.65,-7.85) {Kafka UI};
+\node[et] at (5.65,-8.7) {topics, messages,\\retard des groupes\\\texttt{localhost:8090}};
+
+% ===== Plateforme Lakehouse =====
+\draw[draw=lhblue,line width=2.4pt] (8.1,0) rectangle (18.6,-10.2);
+\node[fill=lhblue,text=white,font=\sffamily\bfseries,minimum width=10.5cm,minimum height=0.7cm,anchor=north west]
+  at (8.1,0) {Plateforme Lakehouse};
+\node[barre,minimum width=9.6cm] (spark) at (13.35,-1.25)
+  {\logo[1.1em]{spark}Spark Structured Streaming \quad \logo[1.1em]{airflow}déclenchement};
+\node[pastille] at (spark.north west) {7};
+
+% Tables par couche
+\draw[bloc] (8.55,-2.2) rectangle (18.15,-6.15);
+\node[et,font=\sffamily\bfseries\scriptsize] at (13.35,-2.55) {Tables par couche};
+\pic at (9.7,-3.55)  {table=lhbronze};  \node[et] at (9.7,-4.45)  {bronze\\événements bruts};
+\pic at (12.7,-3.55) {table=lhsilver};  \node[et] at (12.7,-4.45) {silver\\sans doublons};
+\pic at (16.6,-3.55) {table=lhgold};    \node[et] at (16.6,-4.45) {gold\\incidents par jour};
+\pic at (12.7,-5.55) {table=gray};      \node[et,anchor=west] at (13.2,-5.55) {quarantaine};
+\pic at (16.6,-5.55) {table=lhsilver};  \node[et,anchor=west] at (17.1,-5.55) {état\\des colis};
+\pic at (9.7,-5.55) {fichier=ckpt};     \node[et,anchor=west] at (10.1,-5.55) {checkpoint};
+\draw[flux] (10.25,-3.55) -- (12.15,-3.55) node[pastille,midway]{4};
+\draw[flux] (13.25,-3.55) -- (16.05,-3.55) node[pastille,midway]{5};
+\draw[->,thick,lhfonce] (12.7,-4.8) -- (12.7,-5.0);
+\draw[flux] (13.25,-3.9) -- (16.05,-5.3) node[pastille,pos=0.55]{6};
+
+% Socle : catalogue et stockage ouvert
+\node[fill=lhblue,text=white,font=\sffamily\bfseries\small,minimum width=9.6cm,minimum height=0.6cm]
+  at (13.35,-6.85) {Lakehouse ouvert};
+\draw[bloc] (8.55,-7.3) rectangle (11.95,-9.75);
+\node[barre,minimum width=3.4cm,anchor=north west] at (8.55,-7.3) {Catalogue};
+\node[et] at (10.25,-8.55) {\logo[2.0em]{iceberg}\\[2pt]Iceberg REST};
+\draw[bloc] (12.35,-7.3) rectangle (18.15,-9.75);
+\node[barre,minimum width=5.8cm,anchor=north west] at (12.35,-7.3) {Stockage ouvert (S3)};
+\node[et] at (13.6,-8.55) {\logo[2.0em]{rustfs}\\[2pt]RustFS};
+\node[et] at (15.25,-8.55) {\logo[2.0em]{iceberg}\\[2pt]Iceberg};
+\node[et] at (16.9,-8.55) {\logo[2.0em]{parquet}\\[2pt]Parquet};
+
+% ===== Usages =====
+\draw[cadre] (19.3,0) rectangle (22.7,-4.8);
+\node at (21.0,-1.5) {\logo[2em]{trino}\logo[1.8em]{superset}};
+\node[et] at (21.0,-2.6) {Service client\\état des colis,\\incidents du jour};
+\draw[cadre] (19.3,-5.4) rectangle (22.7,-10.2);
+\node at (21.0,-6.9) {\logo[1.9em]{spark}};
+\node[et] at (21.0,-8.0) {Direction\\bilan mensuel\\en batch};
+
+% ===== Infrastructure =====
+\node[fill=lhfonce,text=white,minimum width=22.7cm,minimum height=0.75cm,anchor=north west] at (0,-10.6)
+  {\logo[1.3em]{docker}\textbf{Infrastructure : conteneurs Docker}};
+
+% ===== Flux =====
+\draw[flux] (2.8,-3.6) -- (3.9,-3.6) node[pastille,pos=0.75]{1};
+\draw[flux] (7.0,-2.6) -- (9.15,-3.3) node[pastille,pos=0.45]{3};
+\draw[flux] (18.6,-2.4) -- (19.3,-2.4) node[pastille,midway,above=3pt]{8};
+\draw[flux] (18.6,-7.8) -- (19.3,-7.8);
+\end{tikzpicture}}
+\caption{L'architecture du flux de suivi des colis. Tous les services tournent dans des conteneurs Docker.}
+\label{fig:archi}
+\end{figure}
+
+Les numéros renvoient aux étapes suivantes.
+
+\begin{description}[leftmargin=1.4em,labelindent=0pt,itemsep=3pt,font=\normalfont]
+\item[\etape{1}] \textbf{Production} (\nb{01\_du\_fichier\_au\_flux}, \nb{02\_kafka}) : le script de
+  rejeu envoie chaque événement au moment où il se produit, d'abord dans un dossier, puis dans Kafka.
+\item[\etape{2}] \textbf{Transport} (\nb{02\_kafka}) : Kafka range les messages du topic
+  \cmd{suivi\_colis} dans trois partitions, selon leur clé \cmd{colis\_id}, et les garde après lecture.
+\item[\etape{3}] \textbf{Bronze} (\nb{03\_bronze\_streaming}) : Spark lit le topic en continu et écrit
+  chaque message dans \cmd{bronze.suivi\_evenements}. Le checkpoint retient les offsets traités.
+\item[\etape{4}] \textbf{Silver} (\nb{04\_temps\_fenetres}) : les messages illisibles partent en
+  quarantaine, et les doublons sont écartés grâce au \emph{watermark}.
+\item[\etape{5}] \textbf{Gold} (\nb{04\_temps\_fenetres}) : les incidents sont comptés par jour et par
+  transporteur, dans des fenêtres de temps.
+\item[\etape{6}] \textbf{État des colis} (\nb{04\_temps\_fenetres}) : chaque micro-lot met à jour la
+  dernière étape de chaque colis, par un \cmd{MERGE}.
+\item[\etape{7}] \textbf{Déclenchement} (\nb{05\_batch\_ou\_streaming}) : la même requête tourne en
+  continu, ou à heure fixe, lancée par Airflow.
+\item[\etape{8}] \textbf{Usages} : le service client lit l'état des colis et les incidents du jour
+  avec Trino et Superset, et la direction garde son bilan mensuel, calculé en batch.
+\end{description}
+
+% =====================================================================
+\section{Déroulé}\label{sec:deroule}
+% =====================================================================
+
+\textbf{Mettre à jour l'environnement, une fois, au début de la séance 1.} L'image JupyterLab
+contient maintenant le connecteur Kafka, et un nouveau profil \cmd{streaming} démarre Kafka et son
+interface web. Dans le terminal Ubuntu, depuis le dossier du dépôt :
+\begin{lstlisting}[style=shell]
+git pull
+cp .env.example .env          # ajoute les versions de Kafka
+docker compose --profile full --profile orchestration --profile observabilite stop
+docker compose pull jupyter
+docker compose --profile streaming pull kafka kafka-ui
+docker compose up -d
+docker compose --profile streaming up -d kafka kafka-ui
+\end{lstlisting}
+Si vous aviez modifié \cmd{.env} (machine de 8 Go), refaites la même modification. Puis, dans un
+terminal JupyterLab, copiez les énoncés :
+\begin{lstlisting}[style=shell]
+cp -r notebooks/tp4 notebooks/mon_travail/
+\end{lstlisting}
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{@{}l X l@{}}
+\toprule
+\textbf{Partie} & \textbf{Contenu} & \textbf{Services nécessaires} \\
+\midrule
+1 & Du fichier au flux (notebook \nb{01\_du\_fichier\_au\_flux}) & de base \\
+2 & Transporter le flux avec Kafka (\nb{02\_kafka}) & \cmd{-{}-profile streaming} \\
+3 & Écrire le flux dans Bronze (\nb{03\_bronze\_streaming}) & \cmd{-{}-profile streaming} \\
+4 & Le temps dans un flux (\nb{04\_temps\_fenetres}) & \cmd{-{}-profile streaming} \\
+5 & Batch ou streaming ? (\nb{05\_batch\_ou\_streaming}) & \cmd{-{}-profile streaming} \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{attention}[Mémoire]
+Kafka et Kafka UI occupent environ 700~Mo. Arrêtez Airflow, Trino, Superset et la supervision
+pendant ce TP (première commande ci-dessus), et un seul notebook à la fois : avant d'ouvrir le
+suivant, arrêtez le noyau du précédent (\emph{Kernel > Shut Down Kernel}). Le message
+\cmd{SparkUI could not bind on port 4040} signale qu'un autre noyau tourne encore.
+\end{attention}
+
+% =====================================================================
+\section{Partie par partie}
+% =====================================================================
+
+\subsection*{Partie 1 -- Du fichier au flux \hfill \nb{01\_du\_fichier\_au\_flux}}
+
+Le rejeu dépose un fichier JSON par jour dans \cmd{landing/flux/suivi/}, toutes les deux secondes.
+Vous lisez ce dossier \emph{en continu} et vous comptez les événements par code : la requête se met
+à jour seule à chaque nouveau fichier.
+
+\begin{notion}[Spark Structured Streaming]
+Spark traite un flux comme une \textbf{table qui grandit sans
+fin}. On écrit la requête comme en batch, avec \cmd{readStream} au lieu de \cmd{read} et
+\cmd{writeStream} au lieu de \cmd{write}. Spark la relance ensuite à chaque \textbf{micro-lot}, sur
+les seules données nouvelles, et met le résultat à jour. Pour une agrégation, il garde d'un
+micro-lot à l'autre un \textbf{état}, par exemple le compte courant de chaque code.
+\end{notion}
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{@{}l X l@{}}
+\toprule
+\textbf{Mode de sortie} & \textbf{Ce qui est écrit à chaque micro-lot} & \textbf{Avec une agrégation} \\
+\midrule
+\cmd{append}   & les nouvelles lignes, définitives & avec un \emph{watermark} seulement \\
+\cmd{update}   & les lignes modifiées & oui \\
+\cmd{complete} & tout le résultat & oui \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{resultat}
+les 11\,232 événements du 1er au 10 mars 2018 sont lus en 10 micro-lots, un par fichier, sans en
+oublier ni en lire deux fois. Sans schéma, Spark refuse de démarrer, et le mode \cmd{append} est
+refusé sur une agrégation sans \emph{watermark}.
+\end{resultat}
+
+\begin{obtenir}
+  \item Dans \nb{01\_du\_fichier\_au\_flux}, exécutez les cellules 1 à 5.
+  \item Exécutez la cellule 6 : elle affiche le résultat de la requête toutes les 5 secondes, pendant que les fichiers arrivent.
+  \item Capturez la sortie de la cellule 6, des tableaux \og après 10 s \fg{} à \og après 20 s \fg{}.
+\end{obtenir}
+\capture{tp4_01_micro_lots}{Partie 1 : le nombre d'événements par code, mis à jour à chaque micro-lot.}{fig:res01}
+\begin{lecture}
+Le même tableau est affiché trois fois, à 5 secondes d'intervalle, et ses compteurs grossissent :
+\cmd{EN\_TRANSIT} passe de 1\,348 à 2\,116 puis à 2\,879 événements, à mesure que les micro-lots 2 à 7
+lisent les fichiers des jours suivants. Personne n'a relancé la requête : Spark l'a fait à chaque
+nouveau fichier, en ne lisant que lui, et en ajoutant son résultat à l'état gardé en mémoire. À la
+fin du rejeu, le total lu est de 11\,232, exactement le nombre d'événements envoyés.
+\end{lecture}
+
+
+\subsection*{Partie 2 -- Transporter le flux avec Kafka \hfill \nb{02\_kafka}}
+
+Vous créez le topic \cmd{suivi\_colis}, vous y envoyez une semaine d'événements, puis vous les lisez
+avec deux groupes de consommateurs (figure~\ref{fig:kafka}).
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\sffamily\footnotesize, >=Stealth,
+  et/.style={font=\sffamily\scriptsize,text=lhfonce,align=center}]
+\node[draw=lhfonce,fill=lhgray,rounded corners=2pt,align=center,minimum height=1.6cm,text width=2.3cm]
+  (prod) at (0,-1.0) {\textbf{producteur}\\clé \texttt{colis\_id}\\$\rightarrow$ partition};
+\foreach \p/\y/\n in {0/0/6,1/-1.0/5,2/-2.0/4} {
+  \node[et] at (2.3,\y) {partition \p};
+  \foreach \o in {0,...,\n} \node[case,minimum width=0.55cm,minimum height=0.55cm] at (3.3+\o*0.55,\y) {\o};
+  \draw[->,thick,lhfonce] (prod.east) -- (2.3-0.65,\y);
+}
+\node[et,font=\sffamily\bfseries\scriptsize] at (5.0,0.75) {topic \texttt{suivi\_colis}};
+\draw[->,thick,lhteal] (8.6,0.55) -- (5.0,0.3);
+\node[et,text=lhteal,anchor=west] at (8.6,0.55) {groupe \texttt{tp4\_lecteurs} : position 2};
+\draw[->,thick,lhviolet] (8.6,-2.55) -- (5.5,-2.3);
+\node[et,text=lhviolet,anchor=west] at (8.6,-2.55) {groupe \texttt{tp4\_tableau\_de\_bord} : à jour};
+\end{tikzpicture}
+\caption{Un topic de trois partitions. Le producteur choisit la partition d'après la clé, et chaque
+groupe de consommateurs garde sa propre position (son offset) dans chaque partition.}
+\label{fig:kafka}
+\end{figure}
+
+\begin{notion}[Le journal de Kafka]
+un topic est un \textbf{journal} : les messages y sont ajoutés à la
+fin et numérotés (l'\textbf{offset}), puis gardés pendant la durée de rétention, qu'ils aient été
+lus ou non. L'ordre n'est garanti que dans une \textbf{partition}, et la \textbf{clé} décide de la
+partition : tous les événements d'un colis restent ainsi dans l'ordre de leur envoi. Chaque
+\textbf{groupe} de consommateurs mémorise sa position et lit à son rythme. Son \textbf{retard}
+(\emph{lag}) est le nombre de messages qui lui restent à lire.
+\end{notion}
+
+\begin{resultat}
+la première semaine de mars compte 7\,869 messages, répartis en 2\,718, 2\,639 et 2\,512 entre les
+trois partitions. Aucun des 4\,319 colis n'est réparti sur deux partitions. Après la lecture, le
+groupe \cmd{tp4\_lecteurs} a encore 7\,859 messages de retard, et \cmd{tp4\_tableau\_de\_bord} n'en a
+aucun.
+\end{resultat}
+
+\begin{obtenir}
+  \item Dans \nb{02\_kafka}, exécutez les cellules 1 à 3, qui créent le topic et y envoient la première semaine de mars.
+  \item Ouvrez Kafka UI (\url{http://localhost:8090}), menu \emph{Topics}, puis le topic \cmd{suivi\_colis} et l'onglet \emph{Messages}.
+  \item Capturez la liste des messages, triée du plus récent au plus ancien (\emph{Newest}).
+\end{obtenir}
+\capture{tp4_02_messages}{Partie 2 : les messages du topic \texttt{suivi\_colis} dans Kafka UI.}{fig:res02a}
+\begin{lecture}
+Chaque ligne est un message : son offset, sa partition, son heure d'arrivée dans Kafka, sa clé et
+sa valeur, le JSON de l'événement. Les derniers offsets sont 2\,717 pour la partition 0 et 2\,511
+pour la partition 2 : ces partitions contiennent 2\,718 et 2\,512 messages, comme l'indique la
+cellule 4. La clé est toujours un \cmd{colis\_id}, et la valeur commence par l'\cmd{evenement\_id} de
+ce colis. Tous les messages ont la même heure d'arrivée, à la seconde près : le rejeu a été lancé
+sans pause. C'est la différence entre l'heure d'arrivée, que Kafka connaît, et l'heure de
+l'événement, cachée dans la valeur, qui sera au cœur de la partie 4.
+\end{lecture}
+
+\begin{obtenir}
+  \item Dans \nb{02\_kafka}, exécutez les cellules 4 à 7.
+  \item Dans Kafka UI, ouvrez le menu \emph{Consumers}.
+  \item Capturez la liste des groupes, avec leur retard (\emph{Consumer Lag}).
+\end{obtenir}
+\capture{tp4_02_consumers}{Partie 2 : les groupes de consommateurs et leur retard dans Kafka UI.}{fig:res02b}
+\begin{lecture}
+Le groupe \cmd{tp4\_tableau\_de\_bord} a tout lu : son retard est nul. Le groupe
+\cmd{tp4\_lecteurs} n'a lu que les 10 messages de l'étape 3 : son retard est de 7\,859 messages, soit
+tout le topic moins ces 10 messages. Les deux groupes lisent le même topic sans se gêner, et les
+messages lus par l'un restent disponibles pour l'autre. En production, un retard qui grandit est le
+premier signe qu'un consommateur ne suit plus le rythme du flux.
+\end{lecture}
+
+
+\subsection*{Partie 3 -- Écrire le flux dans Bronze \hfill \nb{03\_bronze\_streaming}}
+
+Spark lit le topic en continu et écrit chaque message dans \cmd{bronze.suivi\_evenements}, avec sa
+partition, son offset et son heure d'arrivée. En plein rejeu, vous arrêtez la requête, comme si le
+serveur tombait en panne, puis vous la relancez.
+
+\begin{notion}[Le checkpoint et la garantie \emph{exactly-once}]
+à chaque micro-lot, Spark note dans
+le \textbf{checkpoint} (un dossier dans RustFS) les offsets qu'il va lire, puis ceux qu'il a écrits.
+Iceberg n'enregistre un micro-lot que par un \textbf{commit atomique} : un micro-lot est écrit en
+entier, ou pas du tout. Après une panne, Spark relit le checkpoint et reprend au premier offset non
+écrit. Chaque message est donc écrit \textbf{une fois et une seule}. Un checkpoint appartient à
+\emph{une} requête : le supprimer fait tout relire, et le partager entre deux requêtes les fausse.
+\end{notion}
+
+\begin{resultat}
+le mois de mars, soit 34\,951 messages dont 9 tronqués, arrive en Bronze. Après la panne, le premier
+micro-lot rattrape d'un coup plus de 15\,000 messages, et la table compte autant de lignes que de
+messages envoyés, toutes à des positions Kafka différentes. Un mois de flux laisse déjà 7 ou 8
+snapshots et une vingtaine de petits fichiers.
+\end{resultat}
+
+\begin{obtenir}
+  \item Dans \nb{03\_bronze\_streaming}, exécutez les cellules 1 à 4 sans attendre : le rejeu dure 30 secondes.
+  \item Exécutez les cellules 5 à 7, qui simulent la panne, relancent la requête, puis vérifient la table.
+  \item Capturez les sorties des cellules 5 à 7.
+\end{obtenir}
+\capture{tp4_03_panne}{Partie 3 : la panne, la reprise et la vérification de la table Bronze.}{fig:res03}
+\begin{lecture}
+Au moment de la panne, Bronze contient 5\,579 lignes, et toujours 5\,579 dix secondes plus tard :
+plus rien n'est écrit, mais le rejeu continue d'envoyer dans Kafka, où les messages s'accumulent. À
+la reprise, le micro-lot 3 lit d'un coup 15\,889 messages, contre 1\,000 à 5\,000 pour un micro-lot
+normal : Spark a repris aux offsets notés dans le checkpoint. Au final, 34\,951 messages ont été
+envoyés, la table compte 34\,951 lignes et 34\,951 positions distinctes : aucune perte, aucun
+doublon.
+\end{lecture}
+
+
+\subsection*{Partie 4 -- Le temps dans un flux \hfill \nb{04\_temps\_fenetres}}
+
+Vous mesurez le désordre du flux, puis vous construisez la couche Silver (quarantaine, doublons),
+un indicateur par fenêtre de temps en Gold, et l'état courant de chaque colis.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\sffamily\footnotesize, >=Stealth,
+  et/.style={font=\sffamily\scriptsize,text=lhfonce,align=center}]
+\draw[->,thick,lhfonce] (0,0) -- (13,0) node[right,et]{heure de\\l'événement};
+\fill[lhred!12] (0,-0.05) rectangle (6.0,0.9);
+\fill[lhvert!20] (6.0,-0.05) rectangle (10.0,0.9);
+\draw[lhred,very thick] (6.0,-0.3) -- (6.0,1.1);
+\node[et,text=lhred,anchor=north] at (6.0,-0.3) {\textbf{watermark}\\= plus récent vu $-$ attente};
+\draw[lhfonce,very thick] (10.0,-0.3) -- (10.0,1.1);
+\node[et,anchor=north] at (10.0,-0.3) {\textbf{événement le plus récent}\\\textbf{déjà vu}};
+\draw[<->,lhfonce] (6.05,1.9) -- node[et,above]{attente (par exemple 12 h)} (9.95,1.9);
+\foreach \x in {6.6,7.4,8.3,9.1,9.7} \fill[lhfonce] (\x,0.4) circle (0.09);
+\fill[lhteal] (7.9,0.65) circle (0.12);
+\node[et,text=lhteal,anchor=south] at (7.9,0.8) {en retard,\\accepté};
+\fill[lhred] (3.6,0.4) circle (0.12);
+\node[et,text=lhred] at (3.6,0.95) {trop en retard : ignoré};
+\node[et] at (2.4,-0.55) {journées closes : écrites,\\elles ne changeront plus};
+\end{tikzpicture}
+\caption{Le \emph{watermark} : Spark attend les retardataires pendant une durée fixée. Un événement
+plus ancien que le watermark arrive trop tard : sa journée est déjà close.}
+\label{fig:watermark}
+\end{figure}
+
+\begin{notion}[Heure de l'événement et watermark]
+l'\textbf{heure de l'événement} est le moment où
+le colis a changé d'état (\cmd{horodatage}). L'\textbf{heure de traitement} est le moment où le
+message arrive dans Kafka ou dans Spark. Les indicateurs se calculent sur la première, mais les
+événements n'arrivent pas toujours dans l'ordre. Le \textbf{watermark}
+(\cmd{withWatermark("horodatage\_ts", "12 hours")}) dit combien de temps attendre les retardataires
+(figure~\ref{fig:watermark}). Il borne aussi l'\textbf{état} de Spark : au-delà, les fenêtres sont
+closes et les identifiants déjà vus sont oubliés.
+\end{notion}
+
+\begin{notion}[Mettre à jour une table depuis un flux]
+le mode \cmd{append} ne sait qu'ajouter des
+lignes. Pour tenir à jour une ligne par colis, on confie chaque micro-lot à une fonction Python
+(\cmd{foreachBatch}), qui exécute un \cmd{MERGE} Iceberg. La condition
+\cmd{s.horodatage\_ts > t.horodatage\_ts} empêche un événement en retard d'écraser un état plus récent.
+\end{notion}
+
+\begin{resultat}
+1\,806 événements sur 34\,942 lisibles (5,2~\%) arrivent après un événement plus récent qu'eux, dont
+991 avec plus de 24 heures de retard. Silver garde 34\,755 événements, 9 messages vont en quarantaine
+et 187 doublons sont écartés. L'état des colis compte une ligne pour chacun des 10\,118 colis,
+dont 6\,835 livrés.
+\end{resultat}
+
+\begin{obtenir}
+  \item Dans \nb{04\_temps\_fenetres}, exécutez les cellules 1 à 5.
+  \item Exécutez la cellule 6, qui compare les incidents par jour calculés en flux, avec 12 heures d'attente, au calcul batch, puis la cellule 7, qui refait la comparaison avec 2 jours d'attente.
+  \item Capturez les sorties des cellules 6 et 7.
+\end{obtenir}
+\capture{tp4_04_watermark}{Partie 4 : les incidents par jour, en flux avec 12 heures puis 2 jours d'attente, comparés au batch.}{fig:res04}
+\begin{lecture}
+Avec 12 heures d'attente, 30 journées sur 31 sont closes, et le flux compte 1\,075 incidents contre
+1\,084 pour le batch : 9 incidents (0,8~\%) sont arrivés après la clôture de leur journée, et ne sont
+pas comptés. Avec 2 jours d'attente, l'écart tombe à 0, mais seules 28 journées sont closes : le
+chiffre de chaque journée arrive deux jours plus tard. Le watermark règle donc un compromis entre
+\textbf{fraîcheur} et \textbf{exactitude}, et sa durée se choisit d'après le retard réellement
+observé dans le flux.
+\end{lecture}
+
+
+\subsection*{Partie 5 -- Batch ou streaming ? \hfill \nb{05\_batch\_ou\_streaming}}
+
+Vous calculez le même indicateur, les incidents par transporteur, de trois façons, avec la même
+fonction Python, puis vous comparez leur délai et leur coût (figure~\ref{fig:modes}).
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\sffamily\footnotesize, >=Stealth,
+  et/.style={font=\sffamily\scriptsize,text=lhfonce,align=left},
+  bloc/.style={draw=lhfonce,fill=#1,minimum height=0.42cm,inner sep=0pt}]
+\foreach \x in {0.3,0.9,1.2,2.0,2.6,3.1,3.9,4.4,5.2,5.6,6.3,7.0,7.4,8.1,8.8,9.2,9.9,10.5,11.1,11.6}
+  \fill[lhfonce] (2.6+\x,1.0) circle (0.06);
+\node[et,anchor=east] at (2.4,1.0) {événements};
+\node[et,anchor=east] at (2.4,0.3) {batch nocturne};
+\node[bloc=lhgold!60,minimum width=1.2cm] at (13.6,0.3) {};
+\node[et,anchor=east] at (2.4,-0.4) {flux continu};
+\foreach \x in {0,...,23} \node[bloc=lhvert!70,minimum width=0.28cm] at (2.75+\x*0.5,-0.4) {};
+\node[et,anchor=east] at (2.4,-1.1) {flux déclenché};
+\foreach \x in {5.6,8.6,11.6,14.6} \node[bloc=lhteal!45,minimum width=0.55cm] at (\x,-1.1) {};
+\draw[->,thick,lhfonce] (2.6,-1.6) -- (14.9,-1.6) node[et,anchor=north east]{temps};
+\end{tikzpicture}
+\caption{Trois façons de traiter le même flux : tout relire une fois par nuit, un micro-lot toutes
+les quelques secondes, ou les seuls nouveaux messages, à heure fixe.}
+\label{fig:modes}
+\end{figure}
+
+\begin{notion}[Le déclencheur, ou \emph{trigger}]
+le même code Structured Streaming tourne de deux
+façons, selon une seule option. Avec \cmd{trigger(processingTime="5 seconds")}, la requête ne
+s'arrête jamais et lance un micro-lot toutes les 5 secondes. Avec \cmd{trigger(availableNow=True)},
+elle traite tout ce qui est arrivé depuis son dernier passage, puis s'arrête : c'est un
+\textbf{batch incrémental}, qu'Airflow peut lancer chaque heure. Le checkpoint garde les offsets et
+l'état d'un passage à l'autre.
+\end{notion}
+
+\begin{resultat}
+le flux continu écrit le dernier incident dans la table quelques secondes après son envoi. Le flux
+déclenché ne traite au 2e passage que les 18\,137 nouveaux messages, et trouve pourtant 1\,919
+incidents, exactement comme le batch qui relit les 70\,044 messages du topic.
+\end{resultat}
+
+\begin{obtenir}
+  \item Dans \nb{05\_batch\_ou\_streaming}, exécutez toutes les cellules, dans l'ordre.
+  \item Capturez la sortie de la cellule 9, le tableau du bilan.
+\end{obtenir}
+\capture{tp4_05_bilan}{Partie 5 : le bilan des trois façons de calculer les incidents par transporteur.}{fig:res05}
+\begin{lecture}
+Le flux continu rend l'incident visible 5,1 secondes après son envoi, avec des micro-lots d'environ
+1 seconde, mais il a créé 5 snapshots en moins d'une minute et garde ses ressources réservées jour
+et nuit. Le batch relit les 70\,044 messages en 1,1 seconde, et le flux déclenché traite les seuls
+nouveaux messages en 2,1 secondes. À ce volume, relire tout ne coûte presque rien. Mais la durée du
+batch grandit avec l'historique, alors que celle du flux déclenché ne dépend que des nouveaux
+messages. Le choix se fait donc sur le délai dont le métier a besoin : quelques secondes pour
+prévenir un client, une heure pour un tableau de bord, un mois pour un bilan.
+\end{lecture}
+
+
+% =====================================================================
+\section{En entreprise}
+% =====================================================================
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{@{}l X X@{}}
+\toprule
+& \textbf{Dans ce TP} & \textbf{En production} \\
+\midrule
+Brokers & un seul broker, sans réplication & au moins trois brokers, réplication de 3 (Confluent Cloud, Amazon MSK, Redpanda) \\
+Format des messages & JSON, schéma écrit dans le notebook & Avro ou Protobuf, schémas versionnés dans un \emph{Schema Registry} \\
+Base de données vers Kafka & rejeu de fichiers & capture des changements (CDC) avec Debezium \\
+Traitement & Spark Structured Streaming & Spark, Flink, Kafka Streams \\
+Surveillance & Kafka UI & retard des groupes et débit dans Grafana, alertes \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\needspace{24\baselineskip}
+% =====================================================================
+\section{Livrables}\label{sec:livrables}
+% =====================================================================
+
+\subsection*{Le compte rendu}
+
+Au format PDF, nommé \cmd{NOM\_Prenom\_TP4.pdf}, il ne recopie pas le code mais explique vos choix
+et vos résultats. Il contient :
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+  \item \textbf{Architecture} : votre schéma du flux, de la source aux usages, et le rôle de chaque composant.
+  \item \textbf{Kafka} : le rôle des partitions, de la clé et des groupes, avec les captures de Kafka UI.
+  \item \textbf{Garanties} : ce qui se passe pendant et après la panne, et le rôle du checkpoint.
+  \item \textbf{Le temps} : le désordre mesuré, votre choix de watermark et son effet sur les
+        incidents par jour.
+  \item \textbf{Batch ou streaming} : votre tableau de mesures, et votre choix pour chacun des quatre
+        besoins de la question~3 du notebook 05.
+  \item \textbf{Réponses aux questions} des notebooks, rédigées et argumentées.
+  \item \textbf{Limites et améliorations} : ce qu'il faudrait de plus pour passer en production
+        (réplication, schémas, surveillance du retard, coûts).
+\end{enumerate}
+
+\subsection*{Les notebooks}
+
+Les cinq notebooks de \cmd{notebooks/mon\_travail/tp4/}, exécutés, avec leurs sorties.
+
+\clearpage
+% =====================================================================
+\section*{Annexe -- Aide-mémoire}\label{sec:aidememoire}
+% =====================================================================
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.22}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{4.1cm} >{\raggedright\arraybackslash\ttfamily\footnotesize}X@{}}
+\toprule
+\normalfont\textbf{Je veux\dots} & \normalfont\textbf{Code} \\
+\midrule
+\multicolumn{2}{@{}l}{\textbf{\textcolor{lhblue}{Services et rejeu}}} \\
+Démarrer Kafka et Kafka UI & docker compose -{}-profile streaming up -d kafka kafka-ui \\
+Rejouer un mois dans Kafka & python /opt/lakehouse/scripts/rejouer\_suivi.py -{}-depuis 2018-03-01 -{}-jusqu-a 2018-04-01 \\
+Plus vite, ou d'un coup & \dots{} -{}-jours-par-seconde 5 \quad \dots{} -{}-sans-pause \\
+Dans un dossier & \dots{} -{}-dossier s3://landing/flux/suivi \\
+\midrule
+\multicolumn{2}{@{}l}{\textbf{\textcolor{lhblue}{Kafka en Python}}} \\
+Créer un topic & admin.create\_topics([NewTopic("t", num\_partitions=3, replication\_factor=1)]) \\
+Lire des messages & c = Consumer(\{"bootstrap.servers": KAFKA, "group.id": "g"\}) \quad c.subscribe(["t"]) \quad c.poll(5) \\
+Valider la position & c.commit(asynchronous=False) \\
+Fin d'une partition & c.get\_watermark\_offsets(TopicPartition("t", 0)) \\
+\midrule
+\multicolumn{2}{@{}l}{\textbf{\textcolor{lhblue}{Spark Structured Streaming}}} \\
+Lire Kafka & spark.readStream.format("kafka").option("kafka.bootstrap.servers", KAFKA).option("subscribe", "t").option("startingOffsets", "earliest").load() \\
+Lire une table Iceberg & spark.readStream.table("lakehouse.bronze.suivi\_evenements") \\
+Décoder le JSON & F.from\_json(F.col("value").cast("string"), SCHEMA) \\
+Écrire dans Iceberg & df.writeStream.option("checkpointLocation", chemin).toTable("lakehouse.bronze.x") \\
+Déclencheur & .trigger(processingTime="5 seconds") \quad .trigger(availableNow=True) \\
+Mode de sortie & .outputMode("append") \quad "update" \quad "complete" \\
+Attendre les retardataires & .withWatermark("horodatage\_ts", "12 hours") \\
+Fenêtre de temps & .groupBy(F.window("horodatage\_ts", "1 day"), "transporteur").count() \\
+Écarter les doublons & .dropDuplicatesWithinWatermark(["evenement\_id"]) \\
+Mettre à jour une table & .writeStream.foreachBatch(fonction) \textrm{puis} MERGE INTO \dots \\
+Suivre une requête & q.recentProgress \quad q.processAllAvailable() \quad q.stop() \\
+\midrule
+\multicolumn{2}{@{}l}{\textbf{\textcolor{lhblue}{Iceberg}}} \\
+Snapshots, fichiers & SELECT * FROM lakehouse.bronze.suivi\_evenements.snapshots \quad \dots .files \\
+Purger l'historique & CALL lakehouse.system.expire\_snapshots(table => '...', older\_than => TIMESTAMP '...', retain\_last => 1) \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\end{document}

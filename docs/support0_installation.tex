@@ -362,13 +362,17 @@ Marquez &
   L'observabilité des données. Marquez reçoit, au format standard OpenLineage, le lineage
   (quelle table est produite par quel job, à partir de quoi) et l'historique des exécutions. &
   DataHub, Unity Catalog & \texttt{-{}-profile} \\
+Kafka, Kafka UI &
+  Le transport des flux d'événements. Kafka reçoit les messages en continu, les range par topic et
+  les garde pour plusieurs lecteurs. Kafka UI permet de les consulter dans le navigateur. &
+  Confluent Cloud, Amazon MSK & \texttt{-{}-profile} \\
 \end{xltabular}
 
 \smallskip
 {\footnotesize \textbf{auto} : démarre avec \cmd{docker compose up -d}. \quad
 \textbf{-{}-profile} : démarre à la demande, avec \cmd{docker compose -{}-profile full up -d}
-(Trino, Superset), \cmd{-{}-profile orchestration} (Airflow) ou \cmd{-{}-profile observabilite}
-(supervision et Marquez).}
+(Trino, Superset), \cmd{-{}-profile orchestration} (Airflow), \cmd{-{}-profile observabilite}
+(supervision et Marquez) ou \cmd{-{}-profile streaming} (Kafka, Kafka UI).}
 }
 
 
@@ -518,6 +522,7 @@ docker compose exec jupyter python /opt/lakehouse/scripts/check_env.py
 [--] 11. Mesure des conteneurs (profil observabilite non démarré ?)
 [--] 12. Grafana (profil observabilite non démarré ?)
 [--] 13. Marquez (lineage) (profil observabilite non démarré ?)
+[--] 14. Kafka (profil streaming non démarré ?)
 ENVIRONNEMENT PRÊT
 \end{lstlisting}
 \textbf{Faites une capture d'écran de ce résultat}, elle figurera dans votre compte rendu.
@@ -542,9 +547,12 @@ docker compose --profile orchestration --profile observabilite stop
 
 \begin{resultat}
 Attendez une à deux minutes avant le test, le temps qu'Airflow et Marquez préparent leur base au
-premier démarrage. Les lignes 9 à 13 passent alors en \texttt{[OK]}, et seule la ligne 8 reste en
-\texttt{[--]}.
+premier démarrage. Les lignes 9 à 13 passent alors en \texttt{[OK]}, et seules les lignes 8 et 14
+restent en \texttt{[--]}.
 \end{resultat}
+
+La ligne 14 concerne Kafka, utilisé au TP 4. Elle passe en \texttt{[OK]} après
+\cmd{docker compose -{}-profile streaming up -d kafka kafka-ui}.
 
 % =====================================================================
 \section{Le contenu du dépôt}\label{sec:depot}
@@ -613,6 +621,7 @@ sont des dossiers, et les fichiers sont décalés sous le dossier qui les contie
 \fic[2.4]{check\_env.py} & Test automatique de l'environnement (étape~6). \\
 \fic[2.4]{load\_postgres.py} & Charge les données Olist dans PostgreSQL, en deux lots (TP 1). \\
 \fic[2.4]{deposer\_photos.py} & Dépose un lot de photos dans la zone d'atterrissage (TP 3). \\
+\fic[2.4]{rejouer\_suivi.py} & Rejoue le suivi des colis comme un flux d'événements, dans Kafka ou dans un dossier (TP 4). \\
 \fic[2.4]{mesurer\_conteneurs.py} & Service de mesure de la mémoire et du processeur des conteneurs,
   pour Prometheus (TP 3). \\
 \fic[2.4]{init\_bases.py} & Crée dans PostgreSQL la base de Marquez (TP 3, automatique). \\
@@ -628,7 +637,7 @@ sont des dossiers, et les fichiers sont décalés sous le dossier qui les contie
 \dossier[1.2]{data/modeles/} & Modèle de vision MobileNet, au format ONNX (TP 3). \\
 \addlinespace
 \dossier[1.2]{notebooks/} & \\*
-\fic[2.4]{tp1/}, \texttt{tp2/}, \texttt{tp3/} & Énoncés des TP (notebooks, projet dbt du TP 2, scripts
+\fic[2.4]{tp1/} à \texttt{tp4/} & Énoncés des TP (notebooks, projet dbt du TP 2, scripts
   du pipeline et DAG du TP 3), à copier sans les modifier. \\
 \fic[2.4]{\textbf{mon\_travail/}} & \textbf{Votre dossier de travail}, ignoré par Git. Vous y copiez
   les énoncés et y écrivez votre code. \\
@@ -664,13 +673,15 @@ Airflow$^{2}$    & \url{http://localhost:8085} & sans mot de passe \\
 Prometheus$^{3}$ & \url{http://localhost:9090} & sans mot de passe \\
 Grafana$^{3}$ & \url{http://localhost:3000} & \texttt{admin} / \texttt{admin} \\
 Marquez$^{3}$ & \url{http://localhost:3001} & sans mot de passe \\
+Kafka UI$^{4}$ & \url{http://localhost:8090} & sans mot de passe \\
 \bottomrule
 \end{tabularx}
 
 \smallskip
 {\footnotesize $^{1}$ Après \cmd{docker compose -{}-profile full up -d}. \quad
 $^{2}$ Après \cmd{docker compose -{}-profile orchestration up -d} (TP 3). \quad
-$^{3}$ Après \cmd{docker compose -{}-profile observabilite up -d} (TP 3).}
+$^{3}$ Après \cmd{docker compose -{}-profile observabilite up -d} (TP 3). \quad
+$^{4}$ Après \cmd{docker compose -{}-profile streaming up -d} (TP 4).}
 \end{center}
 
 % =====================================================================
@@ -741,6 +752,7 @@ TP 3, partie 1           & base                                        & --     
 TP 3, parties 2 et 3     & base + Airflow                              & \cmd{orchestration}                 & -- \\
 TP 3, partie 4           & base + Trino + Superset                     & \cmd{full}                          & \cmd{orchestration} \\
 TP 3, partie 5           & base + Airflow + supervision et Marquez     & \cmd{observabilite}, \cmd{orchestration} & \cmd{full} \\
+TP 4                     & base + Kafka et Kafka UI                    & \cmd{streaming}                     & tous les autres \\
 \bottomrule
 \end{tabularx}
 \end{center}
@@ -768,11 +780,12 @@ Démarrer                           & docker compose up -d \\
 Démarrer avec Trino et Superset    & docker compose -{}-profile full up -d \\
 Démarrer Airflow (TP 3)            & docker compose -{}-profile orchestration up -d \\
 Démarrer la supervision (TP 3)     & docker compose -{}-profile observabilite up -d \\
+Démarrer Kafka (TP 4)              & docker compose -{}-profile streaming up -d \\
 Arrêter un groupe d'outils         & docker compose -{}-profile observabilite stop \\
-Voir l'état des services           & docker compose -{}-profile full -{}-profile orchestration -{}-profile observabilite ps -a \\
+Voir l'état des services           & docker compose -{}-profile full -{}-profile orchestration -{}-profile observabilite -{}-profile streaming ps -a \\
 Voir les erreurs d'un service      & docker compose logs -{}-tail 50 jupyter \\
 Récupérer les mises à jour du cours & git pull \quad \textrm{puis} \quad docker compose up -d \\
-Arrêter (en gardant mes données)   & docker compose -{}-profile full -{}-profile orchestration -{}-profile observabilite down \\
+Arrêter (en gardant mes données)   & docker compose -{}-profile full -{}-profile orchestration -{}-profile observabilite -{}-profile streaming down \\
 \bottomrule
 \end{tabularx}
 \end{center}

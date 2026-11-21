@@ -143,6 +143,22 @@ def test_outils_tp3():
     test_optionnel("13. Marquez (lineage)", "observabilite", "http://marquez:5000/api/v1/namespaces")
 
 
+def test_kafka():
+    """Kafka (TP 4) : affiché [--] (sans échec) si le profil streaming n'est pas démarré."""
+    import socket
+    try:
+        socket.create_connection(("kafka", 9092), timeout=3).close()
+    except OSError:
+        RESULTATS.append(("--", "14. Kafka (profil streaming non démarré ?)", ""))
+        return
+    try:
+        from confluent_kafka.admin import AdminClient
+        topics = AdminClient({"bootstrap.servers": "kafka:9092"}).list_topics(timeout=10).topics
+        RESULTATS.append(("OK", "14. Kafka", f"{len([t for t in topics if not t.startswith('__')])} topic(s)"))
+    except Exception as err:
+        RESULTATS.append(("KO", "14. Kafka", type(err).__name__))
+
+
 if __name__ == "__main__":
     test_s3()
     test_catalogue()
@@ -155,6 +171,7 @@ if __name__ == "__main__":
     test_trino()
     spark.stop()
     test_outils_tp3()
+    test_kafka()
 
     print("\n" + "=" * 72)
     for statut, nom, detail in RESULTATS:
