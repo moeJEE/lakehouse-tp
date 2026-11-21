@@ -7,6 +7,9 @@ ARG HADOOP_AWS_VERSION=3.3.4
 ARG AWS_SDK_V1_VERSION=1.12.262
 ARG PG_JDBC_VERSION=42.7.4
 ARG OPENLINEAGE_VERSION=1.50.0
+ARG SPARK_VERSION=3.5.6
+ARG KAFKA_CLIENTS_VERSION=3.4.1
+ARG COMMONS_POOL2_VERSION=2.11.1
 ARG MAVEN=https://repo1.maven.org/maven2
 
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -33,7 +36,11 @@ RUN JARS=$(python -c "import pyspark,os;print(os.path.join(os.path.dirname(pyspa
  && curl -fsSLO $MAVEN/org/apache/hadoop/hadoop-aws/$HADOOP_AWS_VERSION/hadoop-aws-$HADOOP_AWS_VERSION.jar \
  && curl -fsSLO $MAVEN/com/amazonaws/aws-java-sdk-bundle/$AWS_SDK_V1_VERSION/aws-java-sdk-bundle-$AWS_SDK_V1_VERSION.jar \
  && curl -fsSLO $MAVEN/org/postgresql/postgresql/$PG_JDBC_VERSION/postgresql-$PG_JDBC_VERSION.jar \
- && curl -fsSLO $MAVEN/io/openlineage/openlineage-spark_2.12/$OPENLINEAGE_VERSION/openlineage-spark_2.12-$OPENLINEAGE_VERSION.jar
+ && curl -fsSLO $MAVEN/io/openlineage/openlineage-spark_2.12/$OPENLINEAGE_VERSION/openlineage-spark_2.12-$OPENLINEAGE_VERSION.jar \
+ && curl -fsSLO $MAVEN/org/apache/spark/spark-sql-kafka-0-10_2.12/$SPARK_VERSION/spark-sql-kafka-0-10_2.12-$SPARK_VERSION.jar \
+ && curl -fsSLO $MAVEN/org/apache/spark/spark-token-provider-kafka-0-10_2.12/$SPARK_VERSION/spark-token-provider-kafka-0-10_2.12-$SPARK_VERSION.jar \
+ && curl -fsSLO $MAVEN/org/apache/kafka/kafka-clients/$KAFKA_CLIENTS_VERSION/kafka-clients-$KAFKA_CLIENTS_VERSION.jar \
+ && curl -fsSLO $MAVEN/org/apache/commons/commons-pool2/$COMMONS_POOL2_VERSION/commons-pool2-$COMMONS_POOL2_VERSION.jar
 
 # dbt (TP 2/3) dans un environnement Python séparé : ses dépendances (protobuf…)
 # n'entrent pas en conflit avec celles de MLflow. Il réutilise le PySpark de l'image.

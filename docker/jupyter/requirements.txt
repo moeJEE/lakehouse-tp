@@ -18,3 +18,5 @@ scikit-learn==1.5.2
 mlflow==2.17.2
 onnxruntime==1.20.1
 pillow==10.4.0
+# Kafka (TP 4) : client Python, pour créer les topics et produire des messages
+confluent-kafka==2.6.1

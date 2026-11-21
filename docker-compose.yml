@@ -91,6 +91,7 @@ services:
       PG_DB: ${PG_DB}
       CATALOG_URI: http://iceberg-rest:8181
       TRINO_HOST: trino
+      KAFKA_BOOTSTRAP: kafka:9092
       DBT_PROFILES_DIR: /opt/dbt-profiles
       DBT_SEND_ANONYMOUS_USAGE_STATS: "false"
     volumes:
@@ -127,6 +128,7 @@ services:
       PG_PASSWORD: ${PG_PASSWORD}
       PG_DB: ${PG_DB}
       CATALOG_URI: http://iceberg-rest:8181
+      KAFKA_BOOTSTRAP: kafka:9092
       DBT_PROFILES_DIR: /opt/dbt-profiles
       DBT_SEND_ANONYMOUS_USAGE_STATS: "false"
       # Les DAG sont lus dans votre dossier de travail
@@ -261,6 +263,44 @@ services:
     restart: unless-stopped
 
   # ---------- Moteur SQL interactif (profil sql / full) ----------
+  # ---------- Streaming (TP 4) : Kafka et son interface web ----------
+  kafka:                      # un seul broker, en mode KRaft (sans ZooKeeper)
+    image: apache/kafka:${KAFKA_VERSION}
+    profiles: ["streaming"]
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      # INTERNE : pour les conteneurs (kafka:9092) ; EXTERNE : pour l'hôte (localhost:9094)
+      KAFKA_LISTENERS: INTERNE://:9092,CONTROLLER://:9093,EXTERNE://:9094
+      KAFKA_ADVERTISED_LISTENERS: INTERNE://kafka:9092,EXTERNE://localhost:${PORT_KAFKA:-9094}
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNE:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNE:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNE
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"   # les topics sont créés explicitement (TP 4)
+      KAFKA_HEAP_OPTS: "-Xms256m -Xmx512m"
+    ports:
+      - "127.0.0.1:${PORT_KAFKA:-9094}:9094"
+    mem_limit: 1g
+    restart: unless-stopped
+
+  kafka-ui:                   # interface web : topics, partitions, messages, groupes de consommateurs
+    image: kafbat/kafka-ui:${KAFKA_UI_VERSION}
+    profiles: ["streaming"]
+    environment:
+      KAFKA_CLUSTERS_0_NAME: lakehouse
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      JAVA_OPTS: "-Xms128m -Xmx256m"
+    ports:
+      - "127.0.0.1:${PORT_KAFKA_UI:-8090}:8080"
+    mem_limit: 512m
+    depends_on: [kafka]
+    restart: unless-stopped
+
   trino:
     image: trinodb/trino:${TRINO_VERSION}
     profiles: ["sql", "full"]
