@@ -1,0 +1,72 @@
+# Teste le TP 4 de bout en bout (Kafka, Spark Structured Streaming, Iceberg) et publie le journal
+# dans la branche resultats-tp4. Se lance après la construction des images, ou à la main.
+name: Tester TP 4 (streaming)
+
+on:
+  workflow_run:
+    workflows: ["Images Docker"]
+    types: [completed]
+  push:
+    branches: [main]
+    paths: [".github/workflows/tester_tp4.yml", ".github/scripts/tester_tp4.py"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: read
+
+jobs:
+  tester:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Démarrer le profil streaming
+        run: |
+          cp .env.example .env
+          docker compose --profile streaming pull -q rustfs iceberg-rest postgres jupyter kafka kafka-ui
+          docker compose --profile streaming up -d rustfs init-buckets iceberg-rest postgres jupyter kafka kafka-ui
+          for i in $(seq 60); do
+            docker compose exec -T jupyter python -c "import socket; socket.create_connection(('kafka', 9092), 2)" 2>/dev/null && break
+            sleep 3
+          done
+          sleep 15
+
+      - name: Tester
+        run: |
+          {
+            docker compose ps --format "table {{.Service}}\t{{.Status}}"
+            docker compose cp .github/scripts/tester_tp4.py jupyter:/tmp/tester_tp4.py
+            docker compose exec -T jupyter python /tmp/tester_tp4.py
+            echo "--- interface Kafka UI"
+            curl -s -o /dev/null -w "HTTP %{http_code}\n" http://localhost:8090/
+            echo "--- mémoire des conteneurs"
+            docker stats --no-stream --format "{{.Name}}\t{{.MemUsage}}"
+          } 2>&1 | grep -v "WARN NativeCodeLoader\|Using Spark's default log4j" | tee test_tp4.log
+
+      - name: Journaux en cas d'échec
+        if: always()
+        run: |
+          echo "--- journaux kafka" >> test_tp4.log
+          docker compose logs kafka --tail 40 >> test_tp4.log 2>&1 || true
+          echo "--- journaux kafka-ui" >> test_tp4.log
+          docker compose logs kafka-ui --tail 20 >> test_tp4.log 2>&1 || true
+          grep -q "TOUS LES TESTS RÉUSSIS" test_tp4.log
+
+      - name: Publier le journal
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan resultats-tp4
+          git rm -rq --cached .
+          git add -f test_tp4.log
+          git commit -qm "Journal du test du TP 4"
+          git push -qf origin resultats-tp4
