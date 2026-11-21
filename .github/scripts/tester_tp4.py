@@ -77,7 +77,8 @@ verifier(melange == 0, f"chaque colis reste dans une seule partition ({len(parti
 
 # ---------------------------------------------------------------- 3. Bronze en continu
 etape("3. Bronze : Kafka vers Iceberg, avec checkpoint")
-spark = SparkSession.builder.appName("tester_tp4").getOrCreate()
+spark = (SparkSession.builder.appName("tester_tp4")
+         .config("spark.ui.showConsoleProgress", "false").getOrCreate())
 spark.sparkContext.setLogLevel("ERROR")
 for ns in ("bronze", "silver", "gold"):
     spark.sql(f"CREATE NAMESPACE IF NOT EXISTS {ns}")
@@ -170,6 +171,8 @@ def mettre_a_jour(lot, id_lot):
     lot.sparkSession.sql("""MERGE INTO silver.colis_etat t USING maj s ON t.colis_id = s.colis_id
         WHEN MATCHED AND s.horodatage_ts > t.horodatage_ts THEN UPDATE SET *
         WHEN NOT MATCHED THEN INSERT *""")
+    print(f"  lot {id_lot} : {lot.count()} événements, "
+          f"{lot.sparkSession.table('silver.colis_etat').count()} colis dans la table", flush=True)
 
 
 etat = (spark.readStream.table("silver.suivi_evenements")

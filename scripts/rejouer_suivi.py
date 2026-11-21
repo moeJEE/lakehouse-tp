@@ -81,8 +81,7 @@ class SortieKafka:
             sys.exit(f"Le topic « {topic} » n'existe pas sur {bootstrap}. "
                      "Créez-le d'abord (notebook 02_kafka, étape 1).")
         self.topic = topic
-        self.producer = Producer({"bootstrap.servers": bootstrap, "linger.ms": 50,
-                                  "acks": "all", "enable.idempotence": True})
+        self.producer = Producer({"bootstrap.servers": bootstrap, "linger.ms": 50, "acks": "all"})
 
     def envoyer(self, cle, valeur):
         while True:

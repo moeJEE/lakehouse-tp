@@ -42,7 +42,7 @@ jobs:
       - name: Tester
         run: |
           {
-            docker compose ps --format "table {{.Service}}\t{{.Status}}"
+            docker compose --profile streaming ps --format "table {{.Service}}\t{{.Status}}"
             docker compose cp .github/scripts/tester_tp4.py jupyter:/tmp/tester_tp4.py
             docker compose exec -T jupyter python /tmp/tester_tp4.py
             echo "--- interface Kafka UI"
@@ -55,9 +55,9 @@ jobs:
         if: always()
         run: |
           echo "--- journaux kafka" >> test_tp4.log
-          docker compose logs kafka --tail 40 >> test_tp4.log 2>&1 || true
+          docker compose --profile streaming logs kafka --tail 40 >> test_tp4.log 2>&1 || true
           echo "--- journaux kafka-ui" >> test_tp4.log
-          docker compose logs kafka-ui --tail 20 >> test_tp4.log 2>&1 || true
+          docker compose --profile streaming logs kafka-ui --tail 20 >> test_tp4.log 2>&1 || true
           grep -q "TOUS LES TESTS RÉUSSIS" test_tp4.log
 
       - name: Publier le journal
