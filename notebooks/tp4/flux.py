@@ -163,3 +163,61 @@ def offsets_du_checkpoint(chemin):
     dernier = max(fichiers, key=lambda c: int(c.rsplit("/", 1)[1]))
     contenu = lire_s3("s3://" + chemin.split("://", 1)[1].split("/", 1)[0] + "/" + dernier)
     return int(dernier.rsplit("/", 1)[1]), json.loads(contenu.strip().splitlines()[-1])
+
+
+# ------------------------------------------------------------------ Airflow (partie 5)
+AIRFLOW = os.environ.get("AIRFLOW_URL", "http://airflow:8080")
+
+
+def airflow(methode, chemin, **kw):
+    """Appelle l'API REST d'Airflow (en local, pas de mot de passe : un jeton suffit)."""
+    import requests
+    jeton = requests.get(f"{AIRFLOW}/auth/token", timeout=30).json()["access_token"]
+    r = requests.request(methode, f"{AIRFLOW}/api/v2/{chemin}", timeout=60,
+                         headers={"Authorization": f"Bearer {jeton}"}, **kw)
+    r.raise_for_status()
+    return r.json()
+
+
+def _executions(dag_id):
+    return airflow("GET", f"dags/{dag_id}/dagRuns", params={"limit": 100})["dag_runs"]
+
+
+def _suivre(dag_id, run):
+    print(f"{dag_id} : exécution {run}")
+    while True:
+        etat = airflow("GET", f"dags/{dag_id}/dagRuns/{run}")["state"]
+        if etat in ("success", "failed"):
+            print(f"{dag_id} : {etat}")
+            return etat
+        time.sleep(10)
+
+
+def lancer_dag(dag_id):
+    """Active le DAG si besoin, attend la fin des exécutions en cours, puis en déclenche une et la suit.
+
+    À l'activation d'un DAG planifié, Airflow lance aussitôt l'exécution de la dernière période :
+    on la suit, et on ne déclenche une exécution manuelle que s'il n'y en a pas eu.
+    """
+    import requests
+    for _ in range(30):                     # Airflow lit un nouveau DAG en 30 s environ
+        try:
+            dag = airflow("GET", f"dags/{dag_id}")
+            break
+        except requests.HTTPError:
+            time.sleep(10)
+    else:
+        raise RuntimeError(f"Airflow ne trouve pas le DAG {dag_id} : vérifiez qu'il est bien copié.")
+    if dag["is_paused"]:
+        deja = {r["dag_run_id"] for r in _executions(dag_id)}
+        airflow("PATCH", f"dags/{dag_id}", json={"is_paused": False})
+        print(f"{dag_id} activé")
+        for _ in range(9):                   # exécution automatique de la dernière heure ?
+            time.sleep(10)
+            nouvelles = [r for r in _executions(dag_id) if r["dag_run_id"] not in deja]
+            if nouvelles:
+                return _suivre(dag_id, nouvelles[0]["dag_run_id"])
+    while any(r["state"] in ("queued", "running") for r in _executions(dag_id)):
+        time.sleep(10)
+    run = airflow("POST", f"dags/{dag_id}/dagRuns", json={"logical_date": None})["dag_run_id"]
+    return _suivre(dag_id, run)
