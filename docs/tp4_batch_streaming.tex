@@ -693,7 +693,8 @@ entre-temps, Airflow a ajouté une exécution \cmd{scheduled} pour cette heure :
 planifié qui fait son travail, et le checkpoint garantit qu'aucun message n'est compté deux fois. La table
 \cmd{gold.passages\_incidents} garde la trace de chaque passage. Le premier a lu les 70\,044
 messages du topic, car le checkpoint \cmd{incidents\_airflow} était vide, en 7,2 secondes. Le
-second n'a lu que les 17\,257 messages de mai, en 6,7 secondes. Les deux durées sont presque égales :
+second n'a lu que les 17\,257 messages de mai, en 6,7 secondes (ces durées varient d'une machine à
+l'autre : comptez 7 à 15 secondes). Les deux durées sont presque égales :
 l'essentiel du temps sert à démarrer une session Spark, pas à lire les messages. C'est le coût d'un
 traitement confié à un orchestrateur, et c'est pourquoi on ne le lance pas toutes les 5 secondes.
 Après les deux passages, \cmd{gold.incidents\_horaire} compte 2\,125 incidents, le même total que
@@ -706,11 +707,12 @@ le batch.
 \end{obtenir}
 \capture{tp4_05_bilan}{Partie 5 : le bilan des trois façons de calculer les incidents par transporteur.}{fig:res05}
 \begin{lecture}
-Le flux continu rend l'incident visible 5,1 secondes après son envoi, avec des micro-lots d'environ
-1 seconde, mais il a créé 5 snapshots en moins d'une minute et garde ses ressources réservées jour
-et nuit. Le batch relit les 70\,044 messages en 1,1 seconde, et le flux déclenché traite les seuls
-nouveaux messages en 2,1 secondes ; lancé par Airflow, il en met environ 7, démarrage de Spark
-compris. À ce volume, relire tout ne coûte presque rien. Mais la durée du
+Le flux continu rend l'incident visible 4,1 secondes après son envoi, avec des micro-lots de moins
+d'une seconde, mais il a créé 5 snapshots en moins d'une minute et garde ses ressources réservées
+jour et nuit. Le batch relit les 70\,044 messages en 1,1 seconde, et le flux déclenché traite les
+seuls nouveaux messages en 1,9 seconde. Lancé par Airflow, le même passage prend 14,8 secondes : il
+démarre à chaque fois une nouvelle session Spark, et ce démarrage coûte plus que la lecture des
+messages. À ce volume, relire tout ne coûte presque rien. Mais la durée du
 batch grandit avec l'historique, alors que celle du flux déclenché ne dépend que des nouveaux
 messages. Le choix se fait donc sur le délai dont le métier a besoin : quelques secondes pour
 prévenir un client, une heure pour un tableau de bord, un mois pour un bilan.
