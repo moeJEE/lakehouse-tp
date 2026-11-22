@@ -273,7 +273,7 @@ Elle reprend le Lakehouse des TP précédents, et y ajoute \textbf{Kafka}, qui t
 \node[fill=lhblue,text=white,font=\sffamily\bfseries,minimum width=10.5cm,minimum height=0.7cm,anchor=north west]
   at (8.1,0) {Plateforme Lakehouse};
 \node[barre,minimum width=9.6cm] (spark) at (13.35,-1.25)
-  {\logo[1.1em]{spark}Spark Structured Streaming (micro-lots)};
+  {\logo[1.1em]{spark}Spark Structured Streaming \quad \logo[1.1em]{airflow}Airflow};
 \node[pastille] at (spark.north west) {7};
 
 % Tables par couche
@@ -341,6 +341,7 @@ Les numéros renvoient aux étapes suivantes.
   dernière étape de chaque colis, par un \cmd{MERGE}.
 \item[\etape{7}] \textbf{Déclenchement} (\nb{05\_batch\_ou\_streaming}) : la même requête tourne en
   continu, ou à heure fixe en mode \cmd{availableNow}, qui traite les nouveaux messages puis s'arrête.
+  Dans ce second cas, c'est Airflow qui la lance, chaque heure.
 \item[\etape{8}] \textbf{Usages} : le service client lit l'état des colis et les incidents du jour
   avec Trino et Superset, et la direction garde son bilan mensuel, calculé en batch.
 \end{description}
@@ -378,14 +379,16 @@ cp -r notebooks/tp4 notebooks/mon_travail/
 2 & Transporter le flux avec Kafka (\nb{02\_kafka}) & \cmd{-{}-profile streaming} \\
 3 & Écrire le flux dans Bronze (\nb{03\_bronze\_streaming}) & \cmd{-{}-profile streaming} \\
 4 & Le temps dans un flux (\nb{04\_temps\_fenetres}) & \cmd{-{}-profile streaming} \\
-5 & Batch ou streaming ? (\nb{05\_batch\_ou\_streaming}) & \cmd{-{}-profile streaming} \\
+5 & Batch ou streaming ? (\nb{05\_batch\_ou\_streaming}) & \cmd{streaming} et \cmd{orchestration} \\
 \bottomrule
 \end{tabularx}
 \end{center}
 
 \begin{attention}[Mémoire]
 Kafka et Kafka UI occupent environ 700~Mo. Arrêtez Airflow, Trino, Superset et la supervision
-pendant ce TP (première commande ci-dessus), et un seul notebook à la fois : avant d'ouvrir le
+pendant les parties 1 à 4 (première commande ci-dessus). Pour la partie 5, démarrez Airflow avec
+\cmd{docker compose -{}-profile orchestration up -d airflow}, et laissez Trino, Superset et la
+supervision arrêtés. Un seul notebook à la fois : avant d'ouvrir le
 suivant, arrêtez le noyau du précédent (\emph{Kernel > Shut Down Kernel}). Le message
 \cmd{SparkUI could not bind on port 4040} signale qu'un autre noyau tourne encore.
 \end{attention}
@@ -655,8 +658,10 @@ le même code Structured Streaming tourne de deux
 façons, selon une seule option. Avec \cmd{trigger(processingTime="5 seconds")}, la requête ne
 s'arrête jamais et lance un micro-lot toutes les 5 secondes. Avec \cmd{trigger(availableNow=True)},
 elle traite tout ce qui est arrivé depuis son dernier passage, puis s'arrête : c'est un
-\textbf{batch incrémental}. Ici, vous le lancez depuis le notebook. En production, un orchestrateur comme Airflow (TP 3) le lancerait à heure fixe, par exemple chaque heure. Le checkpoint garde les offsets et
-l'état d'un passage à l'autre.
+\textbf{batch incrémental}. Le checkpoint garde les offsets et l'état d'un passage à l'autre.
+Vous le lancez d'abord depuis le notebook, pour comprendre, puis vous le confiez à Airflow : le
+script \cmd{pipeline/incidents\_declenche.py} contient la même requête, et le DAG
+\cmd{suivi\_incidents} le lance chaque heure, sans jamais deux exécutions à la fois.
 \end{notion}
 
 \begin{resultat}
@@ -666,8 +671,19 @@ incidents, exactement comme le batch qui relit les 70\,044 messages du topic.
 \end{resultat}
 
 \begin{obtenir}
-  \item Dans \nb{05\_batch\_ou\_streaming}, exécutez toutes les cellules, dans l'ordre.
-  \item Capturez la sortie de la cellule 9, le tableau du bilan.
+  \item Dans \nb{05\_batch\_ou\_streaming}, exécutez les cellules 1 à 6.
+  \item Complétez le DAG \cmd{dag\_suivi\_incidents.py}, puis exécutez les cellules 7 à 9 : la cellule 7 active le DAG, et la cellule 8 rejoue la première quinzaine de mai puis le relance.
+  \item Ouvrez Airflow (\url{http://localhost:8085}), le DAG \cmd{suivi\_incidents}, puis la vue \emph{Grid}.
+  \item Capturez la vue \emph{Grid}, avec les deux exécutions en vert.
+\end{obtenir}
+\capture{tp4_05_airflow}{Partie 5 : les deux exécutions du DAG \texttt{suivi\_incidents} dans Airflow.}{fig:res05a}
+\begin{lecture}
+\textit{[Interprétation à compléter avec les chiffres de l'exécution.]}
+\end{lecture}
+
+\begin{obtenir}
+  \item Exécutez les cellules 10 à 12.
+  \item Capturez la sortie de la cellule 12, le tableau du bilan.
 \end{obtenir}
 \capture{tp4_05_bilan}{Partie 5 : le bilan des trois façons de calculer les incidents par transporteur.}{fig:res05}
 \begin{lecture}
@@ -741,6 +757,7 @@ Les cinq notebooks de \cmd{notebooks/mon\_travail/tp4/}, exécutés, avec leurs 
 \midrule
 \multicolumn{2}{@{}l}{\textbf{\textcolor{lhblue}{Services et rejeu}}} \\
 Démarrer Kafka et Kafka UI & docker compose -{}-profile streaming up -d kafka kafka-ui \\
+Démarrer Airflow (partie 5) & docker compose -{}-profile orchestration up -d airflow \\
 Rejouer un mois dans Kafka & python /opt/lakehouse/scripts/rejouer\_suivi.py -{}-depuis 2018-03-01 -{}-jusqu-a 2018-04-01 \\
 Plus vite, ou d'un coup & \dots{} -{}-jours-par-seconde 5 \quad \dots{} -{}-sans-pause \\
 Dans un dossier & \dots{} -{}-dossier s3://landing/flux/suivi \\
