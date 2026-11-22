@@ -273,7 +273,7 @@ Elle reprend le Lakehouse des TP précédents, et y ajoute \textbf{Kafka}, qui t
 \node[fill=lhblue,text=white,font=\sffamily\bfseries,minimum width=10.5cm,minimum height=0.7cm,anchor=north west]
   at (8.1,0) {Plateforme Lakehouse};
 \node[barre,minimum width=9.6cm] (spark) at (13.35,-1.25)
-  {\logo[1.1em]{spark}Spark Structured Streaming \quad \logo[1.1em]{airflow}déclenchement};
+  {\logo[1.1em]{spark}Spark Structured Streaming : micro-lots, en continu ou à heure fixe};
 \node[pastille] at (spark.north west) {7};
 
 % Tables par couche
@@ -340,7 +340,7 @@ Les numéros renvoient aux étapes suivantes.
 \item[\etape{6}] \textbf{État des colis} (\nb{04\_temps\_fenetres}) : chaque micro-lot met à jour la
   dernière étape de chaque colis, par un \cmd{MERGE}.
 \item[\etape{7}] \textbf{Déclenchement} (\nb{05\_batch\_ou\_streaming}) : la même requête tourne en
-  continu, ou à heure fixe, lancée par Airflow.
+  continu, ou à heure fixe en mode \cmd{availableNow}, qui traite les nouveaux messages puis s'arrête.
 \item[\etape{8}] \textbf{Usages} : le service client lit l'état des colis et les incidents du jour
   avec Trino et Superset, et la direction garde son bilan mensuel, calculé en batch.
 \end{description}
@@ -655,7 +655,7 @@ le même code Structured Streaming tourne de deux
 façons, selon une seule option. Avec \cmd{trigger(processingTime="5 seconds")}, la requête ne
 s'arrête jamais et lance un micro-lot toutes les 5 secondes. Avec \cmd{trigger(availableNow=True)},
 elle traite tout ce qui est arrivé depuis son dernier passage, puis s'arrête : c'est un
-\textbf{batch incrémental}, qu'Airflow peut lancer chaque heure. Le checkpoint garde les offsets et
+\textbf{batch incrémental}. Ici, vous le lancez depuis le notebook. En production, un orchestrateur comme Airflow (TP 3) le lancerait à heure fixe, par exemple chaque heure. Le checkpoint garde les offsets et
 l'état d'un passage à l'autre.
 \end{notion}
 
