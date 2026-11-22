@@ -208,6 +208,11 @@ def lancer_dag(dag_id):
             time.sleep(10)
     else:
         raise RuntimeError(f"Airflow ne trouve pas le DAG {dag_id} : vérifiez qu'il est bien copié.")
+    # Airflow n'exécute ici qu'une tâche à la fois : les DAG du TP 3 encore actifs passeraient devant.
+    for autre in airflow("GET", "dags", params={"paused": "false", "limit": 100})["dags"]:
+        if autre["dag_id"] != dag_id:
+            airflow("PATCH", f"dags/{autre['dag_id']}", json={"is_paused": True})
+            print(f"{autre['dag_id']} mis en pause (pour laisser la place à {dag_id})")
     if dag["is_paused"]:
         deja = {r["dag_run_id"] for r in _executions(dag_id)}
         airflow("PATCH", f"dags/{dag_id}", json={"is_paused": False})

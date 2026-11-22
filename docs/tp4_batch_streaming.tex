@@ -682,13 +682,15 @@ le même calcul donne après la quinzaine de mai 2\,125 incidents, comme le batc
   \item Dans \nb{05\_batch\_ou\_streaming}, exécutez les cellules 1 à 6.
   \item Complétez le DAG \cmd{dag\_suivi\_incidents.py}, puis exécutez les cellules 7 à 9 : la cellule 7 active le DAG, et la cellule 8 rejoue la première quinzaine de mai puis le relance.
   \item Ouvrez Airflow (\url{http://localhost:8085}), le DAG \cmd{suivi\_incidents}, puis la vue \emph{Grid}.
-  \item Capturez la vue \emph{Grid}, avec les deux exécutions en vert.
+  \item Capturez la vue \emph{Grid}, avec les exécutions en vert.
 \end{obtenir}
-\capture{tp4_05_airflow}{Partie 5 : les deux exécutions du DAG \texttt{suivi\_incidents} dans Airflow.}{fig:res05a}
+\capture{tp4_05_airflow}{Partie 5 : les exécutions du DAG \texttt{suivi\_incidents} dans Airflow.}{fig:res05a}
 \begin{lecture}
-La vue \emph{Grid} montre deux exécutions réussies. La première, \cmd{scheduled}, a été lancée par
-Airflow lui-même dès l'activation du DAG, pour l'heure qui venait de s'écouler. La seconde,
-\cmd{manual}, a été déclenchée par la cellule 8 après le rejeu de mai. La table
+La vue \emph{Grid} montre les exécutions réussies. La première, \cmd{scheduled}, a été lancée par
+Airflow lui-même dès l'activation du DAG, pour l'heure qui venait de s'écouler. La dernière,
+\cmd{manual}, a été déclenchée par la cellule 8 après le rejeu de mai. Si une heure pile est passée
+entre-temps, Airflow a ajouté une exécution \cmd{scheduled} pour cette heure : c'est le DAG
+planifié qui fait son travail, et le checkpoint garantit qu'aucun message n'est compté deux fois. La table
 \cmd{gold.passages\_incidents} garde la trace de chaque passage. Le premier a lu les 70\,044
 messages du topic, car le checkpoint \cmd{incidents\_airflow} était vide, en 7,2 secondes. Le
 second n'a lu que les 17\,257 messages de mai, en 6,7 secondes. Les deux durées sont presque égales :
