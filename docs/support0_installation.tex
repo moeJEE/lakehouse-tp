@@ -147,8 +147,9 @@ Matériel & 8~Go de RAM minimum (16~Go conseillés) et 15~Go d'espace disque lib
 Tout l'environnement tourne dans \textbf{Docker}, vous n'installez ni Java, ni Spark, ni Python à la main.
 Comme dans une plateforme Lakehouse d'entreprise, les outils sont organisés en couches
 (figure~\ref{fig:archi}). Les données partent des sources, sont traitées et rangées par couche
-dans la plateforme, puis servent aux usages. L'orchestration et l'observabilité encadrent la
-plateforme, et l'ensemble repose sur des conteneurs Docker.
+dans la plateforme, puis servent aux usages. Les événements reçus en continu passent par Kafka avant
+d'entrer dans la plateforme. L'orchestration et l'observabilité encadrent la plateforme, et
+l'ensemble repose sur des conteneurs Docker.
 
 \begin{figure}[h]
 \centering
@@ -167,71 +168,81 @@ plateforme, et l'ensemble repose sur des conteneurs Docker.
 \node at (1.6,-1.55) {\logo[2.2em]{postgres}};  \node[et] at (1.6,-2.3) {Base de\\données};
 \pic at (1.6,-3.55) {fichier=CSV};             \node[et] at (1.6,-4.25) {Fichiers CSV};
 \pic at (1.6,-5.4) {fichier=\{ \}};            \node[et] at (1.6,-6.1) {Messages JSON};
-\pic at (1.6,-7.2) {photo};                    \node[et] at (1.6,-7.85) {Photos};
+\pic at (1.6,-7.0) {photo};                    \node[et] at (1.6,-7.65) {Photos};
+\pic at (1.6,-8.75) {fichier=\{ \}};           \node[et] at (1.6,-9.5) {Événements\\en continu};
+
+% ===== 7. Flux d'événements =====
+\draw[cadre] (3.9,-5.9) rectangle (6.9,-10.2);
+\node[barre,minimum width=3.0cm,anchor=north west] at (3.9,-5.9) {Flux};
+\node[pastille] at (3.9,-5.9) {7};
+\node at (5.4,-7.3) {\logo[2.0em]{kafka}}; \node[et] at (5.4,-8.05) {Kafka};
+\node[et] at (5.4,-9.2) {Kafka UI\\(consultation)};
 
 % ===== Plateforme Lakehouse =====
-\draw[draw=lhblue,line width=2.4pt] (3.9,0) rectangle (16.3,-10.2);
+\draw[draw=lhblue,line width=2.4pt] (7.60,0) rectangle (20.00,-10.2);
 \node[fill=lhblue,text=white,font=\sffamily\bfseries,minimum width=12.4cm,minimum height=0.7cm,anchor=north west]
-  at (3.9,0) {Plateforme Lakehouse};
-\node[barre,minimum width=5.7cm] (orch) at (7.2,-1.25) {\logo[1.1em]{airflow}Orchestration};
-\node[barre,minimum width=5.9cm] (obs)  at (13.1,-1.25)
+  at (7.60,0) {Plateforme Lakehouse};
+\node[barre,minimum width=5.7cm] (orch) at (10.90,-1.25) {\logo[1.1em]{airflow}Orchestration};
+\node[barre,minimum width=5.9cm] (obs)  at (16.80,-1.25)
   {\logo[1.1em]{prometheus}\logo[1.1em]{grafana}\logo[1.1em]{marquez}Observabilité};
 
 % 2. Traitement
-\draw[bloc] (4.35,-2.2) rectangle (7.25,-6.1);
-\node[pastille] at (4.35,-2.2) {2};
-\node[et,font=\sffamily\bfseries\scriptsize] at (5.8,-2.55) {Traitement};
-\node at (5.8,-3.35) {\logo[1.7em]{jupyter}}; \node[et] at (5.8,-3.9) {JupyterLab};
-\node at (5.8,-4.6)  {\logo[1.5em]{spark}\logo[1.5em]{dbt}}; \node[et] at (5.8,-5.15) {Spark, dbt};
+\draw[bloc] (8.05,-2.2) rectangle (10.95,-6.1);
+\node[pastille] at (8.05,-2.2) {2};
+\node[et,font=\sffamily\bfseries\scriptsize] at (9.50,-2.55) {Traitement};
+\node at (9.50,-3.35) {\logo[1.7em]{jupyter}}; \node[et] at (9.50,-3.9) {JupyterLab};
+\node at (9.50,-4.6)  {\logo[1.5em]{spark}\logo[1.5em]{dbt}}; \node[et] at (9.50,-5.15) {Spark, dbt};
 
 % 3. Couches de données
-\draw[bloc] (7.85,-2.2) rectangle (15.85,-6.1);
-\node[pastille] at (7.85,-2.2) {3};
-\node[et,font=\sffamily\bfseries\scriptsize] at (11.85,-2.55) {Tables par couche};
-\pic at (8.9,-4.2)  {table=gray};      \node[et] at (8.9,-5.15)  {landing};
-\pic at (10.9,-4.2) {table=lhbronze};  \node[et] at (10.9,-5.15) {bronze};
-\pic at (12.9,-4.2) {table=lhsilver};  \node[et] at (12.9,-5.15) {silver};
-\pic at (14.9,-4.2) {table=lhgold};    \node[et] at (14.9,-5.15) {gold};
-\draw[->,thick,lhfonce] (9.45,-4.2) -- (10.35,-4.2);
-\draw[->,thick,lhfonce] (11.45,-4.2) -- (12.35,-4.2);
-\draw[->,thick,lhfonce] (13.45,-4.2) -- (14.35,-4.2);
-\draw[<->,thick,lhfonce] (7.25,-4.2) -- (7.85,-4.2);
+\draw[bloc] (11.55,-2.2) rectangle (19.55,-6.1);
+\node[pastille] at (11.55,-2.2) {3};
+\node[et,font=\sffamily\bfseries\scriptsize] at (15.55,-2.55) {Tables par couche};
+\pic at (12.60,-4.2)  {table=gray};      \node[et] at (12.60,-5.15)  {landing};
+\pic at (14.60,-4.2) {table=lhbronze};  \node[et] at (14.60,-5.15) {bronze};
+\pic at (16.60,-4.2) {table=lhsilver};  \node[et] at (16.60,-5.15) {silver};
+\pic at (18.60,-4.2) {table=lhgold};    \node[et] at (18.60,-5.15) {gold};
+\draw[->,thick,lhfonce] (13.15,-4.2) -- (14.05,-4.2);
+\draw[->,thick,lhfonce] (15.15,-4.2) -- (16.05,-4.2);
+\draw[->,thick,lhfonce] (17.15,-4.2) -- (18.05,-4.2);
+\draw[<->,thick,lhfonce] (10.95,-4.2) -- (11.55,-4.2);
 
 % Socle : catalogue et stockage ouvert
 \node[fill=lhblue,text=white,font=\sffamily\bfseries\small,minimum width=11.5cm,minimum height=0.6cm]
-  at (10.1,-6.85) {Lakehouse ouvert};
-\draw[bloc] (4.35,-7.3) rectangle (8.35,-9.75);
-\node[barre,minimum width=4.0cm,anchor=north west] at (4.35,-7.3) {Catalogue};
-\node[et,font=\sffamily\scriptsize] at (6.35,-8.55) {\logo[2.0em]{iceberg}\\[2pt]Iceberg REST};
-\draw[bloc] (8.75,-7.3) rectangle (15.85,-9.75);
-\node[barre,minimum width=7.1cm,anchor=north west] at (8.75,-7.3) {Stockage ouvert (S3)};
-\node[et,font=\sffamily\scriptsize] at (10.0,-8.55) {\logo[2.0em]{rustfs}\\[2pt]RustFS};
-\node[et,font=\sffamily\scriptsize] at (11.9,-8.55) {\logo[2.0em]{iceberg}\\[2pt]Iceberg};
-\node[et,font=\sffamily\scriptsize] at (13.6,-8.55) {\logo[2.0em]{parquet}\\[2pt]Parquet};
-\node[et,font=\sffamily\scriptsize] at (15.0,-8.55) {\logo[2.0em]{delta}\\[2pt]Delta Lake};
+  at (13.80,-6.85) {Lakehouse ouvert};
+\draw[bloc] (8.05,-7.3) rectangle (12.05,-9.75);
+\node[barre,minimum width=4.0cm,anchor=north west] at (8.05,-7.3) {Catalogue};
+\node[et,font=\sffamily\scriptsize] at (10.05,-8.55) {\logo[2.0em]{iceberg}\\[2pt]Iceberg REST};
+\draw[bloc] (12.45,-7.3) rectangle (19.55,-9.75);
+\node[barre,minimum width=7.1cm,anchor=north west] at (12.45,-7.3) {Stockage ouvert (S3)};
+\node[et,font=\sffamily\scriptsize] at (13.70,-8.55) {\logo[2.0em]{rustfs}\\[2pt]RustFS};
+\node[et,font=\sffamily\scriptsize] at (15.60,-8.55) {\logo[2.0em]{iceberg}\\[2pt]Iceberg};
+\node[et,font=\sffamily\scriptsize] at (17.30,-8.55) {\logo[2.0em]{parquet}\\[2pt]Parquet};
+\node[et,font=\sffamily\scriptsize] at (18.70,-8.55) {\logo[2.0em]{delta}\\[2pt]Delta Lake};
 
 % ===== Usages =====
-\draw[cadre] (17.0,0) rectangle (20.4,-2.95);
-\node[pastille] at (17.0,0) {4};
-\node at (18.7,-1.05) {\logo[2em]{trino}}; \node[et] at (18.7,-1.95) {Requêtes SQL\\(Trino)};
-\draw[cadre] (17.0,-3.6) rectangle (20.4,-6.55);
-\node[pastille] at (17.0,-3.6) {5};
-\node at (18.7,-4.65) {\logo[1.8em]{superset}\logo[1.8em]{streamlit}}; \node[et] at (18.7,-5.55) {Tableaux\\de bord};
-\draw[cadre] (17.0,-7.2) rectangle (20.4,-10.2);
-\node[pastille] at (17.0,-7.2) {6};
-\node at (18.7,-8.25) {\logo[2em]{sklearn}}; \node[et] at (18.7,-9.2) {IA et\\apprentissage};
+\draw[cadre] (20.70,0) rectangle (24.10,-2.95);
+\node[pastille] at (20.70,0) {4};
+\node at (22.40,-1.05) {\logo[2em]{trino}}; \node[et] at (22.40,-1.95) {Requêtes SQL\\(Trino)};
+\draw[cadre] (20.70,-3.6) rectangle (24.10,-6.55);
+\node[pastille] at (20.70,-3.6) {5};
+\node at (22.40,-4.65) {\logo[1.8em]{superset}\logo[1.8em]{streamlit}}; \node[et] at (22.40,-5.55) {Tableaux\\de bord};
+\draw[cadre] (20.70,-7.2) rectangle (24.10,-10.2);
+\node[pastille] at (20.70,-7.2) {6};
+\node at (22.40,-8.25) {\logo[2em]{sklearn}}; \node[et] at (22.40,-9.2) {IA et\\apprentissage};
 
 % ===== Infrastructure =====
-\node[fill=lhfonce,text=white,minimum width=20.4cm,minimum height=0.75cm,anchor=north west] at (0,-10.6)
+\node[fill=lhfonce,text=white,minimum width=24.1cm,minimum height=0.75cm,anchor=north west] at (0,-10.6)
   {\logo[1.3em]{docker}\textbf{Infrastructure : conteneurs Docker}\quad\footnotesize réseau privé,
    volumes, processeur et mémoire};
 
 % ===== Flux =====
-\draw[->,very thick,lhfonce] (3.2,-3.55) -- (3.9,-3.55);
-\draw[->,very thick,lhfonce] (3.2,-5.4) -- (3.9,-5.4);
-\draw[->,very thick,lhfonce] (16.3,-1.5) -- (17.0,-1.5);
-\draw[->,very thick,lhfonce] (16.3,-5.1) -- (17.0,-5.1);
-\draw[->,very thick,lhfonce] (16.3,-8.7) -- (17.0,-8.7);
+\draw[->,very thick,lhfonce] (3.2,-3.55) -- (7.60,-3.55);
+\draw[->,very thick,lhfonce] (3.2,-5.4) -- (7.60,-5.4);
+\draw[->,very thick,lhfonce] (3.2,-8.75) -- (3.9,-8.75);
+\draw[->,very thick,lhfonce] (6.9,-6.3) -- (8.05,-5.7);
+\draw[->,very thick,lhfonce] (20.00,-1.5) -- (20.70,-1.5);
+\draw[->,very thick,lhfonce] (20.00,-5.1) -- (20.70,-5.1);
+\draw[->,very thick,lhfonce] (20.00,-8.7) -- (20.70,-8.7);
 \end{tikzpicture}}
 \caption{Architecture de l'environnement. Tous les services tournent dans des conteneurs Docker.}
 \label{fig:archi}
@@ -256,6 +267,10 @@ plateforme, et l'ensemble repose sur des conteneurs Docker.
   les tables gold avec Spark.
 \item[\pastilletexte{6}] \textbf{L'IA} : des modèles scikit-learn apprennent sur les tables gold, et
   un réseau de neurones pré-entraîné (MobileNet, exécuté avec ONNX Runtime) décrit les photos.
+\item[\pastilletexte{7}] \textbf{Les flux} : les événements envoyés en continu (le suivi des colis
+  au TP 4) arrivent dans Kafka, qui les conserve. Spark Structured Streaming les lit par
+  micro-lots et les écrit dans les tables bronze, silver et gold. Kafka UI permet de consulter les
+  messages dans le navigateur.
 \end{description}
 
 Deux services encadrent la plateforme. \textbf{Airflow} enchaîne automatiquement les traitements,
@@ -291,6 +306,10 @@ c'est-à-dire quel job a lu et écrit quelle table.
   forme d'un petit serveur web qui suit la norme d'Iceberg et que tous les moteurs interrogent de la
   même manière.
   En entreprise, le catalogue gère aussi les droits d'accès (AWS Glue, Unity Catalog, Polaris).
+\item[Lots et flux :] la plupart des traitements s'exécutent \emph{par lots} (\emph{batch}) : ils
+  lisent les données accumulées, à heure fixe. Un \emph{flux} (\emph{streaming}) traite au contraire
+  les événements dès leur arrivée. Kafka transporte ces événements, et Spark les traite par petits
+  lots successifs, les \emph{micro-lots}.
 \item[Lakehouse ouvert :] l'idée qui réunit les notions précédentes. Avec des formats publics et
   un stockage standard, n'importe quel moteur lit les mêmes tables sans copie, et l'on peut changer
   d'outil sans migrer les données. C'est la différence avec un entrepôt de données classique, dont le
@@ -315,7 +334,8 @@ c'est-à-dire quel job a lu et écrit quelle table.
 \endfoot
 JupyterLab + Spark &
   Votre poste de travail, où vous écrivez le code (Python, SQL) qui lit, transforme et écrit
-  les données. Spark est le moteur de calcul. DuckDB et Streamlit y sont aussi installés. &
+  les données. Spark est le moteur de calcul, en lots comme en continu (Spark Structured
+  Streaming). DuckDB et Streamlit y sont aussi installés. &
   Databricks, notebooks d'AWS EMR & auto \\
 Stockage S3 (RustFS) &
   Le disque du Lakehouse. Il garde tous les fichiers, bruts dans \texttt{landing}, puis
