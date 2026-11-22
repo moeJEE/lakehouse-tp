@@ -93,7 +93,7 @@ docs/                  supports du module
 
 ## Pour l'enseignant
 
-Les images `ghcr.io/moejee/lakehouse-jupyter`, `lakehouse-superset` et `lakehouse-airflow` sont construites
+Les images `ghcr.io/mohamedkachmar/lakehouse-jupyter`, `lakehouse-superset` et `lakehouse-airflow` sont construites
 (amd64 + arm64) par le workflow **Images Docker** (onglet *Actions*). Après la première exécution,
 rendre les trois paquets publics dans *Packages > Package settings > Change visibility*, pour que les
 étudiants puissent les télécharger sans compte.

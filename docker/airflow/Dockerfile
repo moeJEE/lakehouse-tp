@@ -1,7 +1,7 @@
 # Image Airflow du cours : construite sur l'image JupyterLab, elle dispose donc de Spark,
 # des connecteurs Iceberg/S3 et de dbt. Airflow est installé dans son propre environnement
 # Python (/opt/airflow-venv) pour ne pas perturber les bibliothèques du cours.
-ARG BASE_IMAGE=ghcr.io/moejee/lakehouse-jupyter:2026.2
+ARG BASE_IMAGE=ghcr.io/mohamedkachmar/lakehouse-jupyter:2026.2
 FROM ${BASE_IMAGE}
 
 ARG AIRFLOW_VERSION=3.1.0
