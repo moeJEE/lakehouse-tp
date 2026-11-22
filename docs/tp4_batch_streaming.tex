@@ -516,8 +516,11 @@ l'événement, cachée dans la valeur, qui sera au cœur de la partie 4.
 \capture{tp4_02_consumers}{Partie 2 : les groupes de consommateurs et leur retard dans Kafka UI.}{fig:res02b}
 \begin{lecture}
 Le groupe \cmd{tp4\_tableau\_de\_bord} a tout lu : son retard est nul. Le groupe
-\cmd{tp4\_lecteurs} n'a lu que les 10 messages de l'étape 3 : son retard est de 7\,859 messages, soit
-tout le topic moins ces 10 messages. Les deux groupes lisent le même topic sans se gêner, et les
+\cmd{tp4\_lecteurs} n'a lu que les 10 messages de l'étape 3, tous pris dans la même partition. Kafka UI
+affiche un retard de 2\,502 : les 2\,512 messages de cette partition moins les 10 lus. Il ne compte en
+effet le retard que sur les partitions où le groupe a déjà enregistré une position. Le notebook, qui
+compte toutes les partitions, trouve 7\,859 messages en retard, soit tout le topic moins ces 10
+messages. Les deux groupes lisent le même topic sans se gêner, et les
 messages lus par l'un restent disponibles pour l'autre. En production, un retard qui grandit est le
 premier signe qu'un consommateur ne suit plus le rythme du flux.
 \end{lecture}
