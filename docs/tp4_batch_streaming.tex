@@ -439,9 +439,11 @@ refusé sur une agrégation sans \emph{watermark}.
 \end{obtenir}
 \capture{tp4_01_micro_lots}{Partie 1 : le nombre d'événements par code, mis à jour à chaque micro-lot.}{fig:res01}
 \begin{lecture}
-Le même tableau est affiché trois fois, à 5 secondes d'intervalle, et ses compteurs grossissent :
-\cmd{EN\_TRANSIT} passe de 1\,348 à 2\,116 puis à 2\,879 événements, à mesure que les micro-lots 2 à 7
-lisent les fichiers des jours suivants. Personne n'a relancé la requête : Spark l'a fait à chaque
+Le même tableau est affiché quatre fois, à 5 secondes d'intervalle. Au premier affichage, il est
+encore vide : aucun micro-lot n'a reçu de données. Ensuite, ses compteurs grossissent :
+\cmd{EN\_TRANSIT} passe de 862 à 1\,793 puis à 2\,489 événements, après 2, 4 puis 6 micro-lots, à
+mesure que les fichiers des jours suivants arrivent. Les chiffres exacts varient d'une exécution à
+l'autre, selon le moment où chaque fichier est lu. Personne n'a relancé la requête : Spark l'a fait à chaque
 nouveau fichier, en ne lisant que lui, et en ajoutant son résultat à l'état gardé en mémoire. À la
 fin du rejeu, le total lu est de 11\,232, exactement le nombre d'événements envoyés.
 \end{lecture}
