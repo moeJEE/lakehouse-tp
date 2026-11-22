@@ -621,13 +621,13 @@ dont 6\,835 livrés.
 \begin{obtenir}
   \item Dans \nb{04\_temps\_fenetres}, exécutez les cellules 1 à 5.
   \item Exécutez la cellule 6, qui compare les incidents par jour calculés en flux, avec 12 heures d'attente, au calcul batch, puis la cellule 7, qui refait la comparaison avec 2 jours d'attente.
-  \item Capturez les sorties des cellules 6 et 7.
+  \item Capturez la cellule 6 et sa sortie.
 \end{obtenir}
-\capture{tp4_04_watermark}{Partie 4 : les incidents par jour, en flux avec 12 heures puis 2 jours d'attente, comparés au batch.}{fig:res04}
+\capture{tp4_04_watermark}{Partie 4 : les incidents par jour, en flux avec 12 heures d'attente, comparés au batch.}{fig:res04}
 \begin{lecture}
 Avec 12 heures d'attente, 30 journées sur 31 sont closes, et le flux compte 1\,075 incidents contre
 1\,084 pour le batch : 9 incidents (0,8~\%) sont arrivés après la clôture de leur journée, et ne sont
-pas comptés. Avec 2 jours d'attente, l'écart tombe à 0, mais seules 28 journées sont closes : le
+pas comptés. La cellule 7 refait le calcul avec 2 jours d'attente : l'écart tombe à 0, mais seules 28 journées sont closes : le
 chiffre de chaque journée arrive deux jours plus tard. Le watermark règle donc un compromis entre
 \textbf{fraîcheur} et \textbf{exactitude}, et sa durée se choisit d'après le retard réellement
 observé dans le flux.
