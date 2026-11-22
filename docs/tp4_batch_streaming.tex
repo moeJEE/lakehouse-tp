@@ -555,10 +555,11 @@ snapshots et une vingtaine de petits fichiers.
 \end{obtenir}
 \capture{tp4_03_panne}{Partie 3 : la panne, la reprise et la vérification de la table Bronze.}{fig:res03}
 \begin{lecture}
-Au moment de la panne, Bronze contient 5\,579 lignes, et toujours 5\,579 dix secondes plus tard :
+Au moment de la panne, Bronze contient 3\,675 lignes, et toujours 3\,675 dix secondes plus tard :
 plus rien n'est écrit, mais le rejeu continue d'envoyer dans Kafka, où les messages s'accumulent. À
-la reprise, le micro-lot 3 lit d'un coup 15\,889 messages, contre 1\,000 à 5\,000 pour un micro-lot
-normal : Spark a repris aux offsets notés dans le checkpoint. Au final, 34\,951 messages ont été
+la reprise, le premier micro-lot (le n\textsuperscript{o}~2) lit d'un coup 15\,409 messages, contre
+quelques centaines à quelques milliers pour un micro-lot normal : Spark a repris aux offsets notés
+dans le checkpoint. Les chiffres exacts dépendent du moment où la panne survient. Au final, 34\,951 messages ont été
 envoyés, la table compte 34\,951 lignes et 34\,951 positions distinctes : aucune perte, aucun
 doublon.
 \end{lecture}
