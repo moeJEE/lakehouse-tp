@@ -19,7 +19,7 @@ Il sert aux TP 1, 2 et 3 du module.
 ## Démarrage rapide
 
 ```bash
-git clone https://github.com/moeJEE/lakehouse-tp.git
+git clone https://github.com/mohamedKachmar/lakehouse-tp.git
 cd lakehouse-tp
 cp .env.example .env              # machine de 8 Go : JUPYTER_MEM_LIMIT=3g
 docker compose --profile full --profile orchestration --profile observabilite pull
