@@ -385,7 +385,8 @@ cp -r notebooks/tp4 notebooks/mon_travail/
 \end{center}
 
 \begin{attention}[Mémoire]
-Kafka et Kafka UI occupent environ 700~Mo. Arrêtez Airflow, Trino, Superset et la supervision
+Kafka et Kafka UI occupent environ 700~Mo ; avec Airflow, l'ensemble monte à environ 4,6~Go
+pendant la partie 5. Arrêtez Airflow, Trino, Superset et la supervision
 pendant les parties 1 à 4 (première commande ci-dessus). Pour la partie 5, démarrez Airflow avec
 \cmd{docker compose -{}-profile orchestration up -d airflow}, et laissez Trino, Superset et la
 supervision arrêtés. Un seul notebook à la fois : avant d'ouvrir le
@@ -667,7 +668,8 @@ script \cmd{pipeline/incidents\_declenche.py} contient la même requête, et le 
 \begin{resultat}
 le flux continu écrit le dernier incident dans la table quelques secondes après son envoi. Le flux
 déclenché ne traite au 2e passage que les 18\,137 nouveaux messages, et trouve pourtant 1\,919
-incidents, exactement comme le batch qui relit les 70\,044 messages du topic.
+incidents, exactement comme le batch qui relit les 70\,044 messages du topic. Lancé par Airflow,
+le même calcul donne après la quinzaine de mai 2\,125 incidents, comme le batch.
 \end{resultat}
 
 \begin{obtenir}
@@ -678,7 +680,16 @@ incidents, exactement comme le batch qui relit les 70\,044 messages du topic.
 \end{obtenir}
 \capture{tp4_05_airflow}{Partie 5 : les deux exécutions du DAG \texttt{suivi\_incidents} dans Airflow.}{fig:res05a}
 \begin{lecture}
-\textit{[Interprétation à compléter avec les chiffres de l'exécution.]}
+La vue \emph{Grid} montre deux exécutions réussies. La première, \cmd{scheduled}, a été lancée par
+Airflow lui-même dès l'activation du DAG, pour l'heure qui venait de s'écouler. La seconde,
+\cmd{manual}, a été déclenchée par la cellule 8 après le rejeu de mai. La table
+\cmd{gold.passages\_incidents} garde la trace de chaque passage. Le premier a lu les 70\,044
+messages du topic, car le checkpoint \cmd{incidents\_airflow} était vide, en 7,2 secondes. Le
+second n'a lu que les 17\,257 messages de mai, en 6,7 secondes. Les deux durées sont presque égales :
+l'essentiel du temps sert à démarrer une session Spark, pas à lire les messages. C'est le coût d'un
+traitement confié à un orchestrateur, et c'est pourquoi on ne le lance pas toutes les 5 secondes.
+Après les deux passages, \cmd{gold.incidents\_horaire} compte 2\,125 incidents, le même total que
+le batch.
 \end{lecture}
 
 \begin{obtenir}
@@ -690,7 +701,8 @@ incidents, exactement comme le batch qui relit les 70\,044 messages du topic.
 Le flux continu rend l'incident visible 5,1 secondes après son envoi, avec des micro-lots d'environ
 1 seconde, mais il a créé 5 snapshots en moins d'une minute et garde ses ressources réservées jour
 et nuit. Le batch relit les 70\,044 messages en 1,1 seconde, et le flux déclenché traite les seuls
-nouveaux messages en 2,1 secondes. À ce volume, relire tout ne coûte presque rien. Mais la durée du
+nouveaux messages en 2,1 secondes ; lancé par Airflow, il en met environ 7, démarrage de Spark
+compris. À ce volume, relire tout ne coûte presque rien. Mais la durée du
 batch grandit avec l'historique, alors que celle du flux déclenché ne dépend que des nouveaux
 messages. Le choix se fait donc sur le délai dont le métier a besoin : quelques secondes pour
 prévenir un client, une heure pour un tableau de bord, un mois pour un bilan.
